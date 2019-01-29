@@ -64,7 +64,7 @@ static void hex_string_2_bytes_array(uint8_t* hexstr, uint16_t hexstrLen, uint8_
 	}
 }
 
-static int mbedtls_se_read_ef(uint8_t* efname, uint16_t efnamelen, char** data, int* data_size, const char* pin) {
+static int se_read_ef(uint8_t* efname, uint16_t efnamelen, char** data, int* data_size, const char* pin) {
 	int ret;
 	uint16_t size;
 	
@@ -78,11 +78,11 @@ static int mbedtls_se_read_ef(uint8_t* efname, uint16_t efnamelen, char** data, 
 				ret = 0;
 			}
 			else {
-				ret = MBEDTLS_ERR_SE_EF_READ_OBJECT_ERROR;
+				ret = ERR_SE_EF_READ_OBJECT_ERROR;
 			}
 		}
 		else {
-			ret = MBEDTLS_ERR_SE_EF_VERIFY_PIN_ERROR;
+			ret = ERR_SE_EF_VERIFY_PIN_ERROR;
 		}
 	}
 	_mf->deselect();
@@ -94,11 +94,11 @@ static int mbedtls_se_read_ef(uint8_t* efname, uint16_t efnamelen, char** data, 
 				ret = 0;
 			}
 			else {
-				ret = MBEDTLS_ERR_SE_EF_READ_OBJECT_ERROR;
+				ret = ERR_SE_EF_READ_OBJECT_ERROR;
 			}
 		}
 		else {
-			ret = MBEDTLS_ERR_SE_EF_VERIFY_PIN_ERROR;
+			ret = ERR_SE_EF_VERIFY_PIN_ERROR;
 		}
 	}
 	Applet_deselect((Applet*) _mf);	
@@ -107,26 +107,26 @@ static int mbedtls_se_read_ef(uint8_t* efname, uint16_t efnamelen, char** data, 
 	return ret;
 }
 
-static int mbedtls_se_read_object(const char* path, char** obj, int* size, const char* pin) {
+static int se_read_object(const char* path, char** obj, int* size, const char* pin) {
 	int ret;
 	uint8_t* efname;
 	uint16_t efname_len;
 		
 	// Name is expected to be of even size (hex string name)
 	if(strlen(path) & 1) {
-		return MBEDTLS_ERR_SE_EF_INVALID_NAME_ERROR;
+		return ERR_SE_EF_INVALID_NAME_ERROR;
 	}
 	
 	efname_len = (strlen(path) / 2);
 	efname = (uint8_t*) malloc(efname_len * sizeof(uint8_t));
 	hex_string_2_bytes_array((uint8_t*) path, strlen(path), efname, (uint16_t*) &efname_len);
-	ret = mbedtls_se_read_ef(efname, efname_len, obj, size, pin);
+	ret = se_read_ef(efname, efname_len, obj, size, pin);
 	free(efname);
 	
 	return ret;
 }
 
-static int mbedtls_se_p11_read_object(const char* label, char** obj, int* size, const char* pin) {
+static int se_p11_read_object(const char* label, char** obj, int* size, const char* pin) {
 	int ret;
 	
 	#ifdef __cplusplus
@@ -137,11 +137,11 @@ static int mbedtls_se_p11_read_object(const char* label, char** obj, int* size, 
 				ret = 0;
 			}
 			else {
-				ret = MBEDTLS_ERR_SE_MIAS_READ_OBJECT_ERROR;
+				ret = ERR_SE_MIAS_READ_OBJECT_ERROR;
 			}
 		}
 		else {
-			ret = MBEDTLS_ERR_SE_MIAS_READ_OBJECT_ERROR;
+			ret = ERR_SE_MIAS_READ_OBJECT_ERROR;
 		}
 	}
 	_mias->deselect();
@@ -153,11 +153,11 @@ static int mbedtls_se_p11_read_object(const char* label, char** obj, int* size, 
 				ret = 0;
 			}
 			else {
-				ret = MBEDTLS_ERR_SE_MIAS_READ_OBJECT_ERROR;
+				ret = ERR_SE_MIAS_READ_OBJECT_ERROR;
 			}
 		}
 		else {
-			ret = MBEDTLS_ERR_SE_MIAS_READ_OBJECT_ERROR;
+			ret = ERR_SE_MIAS_READ_OBJECT_ERROR;
 		}
 	}
 	Applet_deselect((Applet*) _mf);	
@@ -166,7 +166,7 @@ static int mbedtls_se_p11_read_object(const char* label, char** obj, int* size, 
 	return ret;
 }
 
-static int mbedtls_mias_pk_rsa_alt_decrypt(void* ctx, int mode, size_t* olen, const unsigned char* input, unsigned char* output, size_t output_max_len) {
+static int mias_pk_rsa_alt_decrypt(void* ctx, int mode, size_t* olen, const unsigned char* input, unsigned char* output, size_t output_max_len) {
 	int ret;
 	
 	#ifdef __cplusplus
@@ -177,19 +177,19 @@ static int mbedtls_mias_pk_rsa_alt_decrypt(void* ctx, int mode, size_t* olen, co
 						ret = 0;
 				}
 				else {
-					ret = MBEDTLS_ERR_SE_MIAS_IO_ERROR;
+					ret = ERR_SE_MIAS_IO_ERROR;
 				}
 			}
 			else {
-				ret = MBEDTLS_ERR_SE_MIAS_IO_ERROR;
+				ret = ERR_SE_MIAS_IO_ERROR;
 			}
 		}
 		else {
-			ret = MBEDTLS_ERR_SE_MIAS_VERIFY_PIN_ERROR;
+			ret = ERR_SE_MIAS_VERIFY_PIN_ERROR;
 		}
 	}
 	else {
-		ret = MBEDTLS_ERR_SE_MIAS_SELECT_ERROR;
+		ret = ERR_SE_MIAS_SELECT_ERROR;
 	}
 	_mias->deselect();
 	#else
@@ -200,19 +200,19 @@ static int mbedtls_mias_pk_rsa_alt_decrypt(void* ctx, int mode, size_t* olen, co
 						ret = 0;
 				}
 				else {
-					ret = MBEDTLS_ERR_SE_MIAS_IO_ERROR;
+					ret = ERR_SE_MIAS_IO_ERROR;
 				}
 			}
 			else {
-				ret = MBEDTLS_ERR_SE_MIAS_IO_ERROR;
+				ret = ERR_SE_MIAS_IO_ERROR;
 			}
 		}
 		else {
-			ret = MBEDTLS_ERR_SE_MIAS_VERIFY_PIN_ERROR;
+			ret = ERR_SE_MIAS_VERIFY_PIN_ERROR;
 		}
 	}
 	else {
-		ret = MBEDTLS_ERR_SE_MIAS_SELECT_ERROR;
+		ret = ERR_SE_MIAS_SELECT_ERROR;
 	}
 	Applet_deselect((Applet*) _mias);
 	#endif
@@ -251,11 +251,11 @@ static int mbedtls_mias_pk_rsa_alt_sign(void* ctx, int (*f_rng)(void*, unsigned 
 			return MBEDTLS_ERR_MD_FEATURE_UNAVAILABLE;
 	}
 
- 	return mbedtls_mias_pk_rsa_alt_sign(ctx, f_rng, p_rng, mode, mias_alg, hashlen, hash, sig);
+ 	return mias_pk_rsa_alt_sign(ctx, f_rng, p_rng, mode, mias_alg, hashlen, hash, sig);
 }
 */
 
-static int mbedtls_mias_pk_rsa_alt_sign(void* ctx, int (*f_rng)(void*, unsigned char*, size_t), void* p_rng, int mode, char mias_alg, unsigned int hashlen, const unsigned char* hash, unsigned char* sig) {
+static int mias_pk_rsa_alt_sign(void* ctx, int (*f_rng)(void*, unsigned char*, size_t), void* p_rng, int mode, char mias_alg, unsigned int hashlen, const unsigned char* hash, unsigned char* sig) {
 	int ret;
 	uint16_t sig_size;
 
@@ -267,19 +267,19 @@ static int mbedtls_mias_pk_rsa_alt_sign(void* ctx, int (*f_rng)(void*, unsigned 
 					ret = 0;
 				}
 				else {
-					ret = MBEDTLS_ERR_SE_MIAS_IO_ERROR;
+					ret = ERR_SE_MIAS_IO_ERROR;
 				}
 			}
 			else {
-				ret = MBEDTLS_ERR_SE_MIAS_IO_ERROR;
+				ret = ERR_SE_MIAS_IO_ERROR;
 			}
 		}
 		else {
-			ret = MBEDTLS_ERR_SE_MIAS_VERIFY_PIN_ERROR;
+			ret = ERR_SE_MIAS_VERIFY_PIN_ERROR;
 		}
 	}
 	else {
-		ret = MBEDTLS_ERR_SE_MIAS_SELECT_ERROR;
+		ret = ERR_SE_MIAS_SELECT_ERROR;
 	}
 	_mias->deselect();
 	#else
@@ -290,19 +290,19 @@ static int mbedtls_mias_pk_rsa_alt_sign(void* ctx, int (*f_rng)(void*, unsigned 
 					ret = 0;
 				}
 				else {
-					ret = MBEDTLS_ERR_SE_MIAS_IO_ERROR;
+					ret = ERR_SE_MIAS_IO_ERROR;
 				}
 			}
 			else {
-				ret = MBEDTLS_ERR_SE_MIAS_IO_ERROR;
+				ret = ERR_SE_MIAS_IO_ERROR;
 			}
 		}
 		else {
-			ret = MBEDTLS_ERR_SE_MIAS_VERIFY_PIN_ERROR;
+			ret = ERR_SE_MIAS_VERIFY_PIN_ERROR;
 		}
 	}
 	else {
-		ret = MBEDTLS_ERR_SE_MIAS_SELECT_ERROR;
+		ret = ERR_SE_MIAS_SELECT_ERROR;
 	}
 	Applet_deselect((Applet*) _mias);
 	#endif
@@ -310,11 +310,11 @@ static int mbedtls_mias_pk_rsa_alt_sign(void* ctx, int (*f_rng)(void*, unsigned 
 	return ret;
 }
 
-static size_t mbedtls_mias_pk_rsa_alt_key_len(void* ctx) {
+static size_t mias_pk_rsa_alt_key_len(void* ctx) {
 	return (((mias_key_t*) ctx)->kp->size_in_bits / 8);
 }
 
-int mbedtls_se_init(SEInterface* seiface) {	
+int tob_se_init(SEInterface *seiface) {
 	#ifdef __cplusplus
 	_mias = new MIAS();
 	_mias->init(seiface);
@@ -331,18 +331,18 @@ int mbedtls_se_init(SEInterface* seiface) {
 	return 0;
 }
 
-int mbedtls_x509_crt_parse_se(uint8_t* cert, int* cert_size, const char* path, const char* pin) {
-	int ret = MBEDTLS_ERR_SE_BAD_KEY_NAME_ERROR;
+int tob_x509_crt_extract_se(uint8_t *cert, int *cert_size, const char *path, const char *pin) {
+	int ret = ERR_SE_BAD_KEY_NAME_ERROR;
 	
 	// Read Certificate from EF
-	if(memcmp(path, MBEDTLS_SE_EF_KEY_NAME_PREFIX, strlen(MBEDTLS_SE_EF_KEY_NAME_PREFIX)) == 0) {
+	if(memcmp(path, SE_EF_KEY_NAME_PREFIX, strlen(SE_EF_KEY_NAME_PREFIX)) == 0) {
 		int obj_size;
 		char* obj;
 		
 		// Remove prefix from key path
-		path += strlen(MBEDTLS_SE_EF_KEY_NAME_PREFIX);
+		path += strlen(SE_EF_KEY_NAME_PREFIX);
 	
-		if((ret = mbedtls_se_read_object(path, &obj, &obj_size, pin)) == 0) {
+		if((ret = se_read_object(path, &obj, &obj_size, pin)) == 0) {
       memcpy(cert, obj, obj_size); // TODO: re-evaluate this
       cert[obj_size] = '\0';
       *cert_size = obj_size;
@@ -352,14 +352,14 @@ int mbedtls_x509_crt_parse_se(uint8_t* cert, int* cert_size, const char* path, c
 	}
 
 	// Read Certificate from MIAS P11 Data object
-	else if(memcmp(path, MBEDTLS_SE_MIAS_P11_KEY_NAME_PREFIX, strlen(MBEDTLS_SE_MIAS_P11_KEY_NAME_PREFIX)) == 0) {
+	else if(memcmp(path, SE_MIAS_P11_KEY_NAME_PREFIX, strlen(SE_MIAS_P11_KEY_NAME_PREFIX)) == 0) {
 		int obj_size;
 		char* obj;
 		
 		// Remove prefix from key path
-		path += strlen(MBEDTLS_SE_MIAS_P11_KEY_NAME_PREFIX);
+		path += strlen(SE_MIAS_P11_KEY_NAME_PREFIX);
 		
-		if((ret = mbedtls_se_p11_read_object(path, &obj, &obj_size, pin)) == 0) {
+		if((ret = se_p11_read_object(path, &obj, &obj_size, pin)) == 0) {
       memcpy(cert, obj, obj_size); // TODO: re-evaluate this
       cert[obj_size] = '\0';
       *cert_size = obj_size;
@@ -369,11 +369,11 @@ int mbedtls_x509_crt_parse_se(uint8_t* cert, int* cert_size, const char* path, c
 	}
 	
 	// Read Certificate from MIAS
-	else if(memcmp(path, MBEDTLS_SE_MIAS_KEY_NAME_PREFIX, strlen(MBEDTLS_SE_MIAS_KEY_NAME_PREFIX)) == 0) {
+	else if(memcmp(path, SE_MIAS_KEY_NAME_PREFIX, strlen(SE_MIAS_KEY_NAME_PREFIX)) == 0) {
 		uint8_t cid;
 		
 		// Remove prefix from key path
-		path += strlen(MBEDTLS_SE_MIAS_KEY_NAME_PREFIX);
+		path += strlen(SE_MIAS_KEY_NAME_PREFIX);
 			
 		cid = 0;
 		while(*path) {
@@ -416,18 +416,18 @@ int mbedtls_x509_crt_parse_se(uint8_t* cert, int* cert_size, const char* path, c
 	return ret;
 }
 
-int mbedtls_pk_parse_se(uint8_t* pk, int* pk_size, const char* path, const char* pin) {
-	int ret = MBEDTLS_ERR_SE_BAD_KEY_NAME_ERROR;
+int tob_pk_extract_se(uint8_t *pk, int *pk_size, const char *path, const char *pin) {
+	int ret = ERR_SE_BAD_KEY_NAME_ERROR;
 
 	// Read PKey from EF
-	if(memcmp(path, MBEDTLS_SE_EF_KEY_NAME_PREFIX, strlen(MBEDTLS_SE_EF_KEY_NAME_PREFIX)) == 0) {
+	if(memcmp(path, SE_EF_KEY_NAME_PREFIX, strlen(SE_EF_KEY_NAME_PREFIX)) == 0) {
 		int obj_size;
 		char* obj;
 		
 		// Remove prefix from key path
-		path += strlen(MBEDTLS_SE_EF_KEY_NAME_PREFIX);
+		path += strlen(SE_EF_KEY_NAME_PREFIX);
 	
-		if((ret = mbedtls_se_read_object(path, &obj, &obj_size, pin)) == 0) {
+		if((ret = se_read_object(path, &obj, &obj_size, pin)) == 0) {
       memcpy(pk, obj, obj_size); // TODO: re-evaluate this
       pk[obj_size] = '\0';
       *pk_size = obj_size;
@@ -437,14 +437,14 @@ int mbedtls_pk_parse_se(uint8_t* pk, int* pk_size, const char* path, const char*
 	}
 
 	// Read PKey from MIAS P11 Data object
-	else if(memcmp(path, MBEDTLS_SE_MIAS_P11_KEY_NAME_PREFIX, strlen(MBEDTLS_SE_MIAS_P11_KEY_NAME_PREFIX)) == 0) {
+	else if(memcmp(path, SE_MIAS_P11_KEY_NAME_PREFIX, strlen(SE_MIAS_P11_KEY_NAME_PREFIX)) == 0) {
 		int obj_size;
 		char* obj;
 		
 		// Remove prefix from key path
-		path += strlen(MBEDTLS_SE_MIAS_P11_KEY_NAME_PREFIX);
+		path += strlen(SE_MIAS_P11_KEY_NAME_PREFIX);
 		
-		if((ret = mbedtls_se_p11_read_object(path, &obj, &obj_size, pin)) == 0) {
+		if((ret = se_p11_read_object(path, &obj, &obj_size, pin)) == 0) {
       memcpy(pk, obj, obj_size); // TODO: re-evaluate this
       pk[obj_size] = '\0';
       *pk_size = obj_size;
@@ -456,14 +456,14 @@ int mbedtls_pk_parse_se(uint8_t* pk, int* pk_size, const char* path, const char*
 /*
 // FIXME: implement for both openssl, mbedtls, and maybe wolfssl?
 	// Read PKey from MIAS
-	else if(memcmp(path, MBEDTLS_SE_MIAS_KEY_NAME_PREFIX, strlen(MBEDTLS_SE_MIAS_KEY_NAME_PREFIX)) == 0) {
+	else if(memcmp(path, SE_MIAS_KEY_NAME_PREFIX, strlen(SE_MIAS_KEY_NAME_PREFIX)) == 0) {
 		uint8_t cid;
 		mias_key_t* mias_key;
 		
 		// Remove prefix from key path
-		path += strlen(MBEDTLS_SE_MIAS_KEY_NAME_PREFIX);
+		path += strlen(SE_MIAS_KEY_NAME_PREFIX);
 		
-		// NOTE: for unknown reason a call to mbedtls_pk_parse_key need to be done even if useless in that case, 
+		// NOTE: for unknown reason a call to mbedtls_pk_parse_key need to be done even if useless in that case,
 		//       otherwise a compil error will occur!
 		// ToDo: Investigate this to avoid calling mbedtls_pk_parse_key.
 		mbedtls_pk_parse_key(pk, NULL, 0, NULL, 0);
@@ -492,7 +492,7 @@ int mbedtls_pk_parse_se(uint8_t* pk, int* pk_size, const char* path, const char*
 		#endif
 				
 		if(mias_key->kp) {
-			return mbedtls_pk_setup_rsa_alt(pk, mias_key, mbedtls_mias_pk_rsa_alt_decrypt, mbedtls_mias_pk_rsa_alt_sign, mbedtls_mias_pk_rsa_alt_key_len);
+			return mbedtls_pk_setup_rsa_alt(pk, mias_key, mias_pk_rsa_alt_decrypt, mias_pk_rsa_alt_sign, mias_pk_rsa_alt_key_len);
 		}
 		else {
 			free(mias_key);

@@ -26,23 +26,23 @@
 
 #include "SEInterface.h"
 
-#define MBEDTLS_ERR_SE_MIAS_SELECT_ERROR                  -0x5280  /**< Selecting mobile IAS applet failed. */
-#define MBEDTLS_ERR_SE_MIAS_VERIFY_PIN_ERROR              -0x5300  /**< Verifying pin on mobile IAS applet failed. */
-#define MBEDTLS_ERR_SE_MIAS_IO_ERROR                      -0x5380  /**< Transmitting apdu to mobile IAS applet failed. */
-#define MBEDTLS_ERR_SE_MIAS_READ_OBJECT_ERROR             -0x5400  /**< Mobile IAS read object failed. */
-#define MBEDTLS_ERR_SE_EF_VERIFY_PIN_ERROR                -0x5480  /**< Verifying pin to access EF failed. */
-#define MBEDTLS_ERR_SE_EF_INVALID_NAME_ERROR              -0x5500  /**< Trying to access an EF with an invalid name. */
-#define MBEDTLS_ERR_SE_EF_READ_OBJECT_ERROR               -0x5580  /**< EF read object failed. */
-#define MBEDTLS_ERR_SE_BAD_KEY_NAME_ERROR                 -0x5600  /**< No matching key found with the given name. */
+#define ERR_SE_MIAS_SELECT_ERROR                  -0x5280  /**< Selecting mobile IAS applet failed. */
+#define ERR_SE_MIAS_VERIFY_PIN_ERROR              -0x5300  /**< Verifying pin on mobile IAS applet failed. */
+#define ERR_SE_MIAS_IO_ERROR                      -0x5380  /**< Transmitting apdu to mobile IAS applet failed. */
+#define ERR_SE_MIAS_READ_OBJECT_ERROR             -0x5400  /**< Mobile IAS read object failed. */
+#define ERR_SE_EF_VERIFY_PIN_ERROR                -0x5480  /**< Verifying pin to access EF failed. */
+#define ERR_SE_EF_INVALID_NAME_ERROR              -0x5500  /**< Trying to access an EF with an invalid name. */
+#define ERR_SE_EF_READ_OBJECT_ERROR               -0x5580  /**< EF read object failed. */
+#define ERR_SE_BAD_KEY_NAME_ERROR                 -0x5600  /**< No matching key found with the given name. */
 
 
-#define MBEDTLS_SE_EF_KEY_NAME_PREFIX       "SE://EF/"
-#define MBEDTLS_SE_MIAS_KEY_NAME_PREFIX     "SE://MIAS/"
-#define MBEDTLS_SE_MIAS_P11_KEY_NAME_PREFIX "SE://MIAS_P11/"
+#define SE_EF_KEY_NAME_PREFIX       "SE://EF/"
+#define SE_MIAS_KEY_NAME_PREFIX     "SE://MIAS/"
+#define SE_MIAS_P11_KEY_NAME_PREFIX "SE://MIAS_P11/"
 
-int mbedtls_se_init(SEInterface* se_iface);
+int tob_se_init(SEInterface *se_iface);
 
-int mbedtls_x509_crt_parse_se(uint8_t* cert, int* cert_size, const char* path, const char* pin);
-int mbedtls_pk_parse_se(uint8_t* pk, int* pk_size, const char* path, const char* pin);
+int tob_x509_crt_extract_se(uint8_t *cert, int *cert_size, const char *path, const char *pin);
+int tob_pk_extract_se(uint8_t *pk, int *pk_size, const char *path, const char *pin);
 
 #endif /* __BREAKOUT_TOB_H__ */

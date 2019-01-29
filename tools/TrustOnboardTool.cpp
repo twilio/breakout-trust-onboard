@@ -47,15 +47,15 @@ int main(int argc, char** argv) {
 		printf("Error modem not found!\n");
 		return -1;
 	}
-	mbedtls_se_init(&modem);  
+  tob_se_init(&modem);
 
-  ret = mbedtls_x509_crt_parse_se(cert, &cert_size, CERT_MIAS_PATH, pin);
+  ret = tob_x509_crt_extract_se(cert, &cert_size, CERT_MIAS_PATH, pin);
   if (ret != 0) {
     printf("Error reading certificate: %d\n", ret);
     return -1;
   }
 
-  ret = mbedtls_pk_parse_se(pk, &pk_size, PK_MIAS_PATH, pin);
+  ret = tob_pk_extract_se(pk, &pk_size, PK_MIAS_PATH, pin);
   if (ret != 0) {
     printf("Error reading private key: %d\n", ret);
     return -1;
