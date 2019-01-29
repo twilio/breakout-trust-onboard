@@ -1,8 +1,8 @@
 /*
  *  Copyright (c) 2017 Gemalto Limited. All Rights Reserved
  *  This software is the confidential and proprietary information of GEMALTO.
- *
- *  GEMALTO MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
+ *  
+ *  GEMALTO MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF 
  *  THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
  *  TO THE IMPLIED WARRANTIES OR MERCHANTABILITY, FITNESS FOR A
  *  PARTICULAR PURPOSE, OR NON-INFRINGEMENT. GEMALTO SHALL NOT BE
@@ -21,32 +21,56 @@
  *
  */
 
-#ifndef __CINTERION_MODEM_H__
-#define __CINTERION_MODEM_H__
+#include "GenericModem.h"
+#include "LSerial.h"
+#include <stdio.h>
 
-#include "ATInterface.h"
-#include "SEInterface.h"
+//#define MODEM_DEBUG
 
-class CinterionModem: public SEInterface {
-	public:
-		// Create an instance of Cinterion Modem.
-		CinterionModem(const char * const device);
-		~CinterionModem(void);
+GenericModem::GenericModem(const char * const device) : _at(new LSerial(device)) {
+}
 
-		bool open(void) {
-			return _at.open();
+GenericModem::~GenericModem(void) {
+}
+
+bool GenericModem::transmitApdu(uint8_t* apdu, uint16_t apduLen, uint8_t* response, uint16_t* responseLen) {
+	bool ret;
+
+#ifdef MODEM_DEBUG
+	// DEBBUG
+	{
+		uint16_t i;
+		
+		printf("[SND]: ");
+		for(i=0; i<apduLen; i++) {
+			if(i && ((i % 32) == 0)) {
+				printf("\r\n       ");
+			}
+			printf("%02X", apdu[i]);
 		}
-
-		void close(void) {
-			_at.close();
+		printf("\r\n");
+	}
+	// -----
+#endif
+	
+	ret = _at.sendATCSIM(apdu, apduLen, response, responseLen);
+	
+#ifdef MODEM_DEBUG
+	// DEBBUG
+	{
+		uint16_t i;
+		
+		printf("[RCV]: ");
+		for(i=0; i<*responseLen; i++) {
+			if(i && ((i % 32) == 0)) {
+				printf("\r\n       ");
+			}
+			printf("%02X", response[i]);
 		}
+		printf("\r\n");
+	}
+	// -----
+#endif
 
-	protected:
-
-		bool transmitApdu(uint8_t* apdu, uint16_t apduLen, uint8_t* response, uint16_t* responseLen);
-
-	private:
-		ATInterface _at;
-};
-
-#endif /* __CINTERION_MODEM_H__ */
+	return ret;
+}

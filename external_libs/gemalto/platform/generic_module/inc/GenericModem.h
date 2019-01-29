@@ -1,8 +1,8 @@
 /*
  *  Copyright (c) 2017 Gemalto Limited. All Rights Reserved
  *  This software is the confidential and proprietary information of GEMALTO.
- *  
- *  GEMALTO MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF 
+ *
+ *  GEMALTO MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
  *  THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
  *  TO THE IMPLIED WARRANTIES OR MERCHANTABILITY, FITNESS FOR A
  *  PARTICULAR PURPOSE, OR NON-INFRINGEMENT. GEMALTO SHALL NOT BE
@@ -21,56 +21,32 @@
  *
  */
 
-#include "CinterionModem.h"
-#include "LSerial.h"
-#include <stdio.h>
+#ifndef __GENERIC_MODEM_H__
+#define __GENERIC_MODEM_H__
 
-//#define MODEM_DEBUG
+#include "ATInterface.h"
+#include "SEInterface.h"
 
-CinterionModem::CinterionModem(const char * const device) : _at(new LSerial(device)) {
-}
+class GenericModem: public SEInterface {
+	public:
+		// Create an instance of Generic Modem.
+		GenericModem(const char * const device);
+		~GenericModem(void);
 
-CinterionModem::~CinterionModem(void) {
-}
-
-bool CinterionModem::transmitApdu(uint8_t* apdu, uint16_t apduLen, uint8_t* response, uint16_t* responseLen) {
-	bool ret;
-
-#ifdef MODEM_DEBUG
-	// DEBBUG
-	{
-		uint16_t i;
-		
-		printf("[SND]: ");
-		for(i=0; i<apduLen; i++) {
-			if(i && ((i % 32) == 0)) {
-				printf("\r\n       ");
-			}
-			printf("%02X", apdu[i]);
+		bool open(void) {
+			return _at.open();
 		}
-		printf("\r\n");
-	}
-	// -----
-#endif
-	
-	ret = _at.sendATCSIM(apdu, apduLen, response, responseLen);
-	
-#ifdef MODEM_DEBUG
-	// DEBBUG
-	{
-		uint16_t i;
-		
-		printf("[RCV]: ");
-		for(i=0; i<*responseLen; i++) {
-			if(i && ((i % 32) == 0)) {
-				printf("\r\n       ");
-			}
-			printf("%02X", response[i]);
-		}
-		printf("\r\n");
-	}
-	// -----
-#endif
 
-	return ret;
-}
+		void close(void) {
+			_at.close();
+		}
+
+	protected:
+
+		bool transmitApdu(uint8_t* apdu, uint16_t apduLen, uint8_t* response, uint16_t* responseLen);
+
+	private:
+		ATInterface _at;
+};
+
+#endif /* __GENERIC_MODEM_H__ */

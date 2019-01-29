@@ -1,7 +1,25 @@
-#include <stdio.h>
+/*
+ * Twilio Breakout Trust Onboard SDK
+ *
+ * Copyright (c) 2019 Twilio, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-#include "CinterionModem.h"
-#include "breakout_tob.h"
+ #include <stdio.h>
+
+#include "GenericModem.h"
+#include "BreakoutTrustOnboardSDK.h"
 
 #include "config.h"
 
@@ -23,7 +41,7 @@ int main(int argc, char** argv) {
   char* cert_path = argv[3];
   char* pk_path = argv[4];
 
-  CinterionModem modem(device);
+  GenericModem modem(device);
 
 	if(!modem.open()) {
 		printf("Error modem not found!\n");
@@ -43,21 +61,6 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  // # display certificate information
-  // cat certificate.p11 | openssl x509 -text -noout -inform p11
-  //
-  // # convert p11 cert to pem
-  // openssl x509 -inform p11 -in certificate.p11 -out credential.pem
-  // # convert der key to pem
-  // openssl rsa -inform der -in key.der -outform pem -out key.pem
-  // # build p12 from cert and key
-  // openssl pkcs12 -export -out credential.pfx -inkey key.pem -in credential.pem -certfile programmable-wireless.available.bundle -password pass:changeit
-  //
-  // # verify hashes match:
-  // openssl x509 -noout -modulus -in credential.pem | openssl md5
-  // openssl rsa -noout -modulus -in key.pem | openssl md5
-
-  printf("Writing p11 certificate with size: %d...\n", cert_size);
   FILE *cert_fp = fopen(cert_path, "w");
   if (!cert_fp) {
     printf("... error opening file for certificate output: %s\n", cert_path);
