@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
 
   if (argc != 5) {
     printf("%s [device] [pin] [cert outfile] [key outfile]\n", argv[0]);
-    printf("\nExample: %s /dev/ttyACM1 0000 certificate.p11 key.der\n", argv[0]);
+    printf("\nExample: %s /dev/ttyACM1 0000 certificate-chain.pem key.der\n", argv[0]);
     return -1;
   }
 
@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
 
   ret = tob_x509_crt_extract_se(cert, &cert_size, CERT_MIAS_PATH, pin);
   if (ret != 0) {
-    printf("Error reading certificate: %d\n", ret);
+    printf("Error reading certificate chain: %d\n", ret);
     return -1;
   }
 
@@ -61,6 +61,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
+  printf("Writing certificate chain with size: %d...\n", cert_size);
   FILE *cert_fp = fopen(cert_path, "w");
   if (!cert_fp) {
     printf("... error opening file for certificate output: %s\n", cert_path);

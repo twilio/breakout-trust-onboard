@@ -1,7 +1,7 @@
-#!/bin/bash -e -x
+#!/bin/bash -e
 
 if [ "$#" -ne 3 ]; then
-  echo "Usage <certificate.p11> <key.der> <output p12 passphrase>"
+  echo "Usage <certificate-chain.pem> <key.der> <output p12 passphrase>"
   exit 1
 fi
 
@@ -26,13 +26,13 @@ KEY_DIR=`dirname "${KEY}"`
 cat "${CERT}" | openssl x509 \
   -text \
   -noout \
-  -inform p11
+  -inform pem
 
-# convert p11 cert to pem
+# convert cert bundle to single pem (necessary?)
 openssl x509 \
-  -inform p11 \
+  -inform pem \
   -in "${CERT}" \
-  -out "${CERT_DIR}"/credential.pem
+  -out "${CERT_DIR}"/certificate.pem
 # convert der key to pem
 openssl rsa \
   -inform der \
@@ -41,10 +41,17 @@ openssl rsa \
   -out "${KEY_DIR}"/key.pem
 
 # verify hashes match:
+echo -n "Chain hash: "
 openssl x509 \
   -noout \
   -modulus \
-  -in "${CERT_DIR}"/credential.pem | openssl md5
+  -in "${CERT}" | openssl md5
+echo -n "Certificate hash: "
+openssl x509 \
+  -noout \
+  -modulus \
+  -in "${CERT_DIR}"/certificate.pem | openssl md5
+echo -n "Private key hash: "
 openssl rsa \
   -noout \
   -modulus \
@@ -55,6 +62,6 @@ openssl pkcs12 \
   -export \
   -out "${CERT_DIR}"/credential.pfx \
   -inkey "${KEY_DIR}"/key.pem \
-  -in "${CERT_DIR}"/credential.pem \
+  -in ${CERT} \
   -certfile bundles/programmable-wireless.available.bundle \
   -password pass:"${PASSPHRASE}"
