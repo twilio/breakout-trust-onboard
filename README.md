@@ -154,8 +154,8 @@ You should now have the following files in the `temp/` directory:
 
 - `certificate-chain.pem` - The public certificate chain, including roots
 - `certificate.pem` - Only the leaf public certificate
-- `key.pem` - The private key, encoded in DER format
-- `key.der` - The private key, encoded in PEM format
+- `key.pem` - The private key, encoded in PEM format
+- `key.der` - The private key, encoded in DER format
 - `credential.pfx` -  The certificate chain and private key in a passphrase protected P12 format
 
 ## PPP configuration
