@@ -57,6 +57,14 @@ openssl rsa \
   -modulus \
   -in "${KEY_DIR}"/key.pem | openssl md5
 
+# display sha1 fingerprint
+echo -n "SHA1 certificate fingerprint: "
+openssl x509 \
+  -in "${CERT}" \
+  -fingerprint \
+  -sha1 \
+  -noout | sed -e's/://g' | cut -d= -f2
+
 # build p12 from cert and key
 openssl pkcs12 \
   -export \
