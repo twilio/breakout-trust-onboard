@@ -22,16 +22,19 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "MF.h"
 #include "MIAS.h"
 
 #include "BreakoutTrustOnboardSDK.h"
+#include "GenericModem.h"
+
+#include "SEInterface.h"
 
 static MF* _mf;
 static MIAS* _mias;
+static GenericModem* _modem = nullptr;
 
 #define USE_BASIC_CHANNEL false
 
@@ -314,7 +317,7 @@ static size_t mias_pk_rsa_alt_key_len(void* ctx) {
 	return (((mias_key_t*) ctx)->kp->size_in_bits / 8);
 }
 
-int tob_se_init(SEInterface *seiface) {
+int tob_se_init_with_interface(SEInterface *seiface) {
 	#ifdef __cplusplus
 	_mias = new MIAS();
 	_mias->init(seiface);
@@ -329,6 +332,22 @@ int tob_se_init(SEInterface *seiface) {
 	Applet_init((Applet*) _mf, seiface);
 	#endif
 	return 0;
+}
+
+int tob_se_init(const char *device) {
+  if (_modem != nullptr) {
+    return 0;
+  }
+
+  _modem = new GenericModem(device);
+
+	if(!_modem->open()) {
+		printf("Error modem not found!\n");
+    free(_modem);
+    _modem = nullptr;
+		return -1;
+	}
+  return tob_se_init_with_interface(_modem);
 }
 
 int tob_x509_crt_extract_se(uint8_t *cert, int *cert_size, const char *path, const char *pin) {

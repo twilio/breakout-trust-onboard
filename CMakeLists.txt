@@ -7,12 +7,14 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+set(TOOL_BINARY trust_onboard_tool)
+
 include_directories(external_libs/gemalto/common/inc)
 include_directories(external_libs/gemalto/mbedtls/inc)
 include_directories(external_libs/gemalto/platform/generic_module/inc)
 include_directories(include)
 
-add_executable(trust_onboard_tool
+add_library(TwilioTrustOnboard STATIC
         external_libs/gemalto/common/inc/Applet.h
         external_libs/gemalto/common/inc/MF.h
         external_libs/gemalto/common/inc/MIAS.h
@@ -33,5 +35,17 @@ add_executable(trust_onboard_tool
         external_libs/gemalto/platform/generic_module/src/Serial.cpp
         include/BreakoutTrustOnboardSDK.h
         src/BreakoutTrustOnboardSDK.cpp
+  )
+
+add_executable(
+        ${TOOL_BINARY}
         tools/TrustOnboardTool.cpp
         tools/README.md)
+
+target_link_libraries(
+        ${TOOL_BINARY}
+        TwilioTrustOnboard
+  )
+
+install(TARGETS TwilioTrustOnboard DESTINATION lib)
+install(FILES include/BreakoutTrustOnboardSDK.h DESTINATION include)

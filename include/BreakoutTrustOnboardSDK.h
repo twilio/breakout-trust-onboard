@@ -24,7 +24,8 @@
 #ifndef __BREAKOUT_TOB_H__
 #define __BREAKOUT_TOB_H__
 
-#include "SEInterface.h"
+#include <stdlib.h>
+#include <stdint.h>
 
 #define ERR_SE_MIAS_SELECT_ERROR                  -0x5280  /**< Selecting mobile IAS applet failed. */
 #define ERR_SE_MIAS_VERIFY_PIN_ERROR              -0x5300  /**< Verifying pin on mobile IAS applet failed. */
@@ -40,9 +41,16 @@
 #define SE_MIAS_KEY_NAME_PREFIX     "SE://MIAS/"
 #define SE_MIAS_P11_KEY_NAME_PREFIX "SE://MIAS_P11/"
 
-int tob_se_init(SEInterface *se_iface);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-int tob_x509_crt_extract_se(uint8_t *cert, int *cert_size, const char *path, const char *pin);
-int tob_pk_extract_se(uint8_t *pk, int *pk_size, const char *path, const char *pin);
+extern int tob_se_init(const char *device);
+extern int tob_x509_crt_extract_se(uint8_t *cert, int *cert_size, const char *path, const char *pin);
+extern int tob_pk_extract_se(uint8_t *pk, int *pk_size, const char *path, const char *pin);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __BREAKOUT_TOB_H__ */

@@ -18,7 +18,6 @@
 
  #include <stdio.h>
 
-#include "GenericModem.h"
 #include "BreakoutTrustOnboardSDK.h"
 
 #include "config.h"
@@ -41,13 +40,7 @@ int main(int argc, char** argv) {
   char* cert_path = argv[3];
   char* pk_path = argv[4];
 
-  GenericModem modem(device);
-
-	if(!modem.open()) {
-		printf("Error modem not found!\n");
-		return -1;
-	}
-  tob_se_init(&modem);
+  tob_se_init(device);
 
   ret = tob_x509_crt_extract_se(cert, &cert_size, CERT_MIAS_PATH, pin);
   if (ret != 0) {
