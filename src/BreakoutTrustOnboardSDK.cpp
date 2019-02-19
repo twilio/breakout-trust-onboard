@@ -70,7 +70,11 @@ static void hex_string_2_bytes_array(uint8_t* hexstr, uint16_t hexstrLen, uint8_
 static int se_read_ef(uint8_t* efname, uint16_t efnamelen, char** data, int* data_size, const char* pin) {
 	int ret;
 	uint16_t size;
-	
+
+	if (pin == NULL) {
+		return ERR_SE_EF_VERIFY_PIN_ERROR;
+	}
+
 	*data_size = -1;
 	
 	#ifdef __cplusplus
@@ -115,6 +119,10 @@ static int se_read_object(const char* path, char** obj, int* size, const char* p
 	uint8_t* efname;
 	uint16_t efname_len;
 		
+	if (path == NULL || pin == NULL) {
+		return ERR_SE_EF_INVALID_NAME_ERROR;
+	}
+
 	// Name is expected to be of even size (hex string name)
 	if(strlen(path) & 1) {
 		return ERR_SE_EF_INVALID_NAME_ERROR;
@@ -131,7 +139,11 @@ static int se_read_object(const char* path, char** obj, int* size, const char* p
 
 static int se_p11_read_object(const char* label, char** obj, int* size, const char* pin) {
 	int ret;
-	
+
+	if (label == NULL || pin == NULL) {
+		return ERR_SE_MIAS_READ_OBJECT_ERROR;
+	}
+
 	#ifdef __cplusplus
 	if(_mias->select(USE_BASIC_CHANNEL)) {
 		if(_mias->verifyPin((uint8_t*) pin, strlen(pin))) {
@@ -336,6 +348,7 @@ int tob_se_init_with_interface(SEInterface *seiface) {
 
 int tob_se_init(const char *device) {
   if (_modem != nullptr) {
+		printf("Modem already setup, skipping initialization.\n");
     return 0;
   }
 
@@ -356,7 +369,7 @@ int tob_x509_crt_extract_se(uint8_t *cert, int *cert_size, const char *path, con
 	// Read Certificate from EF
 	if(memcmp(path, SE_EF_KEY_NAME_PREFIX, strlen(SE_EF_KEY_NAME_PREFIX)) == 0) {
 		int obj_size;
-		char* obj;
+		char* obj = NULL;
 		
 		// Remove prefix from key path
 		path += strlen(SE_EF_KEY_NAME_PREFIX);
@@ -367,13 +380,15 @@ int tob_x509_crt_extract_se(uint8_t *cert, int *cert_size, const char *path, con
       *cert_size = obj_size;
 		}
 
-		free(obj);
+		if (obj != NULL) {
+			free(obj);
+		}
 	}
 
 	// Read Certificate from MIAS P11 Data object
 	else if(memcmp(path, SE_MIAS_P11_KEY_NAME_PREFIX, strlen(SE_MIAS_P11_KEY_NAME_PREFIX)) == 0) {
 		int obj_size;
-		char* obj;
+		char* obj = NULL;
 		
 		// Remove prefix from key path
 		path += strlen(SE_MIAS_P11_KEY_NAME_PREFIX);
@@ -384,7 +399,9 @@ int tob_x509_crt_extract_se(uint8_t *cert, int *cert_size, const char *path, con
       *cert_size = obj_size;
 		}
 
-		free(obj);
+		if (obj != NULL) {
+			free(obj);
+		}
 	}
 	
 	// Read Certificate from MIAS
@@ -422,10 +439,12 @@ int tob_x509_crt_extract_se(uint8_t *cert, int *cert_size, const char *path, con
 			
 			if(MIAS_get_certificate_by_container_id(_mias, cid, (uint8_t**) &obj, (uint16_t*) &obj_size)) {
 				obj_size &= 0x0000FFFF;
-        memcpy(cert, obj, obj_size); // TODO: re-evaluate this
-        cert[obj_size] = '\0';
-        *cert_size = obj_size;
-				free(obj);
+				if (obj_size > 0) {
+					memcpy(cert, obj, obj_size); // TODO: re-evaluate this
+					cert[obj_size] = '\0';
+					*cert_size = obj_size;
+					free(obj);
+				}
 			}
 		}
 		Applet_deselect((Applet*) _mias);
@@ -441,7 +460,7 @@ int tob_pk_extract_se(uint8_t *pk, int *pk_size, const char *path, const char *p
 	// Read PKey from EF
 	if(memcmp(path, SE_EF_KEY_NAME_PREFIX, strlen(SE_EF_KEY_NAME_PREFIX)) == 0) {
 		int obj_size;
-		char* obj;
+		char* obj = NULL;
 		
 		// Remove prefix from key path
 		path += strlen(SE_EF_KEY_NAME_PREFIX);
@@ -452,13 +471,15 @@ int tob_pk_extract_se(uint8_t *pk, int *pk_size, const char *path, const char *p
       *pk_size = obj_size;
 		}
 
-		free(obj);
+		if (obj != NULL) {
+			free(obj);
+		}
 	}
 
 	// Read PKey from MIAS P11 Data object
 	else if(memcmp(path, SE_MIAS_P11_KEY_NAME_PREFIX, strlen(SE_MIAS_P11_KEY_NAME_PREFIX)) == 0) {
 		int obj_size;
-		char* obj;
+		char* obj = NULL;
 		
 		// Remove prefix from key path
 		path += strlen(SE_MIAS_P11_KEY_NAME_PREFIX);
@@ -469,7 +490,9 @@ int tob_pk_extract_se(uint8_t *pk, int *pk_size, const char *path, const char *p
       *pk_size = obj_size;
 		}
 
-		free(obj);
+		if (obj != NULL) {
+			free(obj);
+		}
 	}
 
 /*
