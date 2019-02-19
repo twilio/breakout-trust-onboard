@@ -9,6 +9,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(TOOL_BINARY trust_onboard_tool)
 
+#add_definitions(-DAT_DEBUG)
+#add_definitions(-DMODEM_DEBUG)
+#add_definitions(-DAPDU_DEBUG)
+#add_definitions(-DSERIAL_DEBUG)
+
 include_directories(external_libs/gemalto/common/inc)
 include_directories(external_libs/gemalto/mbedtls/inc)
 include_directories(external_libs/gemalto/platform/generic_module/inc)
