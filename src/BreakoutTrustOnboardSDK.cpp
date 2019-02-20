@@ -1,4 +1,22 @@
 /*
+ * Twilio Breakout Trust Onboard SDK
+ *
+ * Copyright (c) 2019 Twilio, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  *  Copyright (c) 2017 Gemalto Limited. All Rights Reserved
  *  This software is the confidential and proprietary information of GEMALTO.
  *  
@@ -37,6 +55,13 @@ static MIAS* _mias;
 static GenericModem* _modem = nullptr;
 
 #define USE_BASIC_CHANNEL false
+
+#define SE_EF_KEY_NAME_PREFIX       "SE://EF/"
+#define SE_MIAS_KEY_NAME_PREFIX     "SE://MIAS/"
+#define SE_MIAS_P11_KEY_NAME_PREFIX "SE://MIAS_P11/"
+
+#define CERT_MIAS_PATH SE_MIAS_P11_KEY_NAME_PREFIX "CERT_TYPE_A"
+#define PK_MIAS_PATH SE_MIAS_P11_KEY_NAME_PREFIX "PRIV_TYPE_A"
 
 typedef struct {
 	char*  pin;
@@ -181,154 +206,6 @@ static int se_p11_read_object(const char* label, char** obj, int* size, const ch
 	return ret;
 }
 
-static int mias_pk_rsa_alt_decrypt(void* ctx, int mode, size_t* olen, const unsigned char* input, unsigned char* output, size_t output_max_len) {
-	int ret;
-	
-	#ifdef __cplusplus
-	if(_mias->select(USE_BASIC_CHANNEL)) {
-		if(_mias->verifyPin((uint8_t*) ((mias_key_t*) ctx)->pin, strlen(((mias_key_t*) ctx)->pin))) {
-			if(_mias->decryptInit(ALGO_RSA_PKCS1_PADDING, ((mias_key_t*) ctx)->kp->kid)) {						
-				if(_mias->decryptFinal((uint8_t*) input, ((mias_key_t*) ctx)->kp->size_in_bits / 8, output, (uint16_t*) &olen)) {
-						ret = 0;
-				}
-				else {
-					ret = ERR_SE_MIAS_IO_ERROR;
-				}
-			}
-			else {
-				ret = ERR_SE_MIAS_IO_ERROR;
-			}
-		}
-		else {
-			ret = ERR_SE_MIAS_VERIFY_PIN_ERROR;
-		}
-	}
-	else {
-		ret = ERR_SE_MIAS_SELECT_ERROR;
-	}
-	_mias->deselect();
-	#else
-	if(Applet_select((Applet*) _mias, USE_BASIC_CHANNEL)) {
-		if(MIAS_verify_pin(_mias, (uint8_t*) ((mias_key_t*) ctx)->pin, strlen(((mias_key_t*) ctx)->pin))) {
-			if(MIAS_decrypt_init(_mias, ALGO_RSA_PKCS1_PADDING, ((mias_key_t*) ctx)->kp->kid)) {						
-				if(MIAS_decrypt_final(_mias, (uint8_t*) input, ((mias_key_t*) ctx)->kp->size_in_bits / 8, output, (uint16_t*) &olen)) {
-						ret = 0;
-				}
-				else {
-					ret = ERR_SE_MIAS_IO_ERROR;
-				}
-			}
-			else {
-				ret = ERR_SE_MIAS_IO_ERROR;
-			}
-		}
-		else {
-			ret = ERR_SE_MIAS_VERIFY_PIN_ERROR;
-		}
-	}
-	else {
-		ret = ERR_SE_MIAS_SELECT_ERROR;
-	}
-	Applet_deselect((Applet*) _mias);
-	#endif
-	
-	return ret;
-}
-
-/*
-// Used for mbedtls_md_type mapping to mias_alg
-// FIXME: implement
-static int mbedtls_mias_pk_rsa_alt_sign(void* ctx, int (*f_rng)(void*, unsigned char*, size_t), void* p_rng, int mode, mbedtls_md_type_t md_alg, unsigned int hashlen, const unsigned char* hash, unsigned char* sig) {
-	char mias_alg;
-
-	switch (md_alg) {
-		case MBEDTLS_MD_SHA1:
-			mias_alg = ALGO_SHA1_WITH_RSA_PKCS1_PADDING;
-			break;
-
-		case MBEDTLS_MD_SHA224:
-			mias_alg = ALGO_SHA224_WITH_RSA_PKCS1_PADDING;
-			break;
-
-		case MBEDTLS_MD_SHA256:
-			mias_alg = ALGO_SHA256_WITH_RSA_PKCS1_PADDING;
-			break;
-
-		case MBEDTLS_MD_SHA384:
-			mias_alg = ALGO_SHA384_WITH_RSA_PKCS1_PADDING;
-			break;
-
-		case MBEDTLS_MD_SHA512:
-			mias_alg = ALGO_SHA512_WITH_RSA_PKCS1_PADDING;
-			break;
-
-		default:
-			return MBEDTLS_ERR_MD_FEATURE_UNAVAILABLE;
-	}
-
- 	return mias_pk_rsa_alt_sign(ctx, f_rng, p_rng, mode, mias_alg, hashlen, hash, sig);
-}
-*/
-
-static int mias_pk_rsa_alt_sign(void* ctx, int (*f_rng)(void*, unsigned char*, size_t), void* p_rng, int mode, char mias_alg, unsigned int hashlen, const unsigned char* hash, unsigned char* sig) {
-	int ret;
-	uint16_t sig_size;
-
-	#ifdef __cplusplus
-	if(_mias->select(USE_BASIC_CHANNEL)) {
-		if(_mias->verifyPin((uint8_t*) ((mias_key_t*) ctx)->pin, strlen(((mias_key_t*) ctx)->pin))) {
-			if(_mias->signInit(mias_alg, ((mias_key_t*) ctx)->kp->kid)) {						
-				if(_mias->signFinal((uint8_t*) hash, hashlen, sig, &sig_size)) {
-					ret = 0;
-				}
-				else {
-					ret = ERR_SE_MIAS_IO_ERROR;
-				}
-			}
-			else {
-				ret = ERR_SE_MIAS_IO_ERROR;
-			}
-		}
-		else {
-			ret = ERR_SE_MIAS_VERIFY_PIN_ERROR;
-		}
-	}
-	else {
-		ret = ERR_SE_MIAS_SELECT_ERROR;
-	}
-	_mias->deselect();
-	#else
-	if(Applet_select((Applet*) _mias, USE_BASIC_CHANNEL)) {
-		if(MIAS_verify_pin(_mias, (uint8_t*) ((mias_key_t*) ctx)->pin, strlen(((mias_key_t*) ctx)->pin))) {
-			if(MIAS_sign_init(_mias, mias_alg, ((mias_key_t*) ctx)->kp->kid)) {						
-				if(MIAS_sign_final(_mias, (uint8_t*) hash, hashlen, sig, &sig_size)) {
-					ret = 0;
-				}
-				else {
-					ret = ERR_SE_MIAS_IO_ERROR;
-				}
-			}
-			else {
-				ret = ERR_SE_MIAS_IO_ERROR;
-			}
-		}
-		else {
-			ret = ERR_SE_MIAS_VERIFY_PIN_ERROR;
-		}
-	}
-	else {
-		ret = ERR_SE_MIAS_SELECT_ERROR;
-	}
-	Applet_deselect((Applet*) _mias);
-	#endif
-	
-	return ret;
-}
-
-static size_t mias_pk_rsa_alt_key_len(void* ctx) {
-	return (((mias_key_t*) ctx)->kp->size_in_bits / 8);
-}
-
 int tob_se_init_with_interface(SEInterface *seiface) {
 	#ifdef __cplusplus
 	_mias = new MIAS();
@@ -346,10 +223,15 @@ int tob_se_init_with_interface(SEInterface *seiface) {
 	return 0;
 }
 
-int tob_se_init(const char *device) {
+int tobInitialize(const char *device) {
   if (_modem != nullptr) {
 		printf("Modem already setup, skipping initialization.\n");
     return 0;
+  }
+
+  if (device == nullptr) {
+		printf("Error no device specified!\n");
+    return -1;
   }
 
   _modem = new GenericModem(device);
@@ -375,7 +257,7 @@ int tob_x509_crt_extract_se(uint8_t *cert, int *cert_size, const char *path, con
 		path += strlen(SE_EF_KEY_NAME_PREFIX);
 	
 		if((ret = se_read_object(path, &obj, &obj_size, pin)) == 0) {
-      memcpy(cert, obj, obj_size); // TODO: re-evaluate this
+      memcpy(cert, obj, obj_size);
       cert[obj_size] = '\0';
       *cert_size = obj_size;
 		}
@@ -394,7 +276,7 @@ int tob_x509_crt_extract_se(uint8_t *cert, int *cert_size, const char *path, con
 		path += strlen(SE_MIAS_P11_KEY_NAME_PREFIX);
 		
 		if((ret = se_p11_read_object(path, &obj, &obj_size, pin)) == 0) {
-      memcpy(cert, obj, obj_size); // TODO: re-evaluate this
+      memcpy(cert, obj, obj_size);
       cert[obj_size] = '\0';
       *cert_size = obj_size;
 		}
@@ -425,7 +307,7 @@ int tob_x509_crt_extract_se(uint8_t *cert, int *cert_size, const char *path, con
 			
 			if(_mias->getCertificateByContainerId(cid, (uint8_t**) &obj, (uint16_t*) &obj_size)) {
 				obj_size &= 0x0000FFFF;
-        memcpy(cert, obj, obj_size); // TODO: re-evaluate this
+        memcpy(cert, obj, obj_size);
         cert[obj_size] = '\0';
         *cert_size = obj_size;
 				free(obj);
@@ -440,7 +322,7 @@ int tob_x509_crt_extract_se(uint8_t *cert, int *cert_size, const char *path, con
 			if(MIAS_get_certificate_by_container_id(_mias, cid, (uint8_t**) &obj, (uint16_t*) &obj_size)) {
 				obj_size &= 0x0000FFFF;
 				if (obj_size > 0) {
-					memcpy(cert, obj, obj_size); // TODO: re-evaluate this
+					memcpy(cert, obj, obj_size);
 					cert[obj_size] = '\0';
 					*cert_size = obj_size;
 					free(obj);
@@ -466,7 +348,7 @@ int tob_pk_extract_se(uint8_t *pk, int *pk_size, const char *path, const char *p
 		path += strlen(SE_EF_KEY_NAME_PREFIX);
 	
 		if((ret = se_read_object(path, &obj, &obj_size, pin)) == 0) {
-      memcpy(pk, obj, obj_size); // TODO: re-evaluate this
+      memcpy(pk, obj, obj_size);
       pk[obj_size] = '\0';
       *pk_size = obj_size;
 		}
@@ -485,7 +367,7 @@ int tob_pk_extract_se(uint8_t *pk, int *pk_size, const char *path, const char *p
 		path += strlen(SE_MIAS_P11_KEY_NAME_PREFIX);
 		
 		if((ret = se_p11_read_object(path, &obj, &obj_size, pin)) == 0) {
-      memcpy(pk, obj, obj_size); // TODO: re-evaluate this
+      memcpy(pk, obj, obj_size);
       pk[obj_size] = '\0';
       *pk_size = obj_size;
 		}
@@ -494,54 +376,14 @@ int tob_pk_extract_se(uint8_t *pk, int *pk_size, const char *path, const char *p
 			free(obj);
 		}
 	}
-
-/*
-// FIXME: implement for both openssl, mbedtls, and maybe wolfssl?
-	// Read PKey from MIAS
-	else if(memcmp(path, SE_MIAS_KEY_NAME_PREFIX, strlen(SE_MIAS_KEY_NAME_PREFIX)) == 0) {
-		uint8_t cid;
-		mias_key_t* mias_key;
-		
-		// Remove prefix from key path
-		path += strlen(SE_MIAS_KEY_NAME_PREFIX);
-		
-		// NOTE: for unknown reason a call to mbedtls_pk_parse_key need to be done even if useless in that case,
-		//       otherwise a compil error will occur!
-		// ToDo: Investigate this to avoid calling mbedtls_pk_parse_key.
-		mbedtls_pk_parse_key(pk, NULL, 0, NULL, 0);
-		
-		mias_key = (mias_key_t*) malloc(sizeof(mias_key_t));
-		mias_key->pin = (char*) malloc((strlen(pin) + 1) * sizeof(char));
-		memcpy(mias_key->pin, pin, strlen(pin) + 1);
-		
-		cid = 0;
-		while(*path) {
-			cid *= 10;
-			cid += *path - '0';
-			path++;
-		}
-		
-		#ifdef __cplusplus
-		if(_mias->select(USE_BASIC_CHANNEL)) {
-			_mias->getKeyPairByContainerId(cid, &mias_key->kp);
-		}
-		_mias->deselect();
-		#else
-		if(Applet_select((Applet*) _mias, USE_BASIC_CHANNEL)) {
-			MIAS_get_key_pair_by_container_id(_mias, cid, &mias_key->kp);
-		}
-		Applet_deselect((Applet*) _mias);
-		#endif
-				
-		if(mias_key->kp) {
-			return mbedtls_pk_setup_rsa_alt(pk, mias_key, mias_pk_rsa_alt_decrypt, mias_pk_rsa_alt_sign, mias_pk_rsa_alt_key_len);
-		}
-		else {
-			free(mias_key);
-		}
-	}
-*/
 	
 	return ret;
 }
 
+int tobExtractAvailableCertificate(uint8_t *cert, int *cert_size, const char *pin) {
+  return tob_x509_crt_extract_se(cert, cert_size, CERT_MIAS_PATH, pin);
+}
+
+int tobExtractAvailablePrivateKey(uint8_t *pk, int *pk_size, const char *pin) {
+  return tob_pk_extract_se(pk, pk_size, PK_MIAS_PATH, pin);
+}

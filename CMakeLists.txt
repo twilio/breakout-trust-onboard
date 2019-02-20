@@ -53,4 +53,8 @@ target_link_libraries(
   )
 
 install(TARGETS TwilioTrustOnboard DESTINATION lib)
+install(TARGETS ${TOOL_BINARY} DESTINATION bin)
+# TODO: set group to dialout?
 install(FILES include/BreakoutTrustOnboardSDK.h DESTINATION include)
+
+add_subdirectory(tests)

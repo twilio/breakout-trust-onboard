@@ -20,8 +20,6 @@
 
 #include "BreakoutTrustOnboardSDK.h"
 
-#include "config.h"
-
 int main(int argc, char** argv) {
   int ret = 0;
   uint8_t cert[CERT_BUFFER_SIZE];
@@ -40,15 +38,15 @@ int main(int argc, char** argv) {
   char* cert_path = argv[3];
   char* pk_path = argv[4];
 
-  tob_se_init(device);
+  tobInitialize(device);
 
-  ret = tob_x509_crt_extract_se(cert, &cert_size, CERT_MIAS_PATH, pin);
+  ret = tobExtractAvailableCertificate(cert, &cert_size, pin);
   if (ret != 0) {
     printf("Error reading certificate chain: %d\n", ret);
     return -1;
   }
 
-  ret = tob_pk_extract_se(pk, &pk_size, PK_MIAS_PATH, pin);
+  ret = tobExtractAvailablePrivateKey(pk, &pk_size, pin);
   if (ret != 0) {
     printf("Error reading private key: %d\n", ret);
     return -1;
