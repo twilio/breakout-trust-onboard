@@ -44,13 +44,11 @@ typedef struct TWILIO_TRUST_ONBOARD_HSM_INFO_TAG
 
 int hsm_client_x509_init()
 {
-    (void)printf("init-ing hsm client x509\n");
     return 0;
 }
 
 void hsm_client_x509_deinit()
 {
-    (void)printf("deinit-ing hsm client x509\n");
 }
 
 int hsm_client_tpm_init()
@@ -104,8 +102,6 @@ int populate_cert(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_pa
 {
   int RESULT = 0;
 
-  (void)printf("device_path: %s, pin: %s\r\n", device_path, pin);
-
   if (hsm_info->certificate != nullptr) {
     return RESULT;
   }
@@ -125,7 +121,6 @@ int populate_cert(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_pa
   }
 
   (void)subjectName((const char *)cert, cert_size, (char **)&(hsm_info->common_name));
-  (void)printf("Common name: %s\r\n", hsm_info->common_name);
 
   return RESULT;
 }
@@ -168,7 +163,6 @@ int populate_key(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_pat
     *base64KeyPtr = '\0'; // terminating null
 
     hsm_info->key = base64Key;
-    //printf("expected: %d, actual encoded: %d, final: %d, ptr_len: %d, allocated: %d, bytes: %s\r\n", expectedBase64KeyLen, base64EncodeRet, strlen(base64Key), (base64KeyPtr - base64Key), base64KeyBufferSize, base64Key);
   }
 
   return RESULT;
@@ -179,7 +173,6 @@ HSM_CLIENT_HANDLE custom_hsm_create()
   HSM_CLIENT_HANDLE result;
   TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info = (TWILIO_TRUST_ONBOARD_HSM_INFO *)malloc(sizeof(TWILIO_TRUST_ONBOARD_HSM_INFO));
   memset(hsm_info, 0, sizeof(TWILIO_TRUST_ONBOARD_HSM_INFO));
-  printf("in custom_hsm_create - 0x%X\n", &hsm_info);
   if (hsm_info == NULL)
   {
     (void)printf("Failed allocating hsm info\r\n");
@@ -197,8 +190,6 @@ void custom_hsm_destroy(HSM_CLIENT_HANDLE handle)
 {
     if (handle != NULL)
     {
-        printf("in custom_hsm_destroy - 0x%X\n", &handle);
-
         TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info = (TWILIO_TRUST_ONBOARD_HSM_INFO*)handle;
         // Free anything that has been allocated in this module
         if (hsm_info->device_path != nullptr) free((void *)hsm_info->device_path);
@@ -211,7 +202,6 @@ void custom_hsm_destroy(HSM_CLIENT_HANDLE handle)
 
 char* custom_hsm_get_certificate(HSM_CLIENT_HANDLE handle)
 {
-    printf("%s:%d in custom_hsm_get_certificate\n", __FILE__, __LINE__);
     char* result;
     if (handle == NULL)
     {
@@ -254,7 +244,6 @@ char* custom_hsm_get_certificate(HSM_CLIENT_HANDLE handle)
 
 char* custom_hsm_get_key(HSM_CLIENT_HANDLE handle)
 {
-  printf("%s:%d in custom_hsm_get_key\n", __FILE__, __LINE__);
   char* result;
   if (handle == NULL)
   {
@@ -351,7 +340,6 @@ int custom_hsm_set_data(HSM_CLIENT_HANDLE handle, const void* data)
   	// Cast to the data and store it as necessary
     TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info = (TWILIO_TRUST_ONBOARD_HSM_INFO*)handle;
   	TWILIO_TRUST_ONBOARD_HSM_CONFIG* config = (TWILIO_TRUST_ONBOARD_HSM_CONFIG*)data;
-  	(void)printf("device: %s (%d), pin: %s (%d)\r\n", config->device_path, strlen(config->device_path), config->sim_pin, strlen(config->sim_pin));
     hsm_info->device_path = strdup(config->device_path);
     hsm_info->sim_pin = strdup(config->sim_pin);
   	result = 0;
