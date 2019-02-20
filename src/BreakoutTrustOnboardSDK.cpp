@@ -225,7 +225,7 @@ int tob_se_init_with_interface(SEInterface *seiface) {
 
 int tobInitialize(const char *device) {
   if (_modem != nullptr) {
-		printf("Modem already setup, skipping initialization.\n");
+//		printf("Modem already setup, skipping initialization.\n");
     return 0;
   }
 
