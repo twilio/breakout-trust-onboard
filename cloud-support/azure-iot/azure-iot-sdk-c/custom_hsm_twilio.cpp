@@ -115,7 +115,7 @@ int populate_cert(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_pa
   int cert_size = 0;
 
   tobInitialize(device_path);
-  ret = tobExtractAvailablePrivateKey(cert, &cert_size, pin);
+  ret = tobExtractAvailableCertificate(cert, &cert_size, pin);
   if (ret != 0) {
     (void)printf("Failed reading certificate\r\n");
     RESULT = 1;
@@ -143,7 +143,7 @@ int populate_key(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_pat
   int pk_size = 0;
 
   tobInitialize(device_path);
-  ret = tobExtractAvailableCertificate(pk, &pk_size, pin);
+  ret = tobExtractAvailablePrivateKey(pk, &pk_size, pin);
   if (ret != 0) {
     (void)printf("Failed reading private key\r\n");
     RESULT = 1;
