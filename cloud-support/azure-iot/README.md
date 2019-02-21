@@ -54,3 +54,37 @@ To use our recent device creation, you will need a connection string in addition
 After running `npm install`, you can simply `node simple_sample_device_x509.js` and should see a successful device connection followed by messages as they are sent to the selected Azure IoT Hub instance.
 
 # Azure IoT SDK C
+
+Integrating the Twilio Trust Onboard SDK directly to the Azure IoT C SDK is supported by using a custom HSM provider.
+
+You compile the included cpp file with your application in lieu of any other HSM's included in the Azure IoT C SDK.  This integration currently makes use of a not-yet-released extension to allow you to pass in parameters.  The library installed in our pre-built image has this update already in place.
+
+## Install custom HSM plugin
+
+You will need to copy the following files from the `cloud-support/azure-iot/azure-iot-sdk-c` folder:
+
+    custom_hsm_twilio.h
+    custom_hsm_twilio.cpp
+
+## Include the header for the plugin:
+
+    #include "custom_hsm_twilio.h"
+
+## Initialize the plugin for Provisioning operations
+
+After creating your device provisioning handle, but before calling `Prov_Device_LL_Register_Device`, add the configuration:
+
+    TWILIO_TRUST_ONBOARD_HSM_CONFIG* config = (TWILIO_TRUST_ONBOARD_HSM_CONFIG *)malloc(sizeof(TWILIO_TRUST_ONBOARD_HSM_CONFIG));
+    config->device_path = strdup("/dev/ttyACM1"); // or appropriate path
+    config->sim_pin = strdup("0000"); // or appropriate pin
+    Prov_Device_LL_SetOption(handle, PROV_HSM_CONFIG_DATA, (void*)config);
+
+## Initialize the plugin for Device connection operations
+
+After creating the client handle, but before performing operations, add the configuration:
+
+    TWILIO_TRUST_ONBOARD_HSM_CONFIG* config = (TWILIO_TRUST_ONBOARD_HSM_CONFIG *)malloc(sizeof(TWILIO_TRUST_ONBOARD_HSM_CONFIG));
+    config->device_path = strdup("/dev/ttyACM1"); // or appropriate path
+    config->sim_pin = strdup("0000"); // or appropriate pin
+    IoTHubDeviceClient_LL_SetOption(device_ll_handle, OPTION_HSM_CONFIG_DATA, (void*)config);
+
