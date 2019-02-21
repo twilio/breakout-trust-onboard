@@ -55,13 +55,13 @@ A quick aside - if you have worked with Raspberry Pi HAT's before, you may have 
 1. Attach a monitor by HDMI and keyboard for initial setup
 1. Plug in your Raspberry Pi power supply
 
-# Getting Started Options
+## Getting Started Options
 
 We have a Raspberry Pi image, based on Raspbian (Stretch) available which includes a fully configured environment, the Breakout Trust Onboard C SDK, and the Azure IoT for C SDK set up.  You can [download this image here](https://github.com/twilio/Breakout_Trust_Onboard_SDK/releases).
 
 Alternately, we have included the required steps to [replicate the environment yourself](README-Setup.md).
 
-## Trust Onboard Available Certificate Extraction
+# Trust Onboard Available Certificate Extraction
 
 In the project you build above, you should now have an executable `bin/trust_onboard_tool`.  We can use this tool to extract and convert the Trust Onboard `available` X.509 certificate and private key.  Since the output of this CLI is two files (a certificate chain and a private key) and the conversion script creates a further several files, we recommend writing the files out to a sub-directory.  **Important:** Be sure to replace the PIN `0000` with the PIN provided you or you may block your SIM card.  The password `mypassword` below is the passphrase that will be used to secure the P12 certificate and key bundle the `convert_certs.sh` script generates.  This assumes you are using our pre-built image or ran `make install` for the Breakout_Trust_Onboard_SDK.  The `convert_certs.sh` script can be found in the Breakout_Trust_Onboard_SDK directory or in this repository.
 
