@@ -42,7 +42,7 @@ The utility takes 4 parameters:
 - *cert outfile* - This is the destination filename for the X.509 public certificate chain.
 - *key outfile* - This is the destination filename for the X.509 certificate's private key.  **Important:** keep this key safe!  If it is leaked, your ToB SIM must be replaced to obtain a new private key, there is no way to update a SIM after manufacture with a new certificate and key.
 
-## Software Prerequisites
+# Software Prerequisites
 
 We recommend using [Raspbian Stretch Lite](https://www.raspberrypi.org/downloads/raspbian/) for a headless lightweight install.  The instructions below assume a Raspbian installation but the hardware and software should be compatible with other distributions as well.  You can find information on [writing an image to SD here](https://www.raspberrypi.org/documentation/installation/installing-images/README.md).
 
@@ -50,7 +50,7 @@ You can also use the Seeed LTE Cat 1 Pi HAT connected directly to a workstation 
 
 Once the system is up and running, we will be using the [Breakout Trust Onboard SDK](https://github.com/twilio/Breakout_Trust_Onboard_SDK) repository from github on the device.  We will also use [Twilio Wireless PPP Scripts](https://github.com/twilio/wireless-ppp-scripts) for connecting with PPP to the network for data.
 
-## System configuration
+# System configuration
 
 You will need to configure a number of things upon first boot:
 
@@ -66,7 +66,7 @@ You will need to configure a number of things upon first boot:
 - Disable serial console by editing `/boot/cmdline.txt` and removing the section `console=serial0,115200`
 - Reboot after these changes
 
-## Trust Onboard Software Setup
+# Trust Onboard Software Setup
 
 - Install required packages:
 
@@ -122,7 +122,7 @@ It is worth checking at this time for permission to access the serial ports.  Ra
 
 Your username should appear in the `dialout` group.
 
-## PPP configuration
+# PPP configuration
 
 We can use `/dev/ttyACM0` to provide a PPP connection over Twilio Wireless to the internet for our Pi.  The quickest path for this is to use a sample set of PPP scripts we have published on github.
 

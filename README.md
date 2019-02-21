@@ -1,9 +1,9 @@
 # Contents
 1. [Overview](#overview)
 1. [Example reference implementation](#Example-reference-implementation)
-1. [Parts](#parts)
-1. [Connections](#Connections)
-1. [Getting Started Options](#Getting-Started-Options)
+    1. [Parts](#parts)
+    1. [Connections](#Connections)
+    1. [Getting Started Options](#Getting-Started-Options)
 1. [Trust Onboard Available Certificate Extraction](#Trust-Onboard-Available-Certificate-Extraction)
 
 [Validating Requests on the Azure IoT cloud](cloud-support/azure-iot/README.md)
