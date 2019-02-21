@@ -20,8 +20,8 @@
 
 #include <BreakoutTrustOnboardSDK.h>
 
-//const char* device = "/dev/ttyACM1";
-const char* device = "/dev/cu.usbmodem14403";
+const char* device = "/dev/ttyACM1";
+//const char* device = "/dev/cu.usbmodem14403";
 const char* pin = "0000";
 
 TEST_CASE( "Initialize module", "[tob]" ) {
