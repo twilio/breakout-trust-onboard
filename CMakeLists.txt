@@ -44,8 +44,7 @@ add_library(TwilioTrustOnboard STATIC
 
 add_executable(
         ${TOOL_BINARY}
-        tools/TrustOnboardTool.cpp
-        tools/README.md)
+        tools/TrustOnboardTool.cpp)
 
 target_link_libraries(
         ${TOOL_BINARY}
