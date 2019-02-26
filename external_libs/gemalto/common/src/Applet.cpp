@@ -75,7 +75,7 @@ bool Applet::select(bool isBasic) {
 						}
 					}
 					
-					_seiface->transmit(0x00, 0x70, 0x80, _channel);
+					_seiface->transmit(0x00, 0x70, 0x80, _channel, 0x01);
 				}
 			}
 		}	
@@ -87,7 +87,7 @@ bool Applet::select(bool isBasic) {
 bool Applet::deselect(void) {
 	if(_seiface != NULL) {
 		if(_isSelected && !_isBasic) {
-			if(_seiface->transmit(0x00, 0x70, 0x80, _channel)) {
+			if(_seiface->transmit(0x00, 0x70, 0x80, _channel, 0x01)) {
 				if(_seiface->getStatusWord() == 0x9000) {
 					_isSelected = false;
 				}
