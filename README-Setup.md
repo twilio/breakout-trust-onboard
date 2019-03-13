@@ -14,6 +14,8 @@
 
 This README will guide you through some of the setup we have performed already in the [pre-built image we offer](README.md#Getting-Started-Options).  We recommend starting with the image, but if your needs differ below you will find some helpful getting setup instructions.
 
+**IMPORTANT: If you are using the pre-built image from Twilio, please do not perform the actions below on that image.  The environment has already been set up for you and you should not have to run through these steps.  They are provided for reference or for adding support to an environment other than the pre-built image.**
+
 # Library and Tools
 
 The `src/` and `external_libs/` folders contain the library code to communicate with the Twilio ToB SIM for certificate extraction as well as signing.
@@ -137,6 +139,7 @@ Next we will get the latest PPP scripts published by Twilio and modify them for 
     unzip master.zip
     cd wireless-ppp-scripts-master
     sed -s -i -e 's/ttyUSB0/ttyACM0/g' peers/twilio
+    sed -s -i -e 's/\(^OK AT\+CGDCONT\)/#&/g' chatscripts/twilio
 
 Next, we need to copy the PPP scripts into `/etc`:
 

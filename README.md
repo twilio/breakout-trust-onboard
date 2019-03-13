@@ -59,7 +59,7 @@ A quick aside - if you have worked with Raspberry Pi HAT's before, you may have 
 
 We have a Raspberry Pi image, based on Raspbian (Stretch) available which includes a fully configured environment, the Breakout Trust Onboard C SDK, and the Azure IoT for C SDK set up.  You can [download this image here](https://github.com/twilio/Breakout_Trust_Onboard_SDK/releases).
 
-Alternately, we have included the required steps to [replicate the environment yourself](README-Setup.md).
+Alternately, we have included the required steps to [replicate the environment yourself](README-Setup.md).  **Note: You should not perform these steps against the pre-built image we supply, they have already been done for you which may be un-done by these steps.   These are provided for reference only.**
 
 # Trust Onboard Available Certificate Extraction
 
