@@ -65,11 +65,15 @@ openssl x509 \
   -sha1 \
   -noout | sed -e's/://g' | cut -d= -f2
 
+# FIXME: In the future, the bundle will not be shipped with the SDK -
+# instead it will be shared by CDN.  Update this accordingly when that
+# happens.
+
 # build p12 from cert and key
 openssl pkcs12 \
   -export \
   -out "${CERT_DIR}"/credential.pfx \
   -inkey "${KEY_DIR}"/key.pem \
   -in ${CERT} \
-  -certfile bundles/programmable-wireless.available.bundle \
+  -certfile bundles/programmable-wireless.available.pem \
   -password pass:"${PASSPHRASE}"
