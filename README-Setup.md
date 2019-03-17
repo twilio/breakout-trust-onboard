@@ -139,6 +139,7 @@ Next we will get the latest PPP scripts published by Twilio and modify them for 
     unzip master.zip
     cd wireless-ppp-scripts-master
     sed -s -i -e 's/ttyUSB0/ttyACM0/g' peers/twilio
+    sed -s -i -e '/^defaultroute/ a replacedefaultroute' peers/twilio
     sed -s -i -e 's/\(^OK AT\+CGDCONT\)/#&/g' chatscripts/twilio
 
 Next, we need to copy the PPP scripts into `/etc`:
