@@ -594,7 +594,7 @@ bool MIAS::changePin(uint8_t* oldPin, uint16_t oldPinLen, uint8_t* newPin, uint1
 bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** object, uint16_t* objectLen) {
 	uint8_t  data[2];
 	uint8_t  record[0x15];
-	uint16_t i, offset, len, size;
+	uint16_t i, offset, len, size, trimPos, trimLen;
 	mias_file_t* file = NULL;
 	mias_file_t* nfile = NULL;
 
@@ -669,8 +669,17 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** obje
 															if(getResponseLength() == record[0]) {
 																getResponse(record);
 																record[getResponseLength()] = '\0';
-																//printf("%s\n", record);
-																if((labelLen == getResponseLength()) && (memcmp((void*) label, (void*) record, labelLen) == 0)) {
+                                // Trim padding spaces from record on SIM
+                                trimPos = getResponseLength() - 1;
+                                while (trimPos >= 0 && record[trimPos] == ' ') {
+                                  record[trimPos] = '\0';
+                                  trimPos--;
+                                }
+                                trimLen = trimPos + 1;
+																//printf("label : %s - %ld\n", label, labelLen);
+																//printf("record: %s - %ld\n", record, trimLen);
+                                // Check if we have a record that matches the label
+																if((labelLen == trimLen) && (memcmp((void*) label, (void*) record, labelLen) == 0)) {
 
 																	offset += labelLen;
 
