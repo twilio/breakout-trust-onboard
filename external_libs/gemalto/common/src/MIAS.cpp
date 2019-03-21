@@ -675,7 +675,7 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** obje
                                 // Check if we have a record that matches the label
 																if((labelLen == trimLen) && (memcmp((void*) label, (void*) record, labelLen) == 0)) {
 
-																	offset += labelLen;
+																	offset += getResponseLength();
 
 																	// Skip CKA_APPLICATION
 																	if(transmit(0x00, 0xB0, offset >> 8, offset, 0x01)) {
