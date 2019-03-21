@@ -1,0 +1,3 @@
+[submodule "trust_onboard"]
+	path = trust_onboard
+	url = git@code.hq.twilio.com:wireless/trust_onboard.git

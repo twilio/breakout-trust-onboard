@@ -80,6 +80,7 @@ You will need to configure a number of things upon first boot:
         git clone git@github.com:twilio/Breakout_Trust_Onboard_SDK.git
         cd Breakout_Trust_Onboard_SDK
         git checkout initial-implementation
+        git submodule update --init --recursive
         cmake CMakeLists.txt
         make
 
