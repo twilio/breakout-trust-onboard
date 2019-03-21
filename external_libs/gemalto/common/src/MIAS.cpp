@@ -669,10 +669,9 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** obje
 															if(getResponseLength() == record[0]) {
 																getResponse(record);
 																record[getResponseLength()] = '\0';
-                                // Trim padding spaces from record on SIM
+                                // Ignore padding spaces from record on SIM
                                 trimPos = getResponseLength() - 1;
                                 while (trimPos >= 0 && record[trimPos] == ' ') {
-                                  record[trimPos] = '\0';
                                   trimPos--;
                                 }
                                 trimLen = trimPos + 1;
