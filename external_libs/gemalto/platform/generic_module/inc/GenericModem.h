@@ -22,26 +22,25 @@
 #include "ATInterface.h"
 #include "SEInterface.h"
 
-class GenericModem: public SEInterface {
-	public:
-		// Create an instance of Generic Modem.
-		GenericModem(const char * const device);
-		~GenericModem(void);
+class GenericModem : public SEInterface {
+ public:
+  // Create an instance of Generic Modem.
+  GenericModem(const char* const device);
+  ~GenericModem(void);
 
-		bool open(void) {
-			return _at.open();
-		}
+  bool open(void) {
+    return _at.open();
+  }
 
-		void close(void) {
-			_at.close();
-		}
+  void close(void) {
+    _at.close();
+  }
 
-	protected:
+ protected:
+  bool transmitApdu(uint8_t* apdu, uint16_t apduLen, uint8_t* response, uint16_t* responseLen);
 
-		bool transmitApdu(uint8_t* apdu, uint16_t apduLen, uint8_t* response, uint16_t* responseLen);
-
-	private:
-		ATInterface _at;
+ private:
+  ATInterface _at;
 };
 
 #endif /* __GENERIC_MODEM_H__ */

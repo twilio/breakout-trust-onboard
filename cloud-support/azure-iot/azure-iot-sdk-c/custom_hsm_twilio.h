@@ -20,8 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct TWILIO_TRUST_ONBOARD_HSM_CONFIG_TAG
-{
-    const char* device_path;
-    const char* sim_pin;
+typedef struct TWILIO_TRUST_ONBOARD_HSM_CONFIG_TAG {
+  const char* device_path;
+  const char* sim_pin;
 } TWILIO_TRUST_ONBOARD_HSM_CONFIG;

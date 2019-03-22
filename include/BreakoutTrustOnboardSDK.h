@@ -22,14 +22,14 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define ERR_SE_MIAS_READ_OBJECT_ERROR             -0x5400  /**< Mobile IAS read object failed. */
-#define ERR_SE_EF_VERIFY_PIN_ERROR                -0x5480  /**< Verifying pin to access EF failed. */
-#define ERR_SE_EF_INVALID_NAME_ERROR              -0x5500  /**< Trying to access an EF with an invalid name. */
-#define ERR_SE_EF_READ_OBJECT_ERROR               -0x5580  /**< EF read object failed. */
-#define ERR_SE_BAD_KEY_NAME_ERROR                 -0x5600  /**< No matching key found with the given name. */
+#define ERR_SE_MIAS_READ_OBJECT_ERROR -0x5400 /**< Mobile IAS read object failed. */
+#define ERR_SE_EF_VERIFY_PIN_ERROR -0x5480    /**< Verifying pin to access EF failed. */
+#define ERR_SE_EF_INVALID_NAME_ERROR -0x5500  /**< Trying to access an EF with an invalid name. */
+#define ERR_SE_EF_READ_OBJECT_ERROR -0x5580   /**< EF read object failed. */
+#define ERR_SE_BAD_KEY_NAME_ERROR -0x5600     /**< No matching key found with the given name. */
 
-#define CERT_BUFFER_SIZE 10*1024
-#define PK_BUFFER_SIZE 2*1024
+#define CERT_BUFFER_SIZE 10 * 1024
+#define PK_BUFFER_SIZE 2 * 1024
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,7 +48,8 @@ extern int tobInitialize(const char *device);
  * Extract the Available public certificate in PEM form.  The certificate
  * buffer will contain the device certificate itself and its preceding
  * intemediate certificates.
- * @param cert - buffer to receive the PEM certificate chain - should be allocated with at least size of CERT_BUFFER_SIZE
+ * @param cert - buffer to receive the PEM certificate chain - should be allocated with at least size of
+ * CERT_BUFFER_SIZE
  * @param cert_size - pointer to int that will receive the true number of bytes for the PEM certificate chain
  * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
  * @return 0 if successful, otherwise one of the following error codes:
@@ -64,7 +65,7 @@ extern int tobExtractAvailableCertificate(uint8_t *cert, int *cert_size, const c
  *
  * NOTE: Care should be taken to secure the output of this function, the
  * private key should be kept secret.
- * 
+ *
  * @param pk - buffer to receive the PEM certificate chain - should be allocated with at least size of CERT_BUFFER_SIZE
  * @param pk_size - pointer to int that will receive the true number of bytes for the PEM certificate chain
  * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
