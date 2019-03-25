@@ -14,11 +14,13 @@
 #include "BreakoutTrustOnboardSDK.h"
 #include "GenericModem.h"
 
-#include "SEInterface.h"
+#ifdef PCSC_SUPPORT
+#include "Pcsc.h"
+#endif
 
 static MF* _mf;
 static MIAS* _mias;
-static GenericModem* _modem = nullptr;
+static SEInterface* _modem = nullptr;
 
 #define USE_BASIC_CHANNEL false
 
@@ -181,19 +183,28 @@ int tob_se_init_with_interface(SEInterface* seiface) {
 
 int tobInitialize(const char* device) {
   if (_modem != nullptr) {
-    //		printf("Modem already setup, skipping initialization.\n");
     return 0;
   }
 
   if (device == nullptr) {
-    printf("Error no device specified!\n");
+    fprintf(stderr, "Error no device specified!\n");
     return -1;
   }
 
-  _modem = new GenericModem(device);
+  if (strncmp(device, "pcsc:", 5) == 0) {
+#ifdef PCSC_SUPPORT
+    long idx = strtol(device + 5, 0, 10);  // device is al least 5 characters long, indexing is safe
+    _modem   = new PcscSEInterface((int)idx);
+#else
+    fprintf(stderr, "No pcsc support, please rebuild with -DPCSC_SUPPORT=ON\n");
+    return -1;
+#endif
+  } else {
+    _modem = new GenericModem(device);
+  }
 
   if (!_modem->open()) {
-    printf("Error modem not found!\n");
+    fprintf(stderr, "Error modem not found!\n");
     free(_modem);
     _modem = nullptr;
     return -1;
@@ -267,6 +278,7 @@ int tob_x509_crt_extract_se(uint8_t* cert, int* cert_size, const char* path, con
         cert[obj_size] = '\0';
         *cert_size     = obj_size;
         free(obj);
+        ret = 0;
       }
     }
     _mias->deselect();
