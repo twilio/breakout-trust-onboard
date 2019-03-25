@@ -29,6 +29,9 @@ class SEInterface {
   SEInterface(void);
   virtual ~SEInterface(void);
 
+  virtual bool open(void)  = 0;
+  virtual void close(void) = 0;
+
   // Transmit an APDU case 1
   // Returns true in case transmit was successful, false otherwise.
   bool transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2);

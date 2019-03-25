@@ -17,11 +17,11 @@ class GenericModem : public SEInterface {
   GenericModem(const char* const device);
   ~GenericModem(void);
 
-  bool open(void) {
+  bool open(void) override {
     return _at.open();
   }
 
-  void close(void) {
+  void close(void) override {
     _at.close();
   }
 

@@ -153,6 +153,11 @@ class MIAS : public Applet {
   // Returns true in case decrypting was successful, false otherwise.
   bool decryptFinal(uint8_t* data, uint16_t dataLen, uint8_t* plain, uint16_t* plainLen);
 
+
+  // List existing key pairs.
+  // Returns true in case operation was successful, false otherwise.
+  bool listKeyPairs(void);
+
  private:
   mias_key_pair_t* _keypairs;
 
@@ -164,9 +169,6 @@ class MIAS : public Applet {
   uint8_t _decryptAlgo;
   uint8_t _decryptKey;
 
-  // List existing key pairs.
-  // Returns true in case operation was successful, false otherwise.
-  bool listKeyPairs(void);
 
   bool mseSetBeforeHash(uint8_t algorithm);
   bool psoHashInternally(uint8_t algorithm, uint8_t* data, uint16_t dataLen);

@@ -3,6 +3,10 @@ project(breakout-tob)
 
 set(CMAKE_CXX_STANDARD 14)
 
+option(PCSC_SUPPORT "Support fot pcsc-lite" OFF)
+
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/)
+
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -16,6 +20,7 @@ set(TOOL_BINARY trust_onboard_tool)
 
 include_directories(external_libs/tob_sim/common/inc)
 include_directories(external_libs/tob_sim/platform/generic_modem/inc)
+include_directories(external_libs/tob_sim/platform/pcsc/inc)
 include_directories(include)
 
 set(LIB_SOURCES
@@ -43,6 +48,17 @@ set(LIB_HEADERS
         external_libs/tob_sim/platform/generic_modem/inc/Serial.h
 	)
 
+if(PCSC_SUPPORT)
+	find_package(PCSC REQUIRED)
+
+        set(LIB_SOURCES ${LIB_SOURCES}
+		external_libs/tob_sim/platform/pcsc/src/Pcsc.cpp)
+	set(LIB_HEADERS ${LIB_HEADERS}
+		external_libs/tob_sim/platform/pcsc/inc/Pcsc.h)
+	include_directories(${PCSC_INCLUDE_DIRS})
+	add_definitions(-DPCSC_SUPPORT)
+endif(PCSC_SUPPORT)
+
 add_library(TwilioTrustOnboard STATIC ${LIB_SOURCES} ${LIB_HEADERS})
 
 add_executable(
@@ -53,6 +69,13 @@ target_link_libraries(
         ${TOOL_BINARY}
         TwilioTrustOnboard
   )
+
+if(PCSC_SUPPORT)
+	target_link_libraries(
+		${TOOL_BINARY}
+                ${PCSC_LIBRARIES}
+        )
+endif(PCSC_SUPPORT)
 
 set(TOOLS_SOURCES
         tools/TrustOnboardTool.cpp)

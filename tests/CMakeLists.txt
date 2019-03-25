@@ -9,10 +9,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(TEST_BINARY tests)
 
-include_directories(../external_libs/tob_sim/common/inc)
-include_directories(../external_libs/tob_sim/platform/generic_modem/inc)
-include_directories(../include)
-
 add_executable(
   ${TEST_BINARY}
   tests.cpp
@@ -23,3 +19,11 @@ target_link_libraries(
   ${TEST_BINARY}
   TwilioTrustOnboard
   )
+
+if(PCSC_SUPPORT)
+  target_link_libraries(
+    ${TEST_BINARY}
+    ${PCSC_LIBRARIES}
+  )
+endif(PCSC_SUPPORT)
+

@@ -1,8 +1,10 @@
 /*
+ * Twilio Breakout Trust Onboard SDK
  *
  * Copyright (c) 2019 Twilio, Inc.
  *
  * SPDX-License-Identifier:  Apache-2.0
+ *
  */
 
 #include "MIAS.h"
@@ -372,43 +374,8 @@ bool MIAS::listKeyPairs(void) {
                       if (getStatusWord() == 0x9000) {
                         if ((_seiface->_apduResponse[12] == 'm') && (_seiface->_apduResponse[13] == 's') &&
                             (_seiface->_apduResponse[14] == 'c') && (_seiface->_apduResponse[15] == 'p')) {
-                          /*
-                          {
-                                  uint16_t j;
-                                  
-                                  printf("\r\nFile: ");
-                                  for(j=4; (j<12) && _seiface->_apduResponse[j]; j++) {
-                                          printf("%c", _seiface->_apduResponse[j]);
-                                  }
-                                  printf(" (%02d%02d) size = %dbytes\r\n\r\n", _seiface->_apduResponse[0],
-                          _seiface->_apduResponse[1], (_seiface->_apduResponse[2] << 8) | _seiface->_apduResponse[3]);
-                          }
-                          */
-
-                          // priprk is for key pair only (no certificate)
-                          /*
-                          if((_seiface->_apduResponse[4] == 'p') && (_seiface->_apduResponse[5] == 'r') &&
-                          (_seiface->_apduResponse[6] == 'i') &&
-                                  (_seiface->_apduResponse[7] == 'p') && (_seiface->_apduResponse[8] == 'r') &&
-                          (_seiface->_apduResponse[9] == 'k')) {
-
-                                  ptr = _keypairs;
-                          
-                                  while(ptr != NULL) {
-                                          if(((ptr->kid & 0x0F) - 1) == (((_seiface->_apduResponse[10] - '0') * 10) +
-                          (_seiface->_apduResponse[11] - '0'))) { ptr->pub_file_id[0] = _seiface->_apduResponse[0];
-                                                  ptr->pub_file_id[1] = _seiface->_apduResponse[1];
-                                                  ptr->has_cert = false;
-                                                  break;
-                                          }
-                                          ptr = ptr->next;
-                                  }
-                          }
-                          */
-
-                          // kxc file is for exchange keys
-                          /*else*/ if ((_seiface->_apduResponse[4] == 'k') && (_seiface->_apduResponse[5] == 'x') &&
-                                       (_seiface->_apduResponse[6] == 'c')) {
+                          if ((_seiface->_apduResponse[4] == 'k') && (_seiface->_apduResponse[5] == 'x') &&
+                              (_seiface->_apduResponse[6] == 'c')) {
                             ptr = _keypairs;
 
                             while (ptr != NULL) {
@@ -451,7 +418,7 @@ bool MIAS::listKeyPairs(void) {
           /*
           {
                   ptr = _keypairs;
-                                                          
+
                   printf("\r\n---\r\n");
                   while(ptr != NULL) {
                           printf("KID: %02X %d\r\n", ptr->kid,  ptr->has_cert);
@@ -616,22 +583,6 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** obje
                     memcpy(nfile->dir, &record[12], 8);
                     memcpy(nfile->name, &record[4], 8);
 
-                    /*
-                    printf("dir: ");
-                    for(int ii=0; ii<8; ii++) {
-                            printf("%c", nfile->dir[ii]);
-                    }
-                    printf("    ");
-
-                    printf("name: ");
-                    for(int ii=0; ii<8; ii++) {
-                            printf("%c", nfile->name[ii]);
-                    }
-                    printf("    ");
-
-                    printf("efid: %04X\n", nfile->efid);
-                    fflush(stdout);
-                    */
                     nfile->next = file;
                     file        = nfile;
                   }
@@ -643,9 +594,6 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** obje
               if ((strcmp((const char*)file->dir, "p11") == 0) &&
                   ((memcmp((const char*)file->name, "pubdat", 6) == 0) ||
                    ((memcmp((const char*)file->name, "pridat", 6) == 0)))) {
-                // printf("name: %s\n", file->name);
-                // printf("efid: %04X\n", file->efid);
-
                 data[0] = file->efid >> 8;
                 data[1] = file->efid;
 
@@ -668,8 +616,6 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** obje
                                   trimPos--;
                                 }
                                 trimLen = trimPos + 1;
-                                // printf("label : %s - %ld\n", label, labelLen);
-                                // printf("record: %s - %ld\n", record, trimLen);
                                 // Check if we have a record that matches the label
                                 if ((labelLen == trimLen) && (memcmp((void*)label, (void*)record, labelLen) == 0)) {
                                   offset += getResponseLength();
@@ -701,7 +647,6 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** obje
 
                                                     offset++;
 
-                                                    // printf("CKA_VALUE size = %02X\n", size);
 
                                                     // Clear the files to free some space
                                                     while (file != NULL) {
