@@ -14,30 +14,29 @@ set(TOOL_BINARY trust_onboard_tool)
 #add_definitions(-DAPDU_DEBUG)
 #add_definitions(-DSERIAL_DEBUG)
 
-include_directories(external_libs/gemalto/common/inc)
-include_directories(external_libs/gemalto/mbedtls/inc)
-include_directories(external_libs/gemalto/platform/generic_module/inc)
+include_directories(external_libs/tob_sim/common/inc)
+include_directories(external_libs/tob_sim/platform/generic_modem/inc)
 include_directories(include)
 
 add_library(TwilioTrustOnboard STATIC
-        external_libs/gemalto/common/inc/Applet.h
-        external_libs/gemalto/common/inc/MF.h
-        external_libs/gemalto/common/inc/MIAS.h
-        external_libs/gemalto/common/inc/NetInterface.h
-        external_libs/gemalto/common/inc/SEInterface.h
-        external_libs/gemalto/common/src/Applet.cpp
-        external_libs/gemalto/common/src/MF.cpp
-        external_libs/gemalto/common/src/MIAS.cpp
-        external_libs/gemalto/common/src/NetInterface.cpp
-        external_libs/gemalto/common/src/SEInterface.cpp
-        external_libs/gemalto/platform/generic_module/inc/ATInterface.h
-        external_libs/gemalto/platform/generic_module/inc/GenericModem.h
-        external_libs/gemalto/platform/generic_module/inc/LSerial.h
-        external_libs/gemalto/platform/generic_module/inc/Serial.h
-        external_libs/gemalto/platform/generic_module/src/ATInterface.cpp
-        external_libs/gemalto/platform/generic_module/src/GenericModem.cpp
-        external_libs/gemalto/platform/generic_module/src/LSerial.cpp
-        external_libs/gemalto/platform/generic_module/src/Serial.cpp
+        external_libs/tob_sim/common/inc/Applet.h
+        external_libs/tob_sim/common/inc/MF.h
+        external_libs/tob_sim/common/inc/MIAS.h
+        external_libs/tob_sim/common/inc/NetInterface.h
+        external_libs/tob_sim/common/inc/SEInterface.h
+        external_libs/tob_sim/common/src/Applet.cpp
+        external_libs/tob_sim/common/src/MF.cpp
+        external_libs/tob_sim/common/src/MIAS.cpp
+        external_libs/tob_sim/common/src/NetInterface.cpp
+        external_libs/tob_sim/common/src/SEInterface.cpp
+        external_libs/tob_sim/platform/generic_modem/inc/ATInterface.h
+        external_libs/tob_sim/platform/generic_modem/inc/GenericModem.h
+        external_libs/tob_sim/platform/generic_modem/inc/LSerial.h
+        external_libs/tob_sim/platform/generic_modem/inc/Serial.h
+        external_libs/tob_sim/platform/generic_modem/src/ATInterface.cpp
+        external_libs/tob_sim/platform/generic_modem/src/GenericModem.cpp
+        external_libs/tob_sim/platform/generic_modem/src/LSerial.cpp
+        external_libs/tob_sim/platform/generic_modem/src/Serial.cpp
         include/BreakoutTrustOnboardSDK.h
         src/BreakoutTrustOnboardSDK.cpp
   )

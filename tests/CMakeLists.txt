@@ -9,9 +9,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(TEST_BINARY tests)
 
-include_directories(../external_libs/gemalto/common/inc)
-include_directories(../external_libs/gemalto/mbedtls/inc)
-include_directories(../external_libs/gemalto/platform/generic_module/inc)
+include_directories(../external_libs/tob_sim/common/inc)
+include_directories(../external_libs/tob_sim/platform/generic_modem/inc)
 include_directories(../include)
 
 add_executable(
