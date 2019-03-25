@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
- #include <stdio.h>
+#include <stdio.h>
 
 #include "BreakoutTrustOnboardSDK.h"
 
@@ -33,10 +33,10 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  char* device = argv[1];
-  char* pin = argv[2];
+  char* device    = argv[1];
+  char* pin       = argv[2];
   char* cert_path = argv[3];
-  char* pk_path = argv[4];
+  char* pk_path   = argv[4];
 
   tobInitialize(device);
 
@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
   }
 
   printf("Writing certificate chain with size: %d...\n", cert_size);
-  FILE *cert_fp = fopen(cert_path, "w");
+  FILE* cert_fp = fopen(cert_path, "w");
   if (!cert_fp) {
     printf("... error opening file for certificate output: %s\n", cert_path);
     return -1;
@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
   fclose(cert_fp);
 
   printf("Writing key with size: %d...\n", pk_size);
-  FILE *pk_fp = fopen(pk_path, "w");
+  FILE* pk_fp = fopen(pk_path, "w");
   if (!pk_fp) {
     printf("... error opening file for pk output: %s\n", pk_path);
     return -1;
