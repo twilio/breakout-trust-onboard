@@ -25,7 +25,7 @@ class PcscSEInterface : public SEInterface {
   void close(void) override;
 
  protected:
-  bool transmitApdu(uint8_t* apdu, uint16_t apduLen, uint8_t* response, uint16_t* responseLen);
+  bool transmitApdu(uint8_t* apdu, uint16_t apduLen, uint8_t* response, uint16_t* responseLen) override;
 
  private:
   SCARDHANDLE _card_handle;
