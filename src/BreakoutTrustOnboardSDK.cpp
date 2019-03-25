@@ -31,6 +31,8 @@ static SEInterface* _modem = nullptr;
 #define CERT_MIAS_PATH SE_MIAS_P11_KEY_NAME_PREFIX "CERT_TYPE_A"
 #define PK_MIAS_PATH SE_MIAS_P11_KEY_NAME_PREFIX "PRIV_TYPE_A"
 
+#define CERT_SIGNING_MIAS_PATH SE_MIAS_KEY_NAME_PREFIX "0"
+
 typedef struct {
   char* pin;
   mias_key_pair_t* kp;
@@ -350,6 +352,10 @@ int tob_pk_extract_se(uint8_t* pk, int* pk_size, const char* path, const char* p
 
 int tobExtractAvailableCertificate(uint8_t* cert, int* cert_size, const char* pin) {
   return tob_x509_crt_extract_se(cert, cert_size, CERT_MIAS_PATH, pin);
+}
+
+int tobExtractSigningCertificate(uint8_t* cert, int* cert_size, const char* pin) {
+  return tob_x509_crt_extract_se(cert, cert_size, CERT_SIGNING_MIAS_PATH, pin);
 }
 
 int tobExtractAvailablePrivateKey(uint8_t* pk, int* pk_size, const char* pin) {

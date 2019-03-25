@@ -66,6 +66,21 @@ extern int tobExtractAvailableCertificate(uint8_t *cert, int *cert_size, const c
  */
 extern int tobExtractAvailablePrivateKey(uint8_t *pk, int *pk_size, const char *pin);
 
+/**
+ * Extract the Signing public certificate in DER form.  The certificate
+ * buffer will contain the device certificate itself and its preceding
+ * intemediate certificates.
+ * @param cert - buffer to receive the DER certificate chain - should be allocated with at least size of CERT_BUFFER_SIZE
+ * @param cert_size - pointer to int that will receive the true number of bytes for the PEM certificate chain
+ * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
+ * @return 0 if successful, otherwise one of the following error codes:
+ *   ERR_SE_BAD_KEY_NAME_ERROR
+ *   ERR_SE_EF_INVALID_NAME_ERROR
+ *   ERR_SE_EF_READ_OBJECT_ERROR
+ *   ERR_SE_EF_VERIFY_PIN_ERROR
+ */
+extern int tobExtractSigningCertificate(uint8_t *cert, int *cert_size, const char *pin);
+
 #ifdef __cplusplus
 }
 #endif
