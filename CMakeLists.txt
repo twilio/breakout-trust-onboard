@@ -3,6 +3,10 @@ project(breakout-tob)
 
 set(CMAKE_CXX_STANDARD 14)
 
+option(PCSC_SUPPORT "Support fot pcsc-lite" OFF)
+
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/)
+
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -14,33 +18,48 @@ set(TOOL_BINARY trust_onboard_tool)
 #add_definitions(-DAPDU_DEBUG)
 #add_definitions(-DSERIAL_DEBUG)
 
-include_directories(external_libs/gemalto/common/inc)
-include_directories(external_libs/gemalto/mbedtls/inc)
-include_directories(external_libs/gemalto/platform/generic_module/inc)
+include_directories(external_libs/tob_sim/common/inc)
+include_directories(external_libs/tob_sim/platform/generic_modem/inc)
+include_directories(external_libs/tob_sim/platform/pcsc/inc)
 include_directories(include)
 
-add_library(TwilioTrustOnboard STATIC
-        external_libs/gemalto/common/inc/Applet.h
-        external_libs/gemalto/common/inc/MF.h
-        external_libs/gemalto/common/inc/MIAS.h
-        external_libs/gemalto/common/inc/NetInterface.h
-        external_libs/gemalto/common/inc/SEInterface.h
-        external_libs/gemalto/common/src/Applet.cpp
-        external_libs/gemalto/common/src/MF.cpp
-        external_libs/gemalto/common/src/MIAS.cpp
-        external_libs/gemalto/common/src/NetInterface.cpp
-        external_libs/gemalto/common/src/SEInterface.cpp
-        external_libs/gemalto/platform/generic_module/inc/ATInterface.h
-        external_libs/gemalto/platform/generic_module/inc/GenericModem.h
-        external_libs/gemalto/platform/generic_module/inc/LSerial.h
-        external_libs/gemalto/platform/generic_module/inc/Serial.h
-        external_libs/gemalto/platform/generic_module/src/ATInterface.cpp
-        external_libs/gemalto/platform/generic_module/src/GenericModem.cpp
-        external_libs/gemalto/platform/generic_module/src/LSerial.cpp
-        external_libs/gemalto/platform/generic_module/src/Serial.cpp
-        include/BreakoutTrustOnboardSDK.h
+set(LIB_SOURCES
+        external_libs/tob_sim/common/src/Applet.cpp
+        external_libs/tob_sim/common/src/MF.cpp
+        external_libs/tob_sim/common/src/MIAS.cpp
+        external_libs/tob_sim/common/src/NetInterface.cpp
+        external_libs/tob_sim/common/src/SEInterface.cpp
+        external_libs/tob_sim/platform/generic_modem/src/ATInterface.cpp
+        external_libs/tob_sim/platform/generic_modem/src/GenericModem.cpp
+        external_libs/tob_sim/platform/generic_modem/src/LSerial.cpp
+        external_libs/tob_sim/platform/generic_modem/src/Serial.cpp
         src/BreakoutTrustOnboardSDK.cpp
-  )
+	)
+
+set(LIB_HEADERS
+        external_libs/tob_sim/common/inc/Applet.h
+        external_libs/tob_sim/common/inc/MF.h
+        external_libs/tob_sim/common/inc/MIAS.h
+        external_libs/tob_sim/common/inc/NetInterface.h
+        external_libs/tob_sim/common/inc/SEInterface.h
+        external_libs/tob_sim/platform/generic_modem/inc/ATInterface.h
+        external_libs/tob_sim/platform/generic_modem/inc/GenericModem.h
+        external_libs/tob_sim/platform/generic_modem/inc/LSerial.h
+        external_libs/tob_sim/platform/generic_modem/inc/Serial.h
+	)
+
+if(PCSC_SUPPORT)
+	find_package(PCSC REQUIRED)
+
+        set(LIB_SOURCES ${LIB_SOURCES}
+		external_libs/tob_sim/platform/pcsc/src/Pcsc.cpp)
+	set(LIB_HEADERS ${LIB_HEADERS}
+		external_libs/tob_sim/platform/pcsc/inc/Pcsc.h)
+	include_directories(${PCSC_INCLUDE_DIRS})
+	add_definitions(-DPCSC_SUPPORT)
+endif(PCSC_SUPPORT)
+
+add_library(TwilioTrustOnboard STATIC ${LIB_SOURCES} ${LIB_HEADERS})
 
 add_executable(
         ${TOOL_BINARY}
@@ -50,6 +69,18 @@ target_link_libraries(
         ${TOOL_BINARY}
         TwilioTrustOnboard
   )
+
+if(PCSC_SUPPORT)
+	target_link_libraries(
+		${TOOL_BINARY}
+                ${PCSC_LIBRARIES}
+        )
+endif(PCSC_SUPPORT)
+
+set(TOOLS_SOURCES
+        tools/TrustOnboardTool.cpp)
+
+add_custom_target(format COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/service-scripts/format.sh ${LIB_SOURCES} ${LIB_HEADERS} ${TOOLS_SOURCES} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 install(TARGETS TwilioTrustOnboard DESTINATION lib)
 install(TARGETS ${TOOL_BINARY} DESTINATION bin)

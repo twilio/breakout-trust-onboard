@@ -1,19 +1,10 @@
 /*
+ *
  * Twilio Breakout Trust Onboard SDK
  *
  * Copyright (c) 2019 Twilio, Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * SPDX-License-Identifier:  Apache-2.0
  */
 
 #ifndef __BREAKOUT_TOB_H__
@@ -76,6 +67,21 @@ extern int tobExtractAvailableCertificate(uint8_t *cert, int *cert_size, const c
  *   ERR_SE_MIAS_READ_OBJECT_ERROR
  */
 extern int tobExtractAvailablePrivateKey(uint8_t *pk, int *pk_size, const char *pin);
+
+/**
+ * Extract the Signing public certificate in DER form.  The certificate
+ * buffer will contain the device certificate itself and its preceding
+ * intemediate certificates.
+ * @param cert - buffer to receive the DER certificate chain - should be allocated with at least size of CERT_BUFFER_SIZE
+ * @param cert_size - pointer to int that will receive the true number of bytes for the PEM certificate chain
+ * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
+ * @return 0 if successful, otherwise one of the following error codes:
+ *   ERR_SE_BAD_KEY_NAME_ERROR
+ *   ERR_SE_EF_INVALID_NAME_ERROR
+ *   ERR_SE_EF_READ_OBJECT_ERROR
+ *   ERR_SE_EF_VERIFY_PIN_ERROR
+ */
+extern int tobExtractSigningCertificate(uint8_t *cert, int *cert_size, const char *pin);
 
 #ifdef __cplusplus
 }
