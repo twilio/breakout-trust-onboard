@@ -87,4 +87,25 @@ install(TARGETS ${TOOL_BINARY} DESTINATION bin)
 # TODO: set group to dialout?
 install(FILES include/BreakoutTrustOnboardSDK.h DESTINATION include)
 
+set(CPACK_COMPONENTS_ALL_IN_ONE_PACKAGE 1)
+
+set(CPACK_PACKAGE_NAME "trust-onboard-sdk")
+set(CPACK_PACKAGE_VENDOR "Twilio Inc.")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "SDK and tooling for Trust Onboard")
+set(CPACK_PACKAGE_VERSION "1.0.0")
+set(CPACK_PACKAGE_VERSION_MAJOR "1")
+set(CPACK_PACKAGE_VERSION_MINOR "0")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
+SET(CPACK_SYSTEM_NAME "Linux")
+
+set(CPACK_GENERATOR "DEB")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Twilio Inc.")
+set(CPACK_SET_DESTDIR "ON")
+
+if(TOB_DEVICE)
+	add_subdirectory(device-support/${TOB_DEVICE})
+endif(TOB_DEVICE)
+
+include(CPack)
+
 add_subdirectory(tests)
