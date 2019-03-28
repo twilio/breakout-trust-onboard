@@ -1,0 +1,5 @@
+#!/bin/bash
+
+systemctl enable seeed_lte_hat
+systemctl daemon-reload
+systemctl start seeed_lte_hat
