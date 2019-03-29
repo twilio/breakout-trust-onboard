@@ -2,8 +2,6 @@
 
 cmake_minimum_required(VERSION 3.7)
 
-include("helpers.cmake")
-
 # To override MODULE_DEVICE or SIM_PIN:
 # cmake -DMODULE_DEVICE="/dev/ttyACM1" -DSIM_PIN="0000" ..
 
@@ -26,7 +24,8 @@ if (LINUX)
   set (CMAKE_CXX_FLAGS "-pthread ${CMAKE_CXX_FLAGS}")
 endif()
 
-compileAsC99()
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 11)
 
 set(hello_register_c_files
     hello_register.c
