@@ -24,12 +24,30 @@ You can get Raspberry Pi's cross-compilation toolchain from Github:
     git clone https://github.com/raspberrypi/tools.git raspberrypi-tools
 ```
 
-To cross-compile, build as usual with `cmake` setting the compiler to the one for Raspberry Pi. Also set `TOB_DEVICE` to one if the supported devices (only `Seeed-LTE_Cat_1_Pi_HAT` at the time of writing).
+Make sure that the correct compiler is in your `PATH`:
+
+```
+    export PATH=/path/to/raspberrypi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64
+```
+
+We have also prepared a CMake [toolchain file](device_support/Seeed-LTE_Cat_1_Pi_HAT/toolchain.cmake) which you can give as `-DCMAKE_TOOLCHAIN_FILE=...` to cmake when cross-compiling.
+
+At the time of writing there was one Raspberry Pi / Raspbian device supported, that is Raspberry Pi with [Seeed LTE CAT 1 HAT](https://wiki.seeedstudio.com/LTE_Cat_1_Pi_HAT/).
+
+### Building ToB library and tool to install on the device
+The most convenient way to have the SDK on your Raspbian device is to build a Debian package. The package will contain
+
+  * `TwilioTrustOnboard` static library and headers to build natively on Raspberry Pi
+  * `trust_onboard_tool` binary to extract certificates and available private key from the Trust Onboard SIM.
+  * Platform-specific services to get your device online
+  * **TODO: ppp scripts**
+
+This package is designed to have no dependencies, so you don't have to bother about the sysroot. Nevertheless, please make sure that `RPI_ROOT` is not set (`unset RPI_ROOT`) as having it set will confuse the compiler. To cross-compile, build as usual with `cmake` setting the toolchain to the one for Raspberry Pi. Also set `TOB_DEVICE` to one if the supported devices.
 
 ```
     mkdir build
     cd build
-    cmake -DCMAKE_C_COMPILER=/path/to/raspberrypi-tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc -DCMAKE_CXX_COMPILER=/path/to/raspberrypi-tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ -DTOB_DEVICE=Seeed-LTE_Cat_1_Pi_HAT ..
+    cmake -DCMAKE_TOOLCHAIN_FILE=../device-support/Seeed-LTE_Cat_1_Pi_HAT -DTOB_DEVICE=Seeed-LTE_Cat_1_Pi_HAT ..
     make
 ```
 
