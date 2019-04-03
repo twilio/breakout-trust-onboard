@@ -6,6 +6,7 @@ The only piece of metadata needed by the client is your DPS instance's ID Scope.
 
 ## Building in an environment other than the Critical IoT Kit
 
+### Building natively
 This guide assumes you are using the Azure IoT C SDK that is compatible with Twilio Trust Onboard.  If this is the case, you can skip ahead to [Building and Running the Sample](#Building-and-running-the-sample).
 
 If you are not, you will need to build it with the following configuration options.  If you are work on this on a different platform, please use the following steps to get a similar environment:
@@ -27,7 +28,7 @@ If you encounter this warning turned error, you can safely edit the file to comm
     <...>/azure-iot-sdk-c/provisioning_client/samples/custom_hsm_example/custom_hsm_example.c:20:26: error: ‘SYMMETRIC_KEY’ defined but not used [-Werror=unused-const-variable=]
     static const char* const SYMMETRIC_KEY = "Symmetric Key value";
 
-## Building and running the sample
+#### Building and running the sample
 
 To build the sample using the default module device (/dev/ttyACM1) and SIM PIN (0000), do the following in this directory:
 
@@ -53,3 +54,18 @@ The expected result is something similar to the following output:
       iothub_uri: <youriothubname>.azure-devices.net
       device_id: WCxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
+### Cross-compilation
+Please refer to Azure's [documentation](https://github.com/Azure/azure-iot-sdk-c/blob/master/doc/SDK_cross_compile_example.md) on cross-compilation to build Azure IoT SDK. You can use the toolchain file provided for your device.
+
+#### Building the sample
+For cross-compilation you need to set the toolchain for CMake. E.g. for Raspberry Pi with Seeed LTE Cat 1 hat:
+
+```
+    mkdir cmake
+    cd cmake
+    cmake -DCMAKE_TOOLCHAIN_FILE=../../../../device-support/Seeed-LTE_Cat_1_Pi_HAT/toolchain.cmake ..
+    make
+
+    # optionally you can make a deb file to install on the device
+    cpack
+```
