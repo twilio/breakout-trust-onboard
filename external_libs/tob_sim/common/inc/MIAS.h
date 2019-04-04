@@ -69,8 +69,6 @@ typedef struct mias_key_pair_s {
 
   uint8_t pub_file_id[2];
   bool has_cert;
-
-  struct mias_key_pair_s* next;
 } mias_key_pair_t;
 
 typedef struct mias_file_s {
@@ -78,14 +76,14 @@ typedef struct mias_file_s {
   uint8_t dir[9];
   uint8_t name[9];
   uint16_t size;
-
-  struct mias_file_s* next;
 } mias_file_t;
 
 #ifdef __cplusplus
 
 class MIAS : public Applet {
  public:
+  static constexpr int key_pool_size  = 16;
+  static constexpr int file_pool_size = 32;
   // Create an instance of MIAS Applet.
   MIAS(void);
   ~MIAS(void);
@@ -161,7 +159,11 @@ class MIAS : public Applet {
   bool listKeyPairs(void);
 
  private:
-  mias_key_pair_t* _keypairs;
+  mias_key_pair_t _keypairs[key_pool_size];
+  int _keypairs_num;
+
+  mias_file_t _files[key_pool_size];
+  int _files_num;
 
   uint8_t _hashAlgo;
 
