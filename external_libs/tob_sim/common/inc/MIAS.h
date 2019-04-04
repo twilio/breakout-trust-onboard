@@ -110,14 +110,14 @@ class MIAS : public Applet {
   bool getKeyPairByContainerId(uint8_t container_id, mias_key_pair_t** kp);
 
   // Get certificate on the container identify by the provided id.
-  // Cert parameter is a buffer (auto allocated) which will contain the resulted certificate.
+  // cert parameter is a buffer to contain the resulted certificate. If NULL only length is returned.
   // Returns true in case operation was successful, false otherwise.
-  bool getCertificateByContainerId(uint8_t container_id, uint8_t** cert, uint16_t* certLen);
+  bool getCertificateByContainerId(uint8_t container_id, uint8_t* cert, uint16_t* certLen);
 
   // Get P11 object identify by the provided label.
-  // Object parameter is a buffer (auto allocated) which will contain the extracted object.
+  // object parameter is a buffer to contain the extracted object. If NULL, only length is returned.
   // Returns true in case operation was successful, false otherwise.
-  bool p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** object, uint16_t* objectLen);
+  bool p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t* object, uint16_t* objectLen);
 
   // Prepare context in applet prior computing a hash.
   // Algorithm parameter is the targetted hashing algorithm.

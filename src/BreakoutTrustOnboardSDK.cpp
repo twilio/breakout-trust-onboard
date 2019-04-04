@@ -62,7 +62,7 @@ static void hex_string_2_bytes_array(uint8_t* hexstr, uint16_t hexstrLen, uint8_
   }
 }
 
-static int se_read_ef(uint8_t* efname, uint16_t efnamelen, char** data, int* data_size, const char* pin) {
+static int se_read_ef(uint8_t* efname, uint16_t efnamelen, uint8_t* data, int* data_size, const char* pin) {
   int ret;
   uint16_t size;
 
@@ -75,8 +75,8 @@ static int se_read_ef(uint8_t* efname, uint16_t efnamelen, char** data, int* dat
 #ifdef __cplusplus
   if (_mf->select(USE_BASIC_CHANNEL)) {
     if (_mf->verifyPin((uint8_t*)pin, strlen(pin))) {
-      if (_mf->readEF(efname, efnamelen, (uint8_t**)data, &size)) {
-        *data_size = size & 0x0000FFFF;
+      if (_mf->readEF(efname, efnamelen, data, &size)) {
+        *data_size = size;
         ret        = 0;
       } else {
         ret = ERR_SE_EF_READ_OBJECT_ERROR;
@@ -89,8 +89,8 @@ static int se_read_ef(uint8_t* efname, uint16_t efnamelen, char** data, int* dat
 #else
   if (Applet_select((Applet*)_mf, USE_BASIC_CHANNEL)) {
     if (MF_verify_pin(_mf, (uint8_t*)pin, strlen(pin))) {
-      if (MF_read_ef(_mf, efname, efnamelen, (uint8_t**)data, &size)) {
-        *data_size = size & 0x0000FFFF;
+      if (MF_read_ef(_mf, efname, efnamelen, data, &size)) {
+        *data_size = size;
         ret        = 0;
       } else {
         ret = ERR_SE_EF_READ_OBJECT_ERROR;
@@ -105,30 +105,29 @@ static int se_read_ef(uint8_t* efname, uint16_t efnamelen, char** data, int* dat
   return ret;
 }
 
-static int se_read_object(const char* path, char** obj, int* size, const char* pin) {
+static int se_read_object(const char* path, uint8_t* obj, int* size, const char* pin) {
   int ret;
-  uint8_t* efname;
+  uint8_t efname[32];
   uint16_t efname_len;
 
   if (path == NULL || pin == NULL) {
     return ERR_SE_EF_INVALID_NAME_ERROR;
   }
 
+  size_t pathlen = strlen(path);
   // Name is expected to be of even size (hex string name)
-  if (strlen(path) & 1) {
+  if ((pathlen & 1) || pathlen > ((sizeof(efname) / sizeof(uint8_t)) * 2)) {
     return ERR_SE_EF_INVALID_NAME_ERROR;
   }
 
-  efname_len = (strlen(path) / 2);
-  efname     = (uint8_t*)malloc(efname_len * sizeof(uint8_t));
-  hex_string_2_bytes_array((uint8_t*)path, strlen(path), efname, (uint16_t*)&efname_len);
+  efname_len = (pathlen / 2);
+  hex_string_2_bytes_array((uint8_t*)path, pathlen, efname, (uint16_t*)&efname_len);
   ret = se_read_ef(efname, efname_len, obj, size, pin);
-  free(efname);
 
   return ret;
 }
 
-static int se_p11_read_object(const char* label, char** obj, int* size, const char* pin) {
+static int se_p11_read_object(const char* label, uint8_t* obj, int* size, const char* pin) {
   int ret;
 
   if (label == NULL || pin == NULL) {
@@ -138,8 +137,9 @@ static int se_p11_read_object(const char* label, char** obj, int* size, const ch
 #ifdef __cplusplus
   if (_mias->select(USE_BASIC_CHANNEL)) {
     if (_mias->verifyPin((uint8_t*)pin, strlen(pin))) {
-      if (_mias->p11GetObjectByLabel((uint8_t*)label, strlen(label), (uint8_t**)obj, (uint16_t*)size)) {
-        *size = *size & 0x0000FFFF;
+      uint16_t obj_size;
+      if (_mias->p11GetObjectByLabel((uint8_t*)label, strlen(label), obj, &obj_size)) {
+        *size = obj_size;
         ret   = 0;
       } else {
         ret = ERR_SE_MIAS_READ_OBJECT_ERROR;
@@ -152,8 +152,9 @@ static int se_p11_read_object(const char* label, char** obj, int* size, const ch
 #else
   if (Applet_select((Applet*)_mias, USE_BASIC_CHANNEL)) {
     if (MIAS_verify_pin(_mias, (uint8_t*)pin, strlen(pin))) {
-      if (MIAS_p11_get_object_by_label(_mias, (uint8_t*)label, strlen(label), (uint8_t**)obj, (uint16_t*)size)) {
-        *size = *size & 0x0000FFFF;
+      uint16_t obj_size;
+      if (MIAS_p11_get_object_by_label(_mias, (uint8_t*)label, strlen(label), obj, &obj_size)) {
+        *size = obj_size;
         ret   = 0;
       } else {
         ret = ERR_SE_MIAS_READ_OBJECT_ERROR;
@@ -209,7 +210,7 @@ int tobInitialize(const char* device) {
 
   if (!_modem->open()) {
     fprintf(stderr, "Error modem not found!\n");
-    free(_modem);
+    delete _modem;
     _modem = nullptr;
     return -1;
   }
@@ -221,39 +222,27 @@ int tob_x509_crt_extract_se(uint8_t* cert, int* cert_size, const char* path, con
 
   // Read Certificate from EF
   if (memcmp(path, SE_EF_KEY_NAME_PREFIX, strlen(SE_EF_KEY_NAME_PREFIX)) == 0) {
-    int obj_size;
-    char* obj = NULL;
-
     // Remove prefix from key path
     path += strlen(SE_EF_KEY_NAME_PREFIX);
 
-    if ((ret = se_read_object(path, &obj, &obj_size, pin)) == 0) {
-      memcpy(cert, obj, obj_size);
-      cert[obj_size] = '\0';
-      *cert_size     = obj_size;
-    }
-
-    if (obj != NULL) {
-      free(obj);
+    if ((ret = se_read_object(path, cert, cert_size, pin)) == 0) {
+      if (cert != NULL) {
+        cert[*cert_size] = '\0';
+      }
+      *cert_size += 1;
     }
   }
 
   // Read Certificate from MIAS P11 Data object
   else if (memcmp(path, SE_MIAS_P11_KEY_NAME_PREFIX, strlen(SE_MIAS_P11_KEY_NAME_PREFIX)) == 0) {
-    int obj_size;
-    char* obj = NULL;
-
     // Remove prefix from key path
     path += strlen(SE_MIAS_P11_KEY_NAME_PREFIX);
 
-    if ((ret = se_p11_read_object(path, &obj, &obj_size, pin)) == 0) {
-      memcpy(cert, obj, obj_size);
-      cert[obj_size] = '\0';
-      *cert_size     = obj_size;
-    }
-
-    if (obj != NULL) {
-      free(obj);
+    if ((ret = se_p11_read_object(path, cert, cert_size, pin)) == 0) {
+      if (cert != NULL) {
+        cert[*cert_size] = '\0';
+      }
+      *cert_size += 1;
     }
   }
 
@@ -273,32 +262,27 @@ int tob_x509_crt_extract_se(uint8_t* cert, int* cert_size, const char* path, con
 
 #ifdef __cplusplus
     if (_mias->select(USE_BASIC_CHANNEL)) {
-      char* obj;
-      int obj_size;
+      uint16_t obj_size;
 
-      if (_mias->getCertificateByContainerId(cid, (uint8_t**)&obj, (uint16_t*)&obj_size)) {
-        obj_size &= 0x0000FFFF;
-        memcpy(cert, obj, obj_size);
-        cert[obj_size] = '\0';
-        *cert_size     = obj_size;
-        free(obj);
-        ret = 0;
+      if (_mias->getCertificateByContainerId(cid, cert, &obj_size)) {
+        if (cert != NULL) {
+          cert[obj_size] = '\0';
+        }
+        *cert_size = obj_size + 1;
+        ret        = 0;
       }
     }
     _mias->deselect();
 #else
     if (Applet_select((Applet*)_mias, USE_BASIC_CHANNEL)) {
-      char* obj;
-      int obj_size;
+      uint16_t obj_size;
 
-      if (MIAS_get_certificate_by_container_id(_mias, cid, (uint8_t**)&obj, (uint16_t*)&obj_size)) {
-        obj_size &= 0x0000FFFF;
-        if (obj_size > 0) {
-          memcpy(cert, obj, obj_size);
+      if (MIAS_get_certificate_by_container_id(_mias, cid, cert, &obj_size)) {
+        if (cert != NULL) {
           cert[obj_size] = '\0';
-          *cert_size     = obj_size;
-          free(obj);
         }
+        *cert_size = obj_size + 1;
+        ret        = 0;
       }
     }
     Applet_deselect((Applet*)_mias);
@@ -313,39 +297,27 @@ int tob_pk_extract_se(uint8_t* pk, int* pk_size, const char* path, const char* p
 
   // Read PKey from EF
   if (memcmp(path, SE_EF_KEY_NAME_PREFIX, strlen(SE_EF_KEY_NAME_PREFIX)) == 0) {
-    int obj_size;
-    char* obj = NULL;
-
     // Remove prefix from key path
     path += strlen(SE_EF_KEY_NAME_PREFIX);
 
-    if ((ret = se_read_object(path, &obj, &obj_size, pin)) == 0) {
-      memcpy(pk, obj, obj_size);
-      pk[obj_size] = '\0';
-      *pk_size     = obj_size;
-    }
-
-    if (obj != NULL) {
-      free(obj);
+    if ((ret = se_read_object(path, pk, pk_size, pin)) == 0) {
+      if (pk != NULL) {
+        pk[*pk_size] = '\0';
+      }
+      *pk_size += 1;  // object is read without traling zero
     }
   }
 
   // Read PKey from MIAS P11 Data object
   else if (memcmp(path, SE_MIAS_P11_KEY_NAME_PREFIX, strlen(SE_MIAS_P11_KEY_NAME_PREFIX)) == 0) {
-    int obj_size;
-    char* obj = NULL;
-
     // Remove prefix from key path
     path += strlen(SE_MIAS_P11_KEY_NAME_PREFIX);
 
-    if ((ret = se_p11_read_object(path, &obj, &obj_size, pin)) == 0) {
-      memcpy(pk, obj, obj_size);
-      pk[obj_size] = '\0';
-      *pk_size     = obj_size;
-    }
-
-    if (obj != NULL) {
-      free(obj);
+    if ((ret = se_p11_read_object(path, pk, pk_size, pin)) == 0) {
+      if (pk != NULL) {
+        pk[*pk_size] = '\0';
+      }
+      *pk_size += 1;  // object is read without traling zero
     }
   }
 

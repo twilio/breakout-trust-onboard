@@ -453,7 +453,7 @@ bool MIAS::getKeyPairByContainerId(uint8_t containter_id, mias_key_pair_t** kp) 
   return false;
 }
 
-bool MIAS::getCertificateByContainerId(uint8_t container_id, uint8_t** cert, uint16_t* certLen) {
+bool MIAS::getCertificateByContainerId(uint8_t container_id, uint8_t* cert, uint16_t* certLen) {
   uint8_t i, len;
   uint8_t t, l;
   uint16_t offset;
@@ -483,7 +483,9 @@ bool MIAS::getCertificateByContainerId(uint8_t container_id, uint8_t** cert, uin
 
           if (ef_size) {
             *certLen = ef_size + 1;
-            *cert    = (uint8_t*)malloc((*certLen) * sizeof(uint8_t));
+            if (cert == NULL) {
+              return true;
+            }
 
             for (offset = 0; offset < ef_size;) {
               len = 0xEE;
@@ -493,19 +495,18 @@ bool MIAS::getCertificateByContainerId(uint8_t container_id, uint8_t** cert, uin
 
               if (transmit(0x00, 0xB0, (offset >> 8) & 0xFF, offset & 0xFF, len)) {
                 if (getStatusWord() == 0x9000) {
-                  len = getResponse(&((*cert)[offset]));
+                  len = getResponse(&(cert[offset]));
                 }
               }
 
               offset += len;
             }
-            (*cert)[offset] = '\0';
+            cert[offset] = '\0';
 
-            if (((*cert)[0] == 0x01) && ((*cert)[1] == 0x00)) {
+            if ((cert[0] == 0x01) && (cert[1] == 0x00)) {
               // Compressed
               // ToDo: uncompressed using zlib
               // printf("ERROR: Compressed certificate!");
-              free(*cert);
               return false;
             }
 
@@ -552,7 +553,7 @@ bool MIAS::changePin(uint8_t* oldPin, uint16_t oldPinLen, uint8_t* newPin, uint1
   return false;
 }
 
-bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** object, uint16_t* objectLen) {
+bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t* object, uint16_t* objectLen) {
   uint8_t data[2];
   uint8_t record[0x15];
   uint16_t i, offset, len, size, trimPos, trimLen;
@@ -658,7 +659,10 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** obje
                                                     // ----
 
                                                     *objectLen = size + 1;
-                                                    *object    = (uint8_t*)malloc((*objectLen) * sizeof(uint8_t));
+                                                    if (object == NULL) {
+                                                      return true;
+                                                    }
+
                                                     for (i = 0; i < size;) {
                                                       len = 0xEE;
                                                       if ((i + len) > size) {
@@ -667,14 +671,14 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** obje
 
                                                       if (transmit(0x00, 0xB0, offset >> 8, offset, len)) {
                                                         if (getStatusWord() == 0x9000) {
-                                                          len = getResponse(&(*object)[i]);
+                                                          len = getResponse(&(object[i]));
                                                         }
                                                       }
 
                                                       offset += len;
                                                       i += len;
                                                     }
-                                                    (*object)[i] = '\0';
+                                                    object[i] = '\0';
 
                                                     return true;
                                                   }
@@ -770,12 +774,12 @@ extern "C" bool MIAS_get_key_pair_by_container_id(MIAS* mias, uint8_t container_
   return mias->getKeyPairByContainerId(container_id, kp);
 }
 
-extern "C" bool MIAS_get_certificate_by_container_id(MIAS* mias, uint8_t container_id, uint8_t** cert,
+extern "C" bool MIAS_get_certificate_by_container_id(MIAS* mias, uint8_t container_id, uint8_t* cert,
                                                      uint16_t* cert_len) {
   return mias->getCertificateByContainerId(container_id, cert, cert_len);
 }
 
-extern "C" bool MIAS_p11_get_object_by_label(MIAS* mias, uint8_t* label, uint16_t label_len, uint8_t** object,
+extern "C" bool MIAS_p11_get_object_by_label(MIAS* mias, uint8_t* label, uint16_t label_len, uint8_t* object,
                                              uint16_t* object_len) {
   return mias->p11GetObjectByLabel(label, label_len, object, object_len);
 }
