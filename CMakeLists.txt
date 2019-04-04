@@ -4,6 +4,7 @@ project(breakout-tob)
 set(CMAKE_CXX_STANDARD 14)
 
 option(PCSC_SUPPORT "Support fot pcsc-lite" OFF)
+option(BUILD_SHARED "Build as a shared library" OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/)
 
@@ -59,7 +60,11 @@ if(PCSC_SUPPORT)
 	add_definitions(-DPCSC_SUPPORT)
 endif(PCSC_SUPPORT)
 
-add_library(TwilioTrustOnboard STATIC ${LIB_SOURCES} ${LIB_HEADERS})
+if(BUILD_SHARED)
+	add_library(TwilioTrustOnboard SHARED ${LIB_SOURCES} ${LIB_HEADERS})
+else(BUILD_SHARED)
+	add_library(TwilioTrustOnboard STATIC ${LIB_SOURCES} ${LIB_HEADERS})
+endif(BUILD_SHARED)
 
 add_executable(
         ${TOOL_BINARY}
