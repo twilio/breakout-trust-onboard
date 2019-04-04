@@ -91,14 +91,17 @@ bool MF::changePin(uint8_t* oldPin, uint16_t oldPinLen, uint8_t* newPin, uint16_
   return false;
 }
 
-bool MF::readEF(uint8_t* path, uint16_t pathLen, uint8_t** data, uint16_t* dataLen) {
+bool MF::readEF(uint8_t* path, uint16_t pathLen, uint8_t* data, uint16_t* dataLen) {
   if (transmit(0x00, 0xA4, 0x08, 0x04, path, pathLen, 0x00)) {
     if (getStatusWord() == 0x9000) {
       if (getEFSize(_seiface->_apduResponse, _seiface->getResponseLength(), dataLen)) {
         uint16_t i;
         uint8_t toread;
 
-        *data = (uint8_t*)malloc((*dataLen + 1) * sizeof(uint8_t));
+        // data is NULL, only return length
+        if (data == NULL) {
+          return true;
+        }
 
         for (i = 0; i < *dataLen;) {
           if ((*dataLen - i) >= 255) {
@@ -109,7 +112,7 @@ bool MF::readEF(uint8_t* path, uint16_t pathLen, uint8_t** data, uint16_t* dataL
 
           if (transmit(0x00, 0xB0, i >> 8, i, toread)) {
             if (getStatusWord() == 0x9000) {
-              i += getResponse(&(*data)[i]);
+              i += getResponse(&(data[i]));
             } else {
               return false;
             }
@@ -118,7 +121,7 @@ bool MF::readEF(uint8_t* path, uint16_t pathLen, uint8_t** data, uint16_t* dataL
           }
         }
 
-        (*data)[i] = '\0';
+        data[i] = '\0';
         *dataLen += 1;
         return true;
       }
@@ -145,14 +148,14 @@ extern "C" bool MF_change_pin(MF* mf, uint8_t* old_pin, uint16_t old_pin_len, ui
   return mf->changePin(old_pin, old_pin_len, new_pin, new_pin_len);
 }
 
-extern "C" bool MF_read_ef(MF* mf, uint8_t* path, uint16_t path_len, uint8_t** data, uint16_t* data_len) {
+extern "C" bool MF_read_ef(MF* mf, uint8_t* path, uint16_t path_len, uint8_t* data, uint16_t* data_len) {
   return mf->readEF(path, path_len, data, data_len);
 }
 
-extern "C" bool MF_read_certificate(MF* mf, uint8_t** data, uint16_t* data_len) {
+extern "C" bool MF_read_certificate(MF* mf, uint8_t* data, uint16_t* data_len) {
   return mf->readCertificate(data, data_len);
 }
 
-extern "C" bool MF_read_private_key(MF* mf, uint8_t** data, uint16_t* data_len) {
+extern "C" bool MF_read_private_key(MF* mf, uint8_t* data, uint16_t* data_len) {
   return mf->readPrivateKey(data, data_len);
 }

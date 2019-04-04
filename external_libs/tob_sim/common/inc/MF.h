@@ -30,22 +30,23 @@ class MF : public Applet {
   bool changePin(uint8_t* oldPin, uint16_t oldPinLen, uint8_t* newPin, uint16_t newPinLen);
 
   // Read MF.
-  // Path parameter is the targetted EF name.
-  // Data parameter is a buffer which will contain the EF content. It will be allocated within the function.
+  // path parameter is the targetted EF name.
+  // data parameter is a buffer to write EF content to. If NULL, just returns the length.
+  // dataLen parameter is to write the length of EF content.
   // Returns true in case reading was successful, false otherwise.
-  bool readEF(uint8_t* path, uint16_t pathLen, uint8_t** data, uint16_t* dataLen);
+  bool readEF(uint8_t* path, uint16_t pathLen, uint8_t* data, uint16_t* dataLen);
 
   // Read Certificate.
   // Data parameter is a buffer which will contain the certificate. It will be allocated within the function.
   // Returns true in case reading was successful, false otherwise.
-  bool readCertificate(uint8_t** data, uint16_t* dataLen) {
+  bool readCertificate(uint8_t* data, uint16_t* dataLen) {
     return readEF((uint8_t*)"7FAA6F01", 8, data, dataLen);
   }
 
   // Read Private Key.
   // Data parameter is a buffer which will contain the private key. It will be allocated within the function.
   // Returns true in case reading was successful, false otherwise.
-  bool readPrivateKey(uint8_t** data, uint16_t* dataLen) {
+  bool readPrivateKey(uint8_t* data, uint16_t* dataLen) {
     return readEF((uint8_t*)"7FAA6F02", 8, data, dataLen);
   }
 };
@@ -62,8 +63,8 @@ bool MF_change_pin(MF* mf, uint8_t* old_pin, uint16_t old_pin_len, uint8_t* new_
 
 bool MF_read_ef(MF* mf, uint8_t* path, uint16_t path_len, uint8_t** data, uint16_t* data_len);
 
-bool MF_read_certificate(MF* mf, uint8_t** data, uint16_t* data_len);
-bool MF_read_private_key(MF* mf, uint8_t** data, uint16_t* data_len);
+bool MF_read_certificate(MF* mf, uint8_t* data, uint16_t* data_len);
+bool MF_read_private_key(MF* mf, uint8_t* data, uint16_t* data_len);
 
 #endif
 
