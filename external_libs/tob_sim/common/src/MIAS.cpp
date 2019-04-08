@@ -18,7 +18,7 @@
 static uint8_t AID[] = {0xA0, 0x00, 0x00, 0x00, 0x18, 0x80, 0x00, 0x00, 0x00, 0x06, 0x62, 0x41, 0x51};
 
 MIAS::MIAS(void) : Applet(AID, sizeof(AID)) {
-  _keypairs = NULL;
+  _keypairs_num = -1;
 
   _hashAlgo = 0;
 
@@ -30,13 +30,6 @@ MIAS::MIAS(void) : Applet(AID, sizeof(AID)) {
 }
 
 MIAS::~MIAS(void) {
-  void* ptr;
-
-  while (_keypairs != NULL) {
-    ptr = _keypairs->next;
-    free(_keypairs);
-    _keypairs = (mias_key_pair_t*)ptr;
-  }
 }
 
 /** PRIVATE *******************************************************************/
@@ -280,7 +273,7 @@ bool MIAS::listKeyPairs(void) {
   uint16_t size                = 0;
   mias_key_pair_t* ptr;
 
-  if (_keypairs != NULL) {
+  if (_keypairs_num != -1) {
     return true;
   }
 
@@ -311,7 +304,10 @@ bool MIAS::listKeyPairs(void) {
             if (transmit(0x00, 0xB0, (offset >> 8) & 0xFF, offset & 0xFF, 0x0B)) {
               if (getStatusWord() == 0x9000) {
                 if (_seiface->_apduResponse[0]) {
-                  ptr                 = (mias_key_pair_t*)malloc(sizeof(mias_key_pair_t));
+                  if (_keypairs_num >= key_pool_size - 1) break;
+
+                  ++_keypairs_num;
+                  ptr                 = &_keypairs[_keypairs_num];
                   ptr->pub_file_id[0] = 0;
                   ptr->pub_file_id[1] = 0;
 
@@ -354,15 +350,13 @@ bool MIAS::listKeyPairs(void) {
                   }
 
                   ptr->has_cert = false;
-
-                  ptr->next = _keypairs;
-                  _keypairs = ptr;
                 }
               } else {
                 break;
               }
             }
           }
+          ++_keypairs_num;
 
           if (transmit(0x00, 0xA4, 0x08, 0x04, FILE_DIR_EF, sizeof(FILE_DIR_EF), 0x15)) {
             if (getStatusWord() == 0x9000) {
@@ -377,9 +371,8 @@ bool MIAS::listKeyPairs(void) {
                             (_seiface->_apduResponse[14] == 'c') && (_seiface->_apduResponse[15] == 'p')) {
                           if ((_seiface->_apduResponse[4] == 'k') && (_seiface->_apduResponse[5] == 'x') &&
                               (_seiface->_apduResponse[6] == 'c')) {
-                            ptr = _keypairs;
-
-                            while (ptr != NULL) {
+                            for (int j = 0; j < _keypairs_num; ++j) {
+                              ptr = &_keypairs[j];
                               if (((ptr->kid & 0x0F) - 1) ==
                                   (((_seiface->_apduResponse[7] - '0') * 10) + (_seiface->_apduResponse[8] - '0'))) {
                                 ptr->pub_file_id[0] = _seiface->_apduResponse[0];
@@ -387,15 +380,13 @@ bool MIAS::listKeyPairs(void) {
                                 ptr->has_cert       = true;
                                 break;
                               }
-                              ptr = ptr->next;
                             }
                           }
                           // ksc file is for signature keys
                           else if ((_seiface->_apduResponse[4] == 'k') && (_seiface->_apduResponse[5] == 's') &&
                                    (_seiface->_apduResponse[6] == 'c')) {
-                            ptr = _keypairs;
-
-                            while (ptr != NULL) {
+                            for (int j = 0; j < _keypairs_num; ++j) {
+                              ptr = &_keypairs[j];
                               if (((ptr->kid & 0x0F) - 1) ==
                                   (((_seiface->_apduResponse[7] - '0') * 10) + (_seiface->_apduResponse[8] - '0'))) {
                                 ptr->pub_file_id[0] = _seiface->_apduResponse[0];
@@ -403,7 +394,6 @@ bool MIAS::listKeyPairs(void) {
                                 ptr->has_cert       = true;
                                 break;
                               }
-                              ptr = ptr->next;
                             }
                           }
                         }
@@ -414,21 +404,6 @@ bool MIAS::listKeyPairs(void) {
               }
             }
           }
-
-          // DEBUG
-          /*
-          {
-                  ptr = _keypairs;
-
-                  printf("\r\n---\r\n");
-                  while(ptr != NULL) {
-                          printf("KID: %02X %d\r\n", ptr->kid,  ptr->has_cert);
-                          ptr = ptr->next;
-                  }
-                  printf("---\r\n\r\n");
-          }
-          */
-          // -----
           return true;
         }
       }
@@ -441,19 +416,18 @@ bool MIAS::listKeyPairs(void) {
 bool MIAS::getKeyPairByContainerId(uint8_t containter_id, mias_key_pair_t** kp) {
   listKeyPairs();
 
-  *kp = _keypairs;
 
-  while (*kp != NULL) {
-    if ((((*kp)->kid & 0x0F) - 1) == containter_id) {
+  for (int i = 0; i < _keypairs_num; i++) {
+    if (((_keypairs[i].kid & 0x0F) - 1) == containter_id) {
+      *kp = &_keypairs[i];
       return true;
     }
-    *kp = (*kp)->next;
   }
 
   return false;
 }
 
-bool MIAS::getCertificateByContainerId(uint8_t container_id, uint8_t** cert, uint16_t* certLen) {
+bool MIAS::getCertificateByContainerId(uint8_t container_id, uint8_t* cert, uint16_t* certLen) {
   uint8_t i, len;
   uint8_t t, l;
   uint16_t offset;
@@ -483,7 +457,9 @@ bool MIAS::getCertificateByContainerId(uint8_t container_id, uint8_t** cert, uin
 
           if (ef_size) {
             *certLen = ef_size + 1;
-            *cert    = (uint8_t*)malloc((*certLen) * sizeof(uint8_t));
+            if (cert == NULL) {
+              return true;
+            }
 
             for (offset = 0; offset < ef_size;) {
               len = 0xEE;
@@ -493,19 +469,18 @@ bool MIAS::getCertificateByContainerId(uint8_t container_id, uint8_t** cert, uin
 
               if (transmit(0x00, 0xB0, (offset >> 8) & 0xFF, offset & 0xFF, len)) {
                 if (getStatusWord() == 0x9000) {
-                  len = getResponse(&((*cert)[offset]));
+                  len = getResponse(&(cert[offset]));
                 }
               }
 
               offset += len;
             }
-            (*cert)[offset] = '\0';
+            cert[offset] = '\0';
 
-            if (((*cert)[0] == 0x01) && ((*cert)[1] == 0x00)) {
+            if ((cert[0] == 0x01) && (cert[1] == 0x00)) {
               // Compressed
               // ToDo: uncompressed using zlib
               // printf("ERROR: Compressed certificate!");
-              free(*cert);
               return false;
             }
 
@@ -552,14 +527,14 @@ bool MIAS::changePin(uint8_t* oldPin, uint16_t oldPinLen, uint8_t* newPin, uint1
   return false;
 }
 
-bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** object, uint16_t* objectLen) {
+bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t* object, uint16_t* objectLen) {
   uint8_t data[2];
   uint8_t record[0x15];
   uint16_t i, offset, len, size, trimPos, trimLen;
-  mias_file_t* file  = NULL;
   mias_file_t* nfile = NULL;
 
   *objectLen = 0;
+  _files_num = 0;
 
   // FILE_DIR_EF
   data[0] = 0x01;
@@ -578,25 +553,23 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** obje
               if (transmit(0x00, 0xB0, offset >> 8, offset, 0x15)) {
                 if (getStatusWord() == 0x9000) {
                   if (getResponse(record) == 0x15) {
-                    nfile       = (mias_file_t*)calloc(1, sizeof(mias_file_t));
+                    nfile       = &_files[_files_num];
                     nfile->efid = (record[0] << 8) | record[1];
                     nfile->size = (record[2] << 8) | record[3];
                     memcpy(nfile->dir, &record[12], 8);
                     memcpy(nfile->name, &record[4], 8);
-
-                    nfile->next = file;
-                    file        = nfile;
+                    ++_files_num;
                   }
                 }
               }
             }
 
-            while (file != NULL) {
-              if ((strcmp((const char*)file->dir, "p11") == 0) &&
-                  ((memcmp((const char*)file->name, "pubdat", 6) == 0) ||
-                   ((memcmp((const char*)file->name, "pridat", 6) == 0)))) {
-                data[0] = file->efid >> 8;
-                data[1] = file->efid;
+            for (int j = 0; j < _files_num; ++j) {
+              if ((strcmp((const char*)_files[j].dir, "p11") == 0) &&
+                  ((memcmp((const char*)_files[j].name, "pubdat", 6) == 0) ||
+                   ((memcmp((const char*)_files[j].name, "pridat", 6) == 0)))) {
+                data[0] = _files[j].efid >> 8;
+                data[1] = _files[j].efid;
 
                 if (transmit(0x00, 0xA4, 0x08, 0x04, data, sizeof(data))) {
                   if (getStatusWord() == 0x9000) {
@@ -648,17 +621,11 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** obje
 
                                                     offset++;
 
-
-                                                    // Clear the files to free some space
-                                                    while (file != NULL) {
-                                                      nfile = file->next;
-                                                      free(file);
-                                                      file = nfile;
-                                                    }
-                                                    // ----
-
                                                     *objectLen = size + 1;
-                                                    *object    = (uint8_t*)malloc((*objectLen) * sizeof(uint8_t));
+                                                    if (object == NULL) {
+                                                      return true;
+                                                    }
+
                                                     for (i = 0; i < size;) {
                                                       len = 0xEE;
                                                       if ((i + len) > size) {
@@ -667,14 +634,14 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** obje
 
                                                       if (transmit(0x00, 0xB0, offset >> 8, offset, len)) {
                                                         if (getStatusWord() == 0x9000) {
-                                                          len = getResponse(&(*object)[i]);
+                                                          len = getResponse(&(object[i]));
                                                         }
                                                       }
 
                                                       offset += len;
                                                       i += len;
                                                     }
-                                                    (*object)[i] = '\0';
+                                                    object[i] = '\0';
 
                                                     return true;
                                                   }
@@ -696,9 +663,6 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t** obje
                   }
                 }
               }
-              nfile = file->next;
-              free(file);
-              file = nfile;
             }
           }
         }
@@ -770,12 +734,12 @@ extern "C" bool MIAS_get_key_pair_by_container_id(MIAS* mias, uint8_t container_
   return mias->getKeyPairByContainerId(container_id, kp);
 }
 
-extern "C" bool MIAS_get_certificate_by_container_id(MIAS* mias, uint8_t container_id, uint8_t** cert,
+extern "C" bool MIAS_get_certificate_by_container_id(MIAS* mias, uint8_t container_id, uint8_t* cert,
                                                      uint16_t* cert_len) {
   return mias->getCertificateByContainerId(container_id, cert, cert_len);
 }
 
-extern "C" bool MIAS_p11_get_object_by_label(MIAS* mias, uint8_t* label, uint16_t label_len, uint8_t** object,
+extern "C" bool MIAS_p11_get_object_by_label(MIAS* mias, uint8_t* label, uint16_t label_len, uint8_t* object,
                                              uint16_t* object_len) {
   return mias->p11GetObjectByLabel(label, label_len, object, object_len);
 }
