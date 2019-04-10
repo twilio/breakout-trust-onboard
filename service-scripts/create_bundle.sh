@@ -269,13 +269,14 @@ echo "Setting up static IP address for conference"
 sudo rm ${RPI_ROOT}/etc/systemd/system/dhcpcd.service.d/wait.conf
 sudo cp bundle_files/etc/network/interfaces ${RPI_ROOT}/etc/network/
 
-echo "Installing sample sources"
-sudo rm -rf ${RPI_ROOT}/home/pi/azure-sample
-sudo cp -r ${tob_repo}/cloud-support/azure-iot ${RPI_ROOT}/home/pi/azure-sample
-sudo rsync -axvp ${tob_repo}/ ${RPI_ROOT}/home/pi/Breakout_Trust_Onboard_SDK
+echo "Installing initial Breakout_Trust_Onboard_SDK for examples and documentation"
+sudo rm -rf ${RPI_ROOT}/home/pi/Breakout_Trust_Onboard_SDK
+tob_tmp_dir=$(mktemp -d)
+git clone "$TOB_REPO" --branch ${TOB_BRANCH} --recursive ${tob_tmp_dir}
+sudo mv ${tob_tmp_dir} ${RPI_ROOT}/home/pi/Breakout_Trust_Onboard_SDK
 pi_uname=$(cat ${RPI_ROOT}/etc/passwd | grep '^pi:' | cut -d ':' -f 3)
 pi_grp=$(cat ${RPI_ROOT}/etc/passwd | grep '^pi:' | cut -d ':' -f 4)
-sudo chown -R ${pi_uname}:${pi_grp} ${RPI_ROOT}/home/pi/{azure-sample,Breakout_Trust_Onboard_SDK}
+sudo chown -R ${pi_uname}:${pi_grp} ${RPI_ROOT}/home/pi/Breakout_Trust_Onboard_SDK
 
 sudo umount ${RPI_BOOT}
 sudo umount ${RPI_ROOT}
