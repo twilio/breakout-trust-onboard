@@ -11,6 +11,6 @@ if [ "${SENDER}" == "2936" ]; then
   PARAMS=($TEXT)
   echo "PARAMS: ${PARAMS[1]}"
   if [ "${PARAMS[0]}" == "Register" ]; then
-    echo "${PARAMS[1]}" > ~pi/azure_scope_id.txt
+    echo "${PARAMS[1]}" > ~pi/azure_id_scope.txt
   fi
 fi

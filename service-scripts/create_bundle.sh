@@ -219,10 +219,10 @@ sudo ln -s /etc/systemd/system/twilio_ppp.service ${RPI_ROOT}/etc/systemd/system
 echo "Setting up smstools"
 sudo cp bundle_files/etc/smsd.conf ${RPI_ROOT}/etc/
 sudo cp bundle_files/home/pi/sms_received.sh ${RPI_ROOT}/home/pi/
-sudo touch ${RPI_ROOT}/home/pi/azure_scope_id.txt
+sudo touch ${RPI_ROOT}/home/pi/azure_id_scope.txt
 pi_uname=$(cat ${RPI_ROOT}/etc/passwd | grep '^pi:' | cut -d ':' -f 3)
 dialout_grp=$(cat ${RPI_ROOT}/etc/group | grep '^dialout:' | cut -d ':' -f 3)
-sudo chown -R ${pi_uname}:${dialout_grp} ${RPI_ROOT}/home/pi/azure_scope_id.txt
+sudo chown -R ${pi_uname}:${dialout_grp} ${RPI_ROOT}/home/pi/azure_id_scope.txt
 
 echo "Configuring default locale"
 # TODO: change default locale to en_US.UTF-8 UTF-8
