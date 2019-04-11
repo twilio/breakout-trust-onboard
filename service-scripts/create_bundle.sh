@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Install qemu and proot on host machine
+sudo apt-get install qemu-user proot
+
 DEFAULT_RASPBIAN_URL=https://downloads.raspberrypi.org/raspbian_lite_latest
 DEFAULT_RASPBIAN_IMAGENAME=raspbian_lite_latest
 
@@ -15,22 +18,20 @@ TOB_BRANCH=build-bundle
 WIRELESS_PPP_REPO=https://github.com/twilio/wireless-ppp-scripts.git
 WIRELESS_PPP_BRANCH=master
 
-RASPBIAN_DISTRO_URL=http://raspbian.raspberrypi.org/raspbian/
-REQUIRED_PACKAGES="libcurl4-openssl-dev libpcap0.8 libssl1.0-dev ppp uuid-dev cmake cmake-data libarchive13 libjsoncpp1 libuv1 liblzo2-2 smstools procmail screen udhcpd busybox"
-
-find_file () {
-	package=$1
-
-	if [ ! -f Packages ]; then
-		wget ${RASPBIAN_DISTRO_URL}/dists/stretch/main/binary-armhf/Packages
-	fi
-
-	cat Packages | \
-	sed -n "/^Package: ${package}\$/,/^Package: .*\$/p" | \
-	sed -n "s/Filename: \(.*\)/\1/p"
-}
+REQUIRED_PACKAGES="libcurl4-openssl-dev libpcap0.8 libssl1.0-dev ppp uuid-dev cmake cmake-data libarchive13 libjsoncpp1 libuv1 liblzo2-2 smstools procmail screen udhcpd"
 
 mount_cleanup () {
+ 	 # Tear-down qemu chroot env
+ 	 if [ ! -z "${RPI_ROOT}}" ]; then
+ 		sudo rm ${RPI_ROOT}/usr/bin/qemu-arm-static || true
+ 		rm ${RPI_ROOT}/tmp/setup.sh || true
+ 		sudo sed -i 's/^#CHROOT //g' ${RPI_ROOT}/etc/ld.so.preload || true
+ 		sleep 2
+ 		sudo umount ${RPI_ROOT}/dev/pts
+ 		sudo umount ${RPI_ROOT}/dev
+ 		sudo umount ${RPI_ROOT}/{sys,proc,etc/resolv.conf} || true
+ 	 fi
+
 	sudo umount ${RPI_BOOT}
 	sudo umount ${RPI_ROOT}
 	sudo losetup -d ${loop_device}
@@ -43,11 +44,24 @@ mount_sysroot () {
 	mountpoint_root=$2
 	image=$3
 
+ 	 if [ -z "${mountpoint_root}" ]; then
+ 		fail "Trouble locating mountpoint_root - aborting"
+ 	 fi
+
 	loop_device=$(sudo losetup --show -f "${image}")
 	export loop_device
 	sudo partprobe ${loop_device} && \
 	sudo mount ${loop_device}p1 ${mountpoint_boot} && \
 	sudo mount ${loop_device}p2 ${mountpoint_root}
+
+ 	 # Setup chroot qemu env
+ 	 sudo mount --bind /dev ${mountpoint_root}/dev/ || fail "Unable to mount chroot environment"
+ 	 sudo mount --bind /sys ${mountpoint_root}/sys/ || fail "Unable to mount chroot environment"
+ 	 sudo mount --bind /proc ${mountpoint_root}/proc/ || fail "Unable to mount chroot environment"
+ 	 sudo mount --bind /dev/pts ${mountpoint_root}/dev/pts || fail "Unable to mount chroot environment"
+ 	 sudo mount --bind /etc/resolv.conf ${mountpoint_root}/etc/resolv.conf || fail "Unable to mount chroot environment"
+ 	 sudo sed -i 's/^/#CHROOT /g' ${mountpoint_root}/etc/ld.so.preload || fail "Unable to setup chroot environment"
+ 	 sudo cp /usr/bin/qemu-arm-static ${mountpoint_root}/usr/bin/ || fail "Unable to setup chroot environment"
 }
 
 fail () {
@@ -164,28 +178,30 @@ if [ -z "${RPI_ROOT}" ]; then
   exit 1
 fi
 
-echo "Downloading Debian packages"
+# Generate setup shell script
+cat > ${RPI_ROOT}/tmp/setup.sh << _DONE_
+echo "Configuring default locale"
+# dpkg-reconfigure locales
+sed -i 's/^# \(en_US.UTF-8 UTF-8\)/\1/g' etc/locale.gen
+sed -i 's/^\(en_GB.UTF-8\)/#\1/g' etc/locale.gen
+/usr/sbin/locale-gen
 
-mkdir -p debs
-pushd debs
-for package in ${REQUIRED_PACKAGES}; do
-	package_path=$(find_file ${package})
+echo "Setting default conference password"
+echo -e "build19\nbuild19" | passwd pi
 
-	if [ -z "$package_path" ]; then
-		fail "couldn't find ${package} in Raspbian repo"
-	fi
+echo "Installing required packages"
+apt-get update
+# Before the conference, we would like to update the pi's, but upgrading everything seems to break USB UART replication from the u-blox.  Investigate this.
+#apt-get upgrade -y
+apt-get install -y ${REQUIRED_PACKAGES}
+apt-get autoremove -y
+apt-get clean
 
-	if [ ! -f $(basename ${package_path}) ]; then
-		wget -nc "${RASPBIAN_DISTRO_URL}${package_path}" || fail "couldn't download ${package} from ${RASPBIAN_DISTRO_URL}${package_path}"
-	fi
-done
-popd
-
-echo "Installing Debian packages"
-
-for package in debs/*.deb; do
-	sudo dpkg -x ${package} ${RPI_ROOT} || fail "couldn't install ${package}"
-done
+# Upgrading ssh can lead to host key generation, we don't want this - clean them up if they are created
+rm -f etc/ssh/ssh_host_*
+_DONE_
+sudo chmod +x ${RPI_ROOT}/tmp/setup.sh || fail "Unable to generate setup script"
+sudo chroot ${RPI_ROOT} /bin/bash /tmp/setup.sh || fail "Unable to generate setup script"
 
 export PATH=${PATH}:${rpi_tools_repo}/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin
 
@@ -223,10 +239,7 @@ cpack || fail "failed to package Trust Onboard SDK"
 for package in *.deb; do
 	sudo dpkg -x ${package} ${RPI_ROOT} || fail "failed to install Trust Onboard SDK"
 done
-
 popd
-
-sudo ln -fs /etc/systemd/system/seeed_lte_hat.service ${RPI_ROOT}/etc/systemd/system/multi-user.target.wants/seeed_lte_hat.service
 
 echo "Installing PPP scripts"
 ppp_tempdir=$(mktemp -d)
@@ -240,8 +253,6 @@ sudo cp peers/twilio ${RPI_ROOT}/etc/ppp/peers
 rm -rf ${ppp_tempdir}
 popd
 
-sudo ln -fs /etc/systemd/system/twilio_ppp.service ${RPI_ROOT}/etc/systemd/system/multi-user.target.wants/twilio_ppp.service
-
 echo "Setting up smstools"
 sudo cp ${tob_repo}/service-scripts/bundle_files/etc/smsd.conf ${RPI_ROOT}/etc/
 sudo cp ${tob_repo}/service-scripts/bundle_files/home/pi/sms_received.sh ${RPI_ROOT}/home/pi/
@@ -250,17 +261,9 @@ pi_uname=$(cat ${RPI_ROOT}/etc/passwd | grep '^pi:' | cut -d ':' -f 3)
 dialout_grp=$(cat ${RPI_ROOT}/etc/group | grep '^dialout:' | cut -d ':' -f 3)
 sudo chown -R ${pi_uname}:${dialout_grp} ${RPI_ROOT}/home/pi/azure_id_scope.txt
 
-echo "Configuring default locale"
-# TODO: change default locale to en_US.UTF-8 UTF-8
-# TODO: additional work needed -> mnt/rootfs/usr/lib/locale/locale-archive /media/rbeiter/rootfs/usr/lib/locale/locale-archive
-# -bash: warning: setlocale: LC_ALL: cannot change locale (en_US.utf8)
-sudo cp ${tob_repo}/service-scripts/bundle_files/etc/default/locale ${RPI_ROOT}/etc/default/
-sudo cp ${tob_repo}/service-scripts/bundle_files/etc/locale.gen ${RPI_ROOT}/etc/
-
 echo "Configuring default keyboard layout"
+# dpkg-reconfigure keyboard-layout
 sudo cp ${tob_repo}/service-scripts/bundle_files/etc/default/keyboard ${RPI_ROOT}/etc/default/
-
-# TODO: change default pi password
 
 echo "Disabling serial console to avoid conflicts with LTE HAT"
 sudo sed -i 's/ console=serial0,115200//g' ${RPI_BOOT}/cmdline.txt
@@ -270,30 +273,13 @@ sudo touch ${RPI_ROOT}/etc/modprobe.d/raspi-blacklist.conf
 sudo sh -c "echo i2c-dev >> ${RPI_ROOT}/etc/modules"
 sudo sed -i 's/^#\(dtparam=i2c_arm=on\)/\1/g' ${RPI_BOOT}/config.txt
 
-# TODO: Conference-only configuration, will be removed for official Critical IoT Kit
-
-echo "Enabling sshd by default for conference"
-sudo rm -f ${RPI_ROOT}/etc/init/ssh.override
-sudo ln -fs /lib/systemd/system/ssh.service ${RPI_ROOT}/etc/systemd/system/multi-user.target.wants/ssh.service
-sudo mv ${RPI_ROOT}/etc/rc2.d/{K,S}01ssh || true
-sudo mv ${RPI_ROOT}/etc/rc3.d/{K,S}01ssh || true
-sudo mv ${RPI_ROOT}/etc/rc4.d/{K,S}01ssh || true
-sudo mv ${RPI_ROOT}/etc/rc5.d/{K,S}01ssh || true
+echo "Setting up static IP address for conference"
+sudo rm -f ${RPI_ROOT}/etc/systemd/system/dhcpcd.service.d/wait.conf
+sudo cp ${tob_repo}/service-scripts/bundle_files/etc/network/interfaces ${RPI_ROOT}/etc/network/
 
 echo "Setting up udhcpd"
 sudo sed -i 's/ENABLED="no"/ENABLED="yes"/' ${RPI_ROOT}/etc/default/udhcpd
 sudo cp ${tob_repo}/service-scripts/bundle_files/etc/udhcpd.conf ${RPI_ROOT}/etc/
-sudo ln -fs ../init.d/udhcpd ${RPI_ROOT}/etc/rc0.d/K01udhcpd
-sudo ln -fs ../init.d/udhcpd ${RPI_ROOT}/etc/rc1.d/K01udhcpd
-sudo ln -fs ../init.d/udhcpd ${RPI_ROOT}/etc/rc2.d/S01udhcpd
-sudo ln -fs ../init.d/udhcpd ${RPI_ROOT}/etc/rc3.d/S01udhcpd
-sudo ln -fs ../init.d/udhcpd ${RPI_ROOT}/etc/rc4.d/S01udhcpd
-sudo ln -fs ../init.d/udhcpd ${RPI_ROOT}/etc/rc5.d/S01udhcpd
-sudo ln -fs ../init.d/udhcpd ${RPI_ROOT}/etc/rc6.d/K01udhcpd
-
-echo "Setting up static IP address for conference"
-sudo rm -f ${RPI_ROOT}/etc/systemd/system/dhcpcd.service.d/wait.conf
-sudo cp ${tob_repo}/service-scripts/bundle_files/etc/network/interfaces ${RPI_ROOT}/etc/network/
 
 echo "Installing initial Breakout_Trust_Onboard_SDK for examples and documentation"
 sudo rm -rf ${RPI_ROOT}/home/pi/Breakout_Trust_Onboard_SDK
@@ -301,5 +287,15 @@ sudo git clone ${tob_repo} --branch ${TOB_BRANCH} ${RPI_ROOT}/home/pi/Breakout_T
 pi_uname=$(cat ${RPI_ROOT}/etc/passwd | grep '^pi:' | cut -d ':' -f 3)
 pi_grp=$(cat ${RPI_ROOT}/etc/passwd | grep '^pi:' | cut -d ':' -f 4)
 sudo chown -R ${pi_uname}:${pi_grp} ${RPI_ROOT}/home/pi/Breakout_Trust_Onboard_SDK
+
+echo "Enabling services"
+cat > ${RPI_ROOT}/tmp/setup.sh << _DONE_
+systemctl enable seeed_lte_hat
+systemctl enable ssh
+systemctl enable udhcpd
+systemctl enable twilio_ppp
+_DONE_
+sudo chmod +x ${RPI_ROOT}/tmp/setup.sh || fail "Unable to generate setup script"
+sudo chroot ${RPI_ROOT} /bin/bash /tmp/setup.sh || fail "Unable to generate setup script"
 
 echo "Successfully created image at ${raspbian_image}"
