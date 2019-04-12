@@ -283,7 +283,7 @@ sudo cp ${tob_repo}/service-scripts/bundle_files/etc/udhcpd.conf ${RPI_ROOT}/etc
 
 echo "Installing initial Breakout_Trust_Onboard_SDK for examples and documentation"
 sudo rm -rf ${RPI_ROOT}/home/pi/Breakout_Trust_Onboard_SDK
-sudo git clone ${tob_repo} --branch ${TOB_BRANCH} ${RPI_ROOT}/home/pi/Breakout_Trust_Onboard_SDK
+sudo git clone "$TOB_REPO" --branch ${TOB_BRANCH} --recursive ${RPI_ROOT}/home/pi/Breakout_Trust_Onboard_SDK
 pi_uname=$(cat ${RPI_ROOT}/etc/passwd | grep '^pi:' | cut -d ':' -f 3)
 pi_grp=$(cat ${RPI_ROOT}/etc/passwd | grep '^pi:' | cut -d ':' -f 4)
 sudo chown -R ${pi_uname}:${pi_grp} ${RPI_ROOT}/home/pi/Breakout_Trust_Onboard_SDK
