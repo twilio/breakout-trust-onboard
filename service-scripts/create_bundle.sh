@@ -18,7 +18,7 @@ TOB_BRANCH=build-bundle
 WIRELESS_PPP_REPO=https://github.com/twilio/wireless-ppp-scripts.git
 WIRELESS_PPP_BRANCH=master
 
-REQUIRED_PACKAGES="libcurl4-openssl-dev libpcap0.8 libssl1.0-dev ppp uuid-dev cmake cmake-data libarchive13 libjsoncpp1 libuv1 liblzo2-2 smstools procmail screen udhcpd"
+REQUIRED_PACKAGES="libcurl4-openssl-dev libpcap0.8 libssl1.0-dev ppp uuid-dev cmake cmake-data libarchive13 libjsoncpp1 libuv1 liblzo2-2 smstools procmail screen udhcpd git"
 
 mount_cleanup () {
  	 # Tear-down qemu chroot env
@@ -259,7 +259,7 @@ sudo cp ${tob_repo}/service-scripts/bundle_files/home/pi/sms_received.sh ${RPI_R
 sudo touch ${RPI_ROOT}/home/pi/azure_id_scope.txt
 pi_uname=$(cat ${RPI_ROOT}/etc/passwd | grep '^pi:' | cut -d ':' -f 3)
 dialout_grp=$(cat ${RPI_ROOT}/etc/group | grep '^dialout:' | cut -d ':' -f 3)
-sudo chown -R ${pi_uname}:${dialout_grp} ${RPI_ROOT}/home/pi/azure_id_scope.txt
+sudo chown -R ${pi_uname}:${dialout_grp} ${RPI_ROOT}/home/pi/azure_id_scope.txt ${RPI_ROOT}/home/pi/sms_received.sh
 
 echo "Configuring default keyboard layout"
 # dpkg-reconfigure keyboard-layout
@@ -273,12 +273,12 @@ sudo touch ${RPI_ROOT}/etc/modprobe.d/raspi-blacklist.conf
 sudo sh -c "echo i2c-dev >> ${RPI_ROOT}/etc/modules"
 sudo sed -i 's/^#\(dtparam=i2c_arm=on\)/\1/g' ${RPI_BOOT}/config.txt
 
-echo "Setting up static IP address for conference"
+echo "Setting up fallback static IP address for conference"
 sudo rm -f ${RPI_ROOT}/etc/systemd/system/dhcpcd.service.d/wait.conf
-sudo cp ${tob_repo}/service-scripts/bundle_files/etc/network/interfaces ${RPI_ROOT}/etc/network/
+sudo cp ${tob_repo}/service-scripts/bundle_files/etc/dhcpcd.conf ${RPI_ROOT}/etc/
 
 echo "Setting up udhcpd"
-sudo sed -i 's/ENABLED="no"/ENABLED="yes"/' ${RPI_ROOT}/etc/default/udhcpd
+sudo sed -i 's/ENABLED="no"/ENABLED="yes"/;s/DHCPD_OPTS="/DHCPD_OPTS="192.168.253.100 /' ${RPI_ROOT}/etc/default/udhcpd
 sudo cp ${tob_repo}/service-scripts/bundle_files/etc/udhcpd.conf ${RPI_ROOT}/etc/
 
 echo "Installing initial Breakout_Trust_Onboard_SDK for examples and documentation"
@@ -294,6 +294,7 @@ systemctl enable seeed_lte_hat
 systemctl enable ssh
 systemctl enable udhcpd
 systemctl enable twilio_ppp
+systemctl disable exim4
 _DONE_
 sudo chmod +x ${RPI_ROOT}/tmp/setup.sh || fail "Unable to generate setup script"
 sudo chroot ${RPI_ROOT} /bin/bash /tmp/setup.sh || fail "Unable to generate setup script"
