@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Install qemu and proot on host machine
-sudo apt-get install qemu-user proot
+# Install qemu on host machine
+sudo apt-get install qemu-user-static
 
 DEFAULT_RASPBIAN_URL=https://downloads.raspberrypi.org/raspbian_lite_latest
 DEFAULT_RASPBIAN_IMAGENAME=raspbian_lite_latest
@@ -18,7 +18,7 @@ TOB_BRANCH=build-bundle
 WIRELESS_PPP_REPO=https://github.com/twilio/wireless-ppp-scripts.git
 WIRELESS_PPP_BRANCH=master
 
-REQUIRED_PACKAGES="libcurl4-openssl-dev libpcap0.8 libssl1.0-dev ppp uuid-dev cmake cmake-data libarchive13 libjsoncpp1 libuv1 liblzo2-2 smstools procmail screen udhcpd git"
+REQUIRED_PACKAGES="libcurl4-openssl-dev libpcap0.8 libssl1.0-dev ppp uuid-dev cmake cmake-data libarchive13 libjsoncpp1 libuv1 liblzo2-2 smstools procmail screen udhcpd git i2c-tools"
 
 mount_cleanup () {
  	 # Tear-down qemu chroot env
@@ -282,10 +282,13 @@ sudo sed -i 's/ENABLED="no"/ENABLED="yes"/;s/DHCPD_OPTS="/DHCPD_OPTS="-I 192.168
 sudo cp ${tob_repo}/service-scripts/bundle_files/etc/udhcpd.conf ${RPI_ROOT}/etc/
 
 echo "Installing initial Breakout_Trust_Onboard_SDK for examples and documentation"
-sudo rm -rf ${RPI_ROOT}/home/pi/Breakout_Trust_Onboard_SDK
-sudo git clone "$TOB_REPO" --branch ${TOB_BRANCH} --recursive ${RPI_ROOT}/home/pi/Breakout_Trust_Onboard_SDK
+tob_tempdir=$(mktemp -d)
+# needs to be done as local user because remote repository is not yet public and ssh identity is needed to clone
+git clone "$TOB_REPO" --branch ${TOB_BRANCH} --recursive ${tob_tempdir}
 pi_uname=$(cat ${RPI_ROOT}/etc/passwd | grep '^pi:' | cut -d ':' -f 3)
 pi_grp=$(cat ${RPI_ROOT}/etc/passwd | grep '^pi:' | cut -d ':' -f 4)
+sudo rm -rf ${RPI_ROOT}/home/pi/Breakout_Trust_Onboard_SDK
+sudo mv ${tob_tempdir} ${RPI_ROOT}/home/pi/Breakout_Trust_Onboard_SDK
 sudo chown -R ${pi_uname}:${pi_grp} ${RPI_ROOT}/home/pi/Breakout_Trust_Onboard_SDK
 
 echo "Enabling services"
