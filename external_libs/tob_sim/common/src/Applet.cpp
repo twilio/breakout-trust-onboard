@@ -25,6 +25,14 @@ Applet::~Applet(void) {
   }
 }
 
+void Applet::closeAllChannels(SEInterface* seiface) {
+  if (seiface != NULL) {
+    for (int i = 1; i <= APPLET_MAX_CHANNEL; i++) {
+      seiface->transmit(0x00, 0x70, 0x80, i, 0x01);
+    }
+  }
+}
+
 void Applet::init(SEInterface* seiface) {
   _seiface = seiface;
 }
@@ -150,6 +158,10 @@ extern "C" Applet* Applet_create(uint8_t* aid, uint16_t aid_len) {
 
 extern "C" void Applet_destroy(Applet* applet) {
   delete applet;
+}
+
+extern "C" void Applet_closeAllChannels(SEInterface* seiface) {
+  Applet::closeAllChannels(seiface);
 }
 
 extern "C" void Applet_init(Applet* applet, SEInterface* seiface) {
