@@ -14,12 +14,15 @@
 
 #ifdef __cplusplus
 
+#define APPLET_MAX_CHANNEL 13  // as per ISO/IEC 7816-4
+
 class Applet {
  public:
   // Create an instance of Applet and settings its corresponding AID.
   Applet(uint8_t* aid, uint16_t aidLen);
   ~Applet(void);
 
+  static void closeAllChannels(SEInterface* se);
   // Configure Applet instance with Secure Element access interface to use
   // to access the targetted applet.
   void init(SEInterface* se);
@@ -84,6 +87,7 @@ typedef struct Applet Applet;
 Applet* Applet_create(uint8_t* aid, uint16_t aid_len);
 void Applet_destroy(Applet* applet);
 
+void Applet_closeAllChannels(SEInterface* seiface);
 void Applet_init(Applet* applet, SEInterface* seiface);
 bool Applet_is_selected(Applet* applet);
 bool Applet_select(Applet* applet, bool is_basic);

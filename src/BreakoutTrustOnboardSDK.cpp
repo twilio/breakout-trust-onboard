@@ -171,12 +171,15 @@ static int se_p11_read_object(const char* label, uint8_t* obj, int* size, const 
 
 int tob_se_init_with_interface(SEInterface* seiface) {
 #ifdef __cplusplus
+  Applet::closeAllChannels(seiface);
+
   _mias = new MIAS();
   _mias->init(seiface);
 
   _mf = new MF();
   _mf->init(seiface);
 #else
+  Applet_closeAllChannels(seiface);
   _mias = MIAS_create();
   Applet_init((Applet*)_mias, seiface);
 
