@@ -29,7 +29,7 @@ mount_cleanup () {
  		sleep 2
  		sudo umount ${RPI_ROOT}/dev/pts
  		sudo umount ${RPI_ROOT}/dev
- 		sudo umount ${RPI_ROOT}/{sys,proc,etc/resolv.conf} || true
+ 		sudo umount ${RPI_ROOT}/{sys,proc,etc/resolv.conf,boot} || true
  	 fi
 
 	sudo umount ${RPI_BOOT}
@@ -60,6 +60,7 @@ mount_sysroot () {
  	 sudo mount --bind /proc ${mountpoint_root}/proc/ || fail "Unable to mount chroot environment"
  	 sudo mount --bind /dev/pts ${mountpoint_root}/dev/pts || fail "Unable to mount chroot environment"
  	 sudo mount --bind /etc/resolv.conf ${mountpoint_root}/etc/resolv.conf || fail "Unable to mount chroot environment"
+ 	 sudo mount --bind ${mountpoint_boot} ${mountpoint_root}/boot/ || fail "Unable to mount chroot environment"
  	 sudo sed -i 's/^/#CHROOT /g' ${mountpoint_root}/etc/ld.so.preload || fail "Unable to setup chroot environment"
  	 sudo cp /usr/bin/qemu-arm-static ${mountpoint_root}/usr/bin/ || fail "Unable to setup chroot environment"
 }
@@ -191,8 +192,7 @@ echo -e "build19\nbuild19" | passwd pi
 
 echo "Installing required packages"
 apt-get update
-# Before the conference, we would like to update the pi's, but upgrading everything seems to break USB UART replication from the u-blox.  Investigate this.
-#apt-get upgrade -y
+apt-get upgrade -y
 apt-get install -y ${REQUIRED_PACKAGES}
 apt-get autoremove -y
 apt-get clean
