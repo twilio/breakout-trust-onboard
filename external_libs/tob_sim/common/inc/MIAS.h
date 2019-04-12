@@ -162,7 +162,7 @@ class MIAS : public Applet {
   mias_key_pair_t _keypairs[key_pool_size];
   int _keypairs_num;
 
-  mias_file_t _files[key_pool_size];
+  mias_file_t _files[file_pool_size];
   int _files_num;
 
   uint8_t _hashAlgo;
