@@ -278,7 +278,7 @@ sudo rm -f ${RPI_ROOT}/etc/systemd/system/dhcpcd.service.d/wait.conf
 sudo cp ${tob_repo}/service-scripts/bundle_files/etc/dhcpcd.conf ${RPI_ROOT}/etc/
 
 echo "Setting up udhcpd"
-sudo sed -i 's/ENABLED="no"/ENABLED="yes"/;s/DHCPD_OPTS="/DHCPD_OPTS="192.168.253.100 /' ${RPI_ROOT}/etc/default/udhcpd
+sudo sed -i 's/ENABLED="no"/ENABLED="yes"/;s/DHCPD_OPTS="/DHCPD_OPTS="-I 192.168.253.100 /' ${RPI_ROOT}/etc/default/udhcpd
 sudo cp ${tob_repo}/service-scripts/bundle_files/etc/udhcpd.conf ${RPI_ROOT}/etc/
 
 echo "Installing initial Breakout_Trust_Onboard_SDK for examples and documentation"
