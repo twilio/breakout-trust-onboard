@@ -13,7 +13,7 @@ RPI_TOOLS_REPO=https://github.com/raspberrypi/tools.git
 RPI_TOOLS_BRANCH=master
 
 TOB_REPO=git@github.com:twilio/Breakout_Trust_Onboard_SDK.git
-TOB_BRANCH=build-bundle
+TOB_BRANCH=initial-implementation
 
 WIRELESS_PPP_REPO=https://github.com/twilio/wireless-ppp-scripts.git
 WIRELESS_PPP_BRANCH=master
@@ -207,24 +207,6 @@ export PATH=${PATH}:${rpi_tools_repo}/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf
 
 echo "Building Azure SDK"
 pushd ${azure_repo}/build_all/linux
-set +e
-patch -p3 -N <<_DONE_ || true
-diff --git a/build_all/linux/build.sh b/build_all/linux/build.sh
-index 15a65bce0..9d5c60a8a 100755
---- a/build_all/linux/build.sh
-+++ b/build_all/linux/build.sh
-@@ -127,7 +127,7 @@ process_args \$*
- rm -r -f \$build_folder
- mkdir -p \$build_folder
- pushd \$build_folder
--cmake \$toolchainfile \$cmake_install_prefix -Drun_valgrind:BOOL=\$run_valgrind -DcompileOption_C:STRING="\$extracloptions" -Drun_e2e_tests:BOOL=\$run_e2e_tests -Drun_sfc_tests:BOOL=\$run-sfc-tests -Drun_longhaul_tests=\$run_longhaul_tests -Duse_amqp:BOOL=\$build_amqp -Duse_http:BOOL=\$build_http -Duse_mqtt:BOOL=\$build_mqtt -Ddont_use_uploadtoblob:BOOL=\$no_blob -Drun_unittests:BOOL=\$run_unittests -Dbuild_python:STRING=\$build_python -Dno_logging:BOOL=\$no_logging \$build_root -Duse_prov_client:BOOL=\$prov_auth -Duse_tpm_simulator:BOOL=\$prov_use_tpm_simulator -Duse_edge_modules=\$use_edge_modules
-+cmake \$toolchainfile \$cmake_install_prefix -Drun_valgrind:BOOL=\$run_valgrind -DcompileOption_C:STRING="\$extracloptions" -Drun_e2e_tests:BOOL=\$run_e2e_tests -Drun_sfc_tests:BOOL=\$run-sfc-tests -Drun_longhaul_tests=\$run_longhaul_tests -Duse_amqp:BOOL=\$build_amqp -Duse_http:BOOL=\$build_http -Duse_mqtt:BOOL=\$build_mqtt -Ddont_use_uploadtoblob:BOOL=\$no_blob -Drun_unittests:BOOL=\$run_unittests -Dbuild_python:STRING=\$build_python -Dno_logging:BOOL=\$no_logging \$build_root -Duse_prov_client:BOOL=\$prov_auth -Duse_tpm_simulator:BOOL=\$prov_use_tpm_simulator -Duse_edge_modules=\$use_edge_modules -Duse_openssl:bool=ON -Dbuild_provisioning_service_client=ON
- 
- if [ "$make" = true ]
- then
-_DONE_
-
-set -e
 ./build.sh --toolchain-file ${tob_repo}/device-support/Seeed-LTE_Cat_1_Pi_HAT/toolchain.cmake --provisioning --no_uploadtoblob --install-path-prefix ${RPI_ROOT}/usr || fail "failed to build Azure SDK"
 cd ../../cmake/iotsdk_linux
 sudo make install || fail "failed to install Azure SDK"
@@ -260,6 +242,7 @@ sudo touch ${RPI_ROOT}/home/pi/azure_id_scope.txt
 pi_uname=$(cat ${RPI_ROOT}/etc/passwd | grep '^pi:' | cut -d ':' -f 3)
 dialout_grp=$(cat ${RPI_ROOT}/etc/group | grep '^dialout:' | cut -d ':' -f 3)
 sudo chown -R ${pi_uname}:${dialout_grp} ${RPI_ROOT}/home/pi/azure_id_scope.txt ${RPI_ROOT}/home/pi/sms_received.sh
+sudo chmod ug+w ${RPI_ROOT}/home/pi/azure_id_scope.txt
 
 echo "Configuring default keyboard layout"
 # dpkg-reconfigure keyboard-layout
