@@ -20,6 +20,8 @@
 #include "Pcsc.h"
 #endif
 
+#include "base64.h"
+
 static MF* _mf;
 static MIAS* _mias;
 static SEInterface* _modem = nullptr;
@@ -39,6 +41,36 @@ typedef struct {
   char* pin;
   mias_key_pair_t* kp;
 } mias_key_t;
+
+static void convert_der_to_pem(char const* headerStr, uint8_t* inDer, int inDerLen, uint8_t* outPem, int *outPemLen) {
+  int expectedBase64Len = Base64encode_len(inDerLen); // includes 1 extra byte for \0 termination
+  int base64BufferSize = (11 + strlen((char *)headerStr) + 6) + expectedBase64Len + (9 + strlen((char *)headerStr) + 5);
+  int base64EncodeRet = -1;
+  uint8_t *outPemPtr = outPem;
+
+  memcpy(outPemPtr, "-----BEGIN ", 11);
+  outPemPtr += 11;
+  memcpy(outPemPtr, headerStr, strlen(headerStr));
+  outPemPtr += strlen(headerStr);
+  memcpy(outPemPtr, "-----""\n", 6);
+  outPemPtr += 6;
+  
+  base64EncodeRet = Base64encode((char *)outPemPtr, (const char *)inDer, inDerLen);
+  outPemPtr += base64EncodeRet - 1; // leave off terminating null from Base64encode
+
+  memcpy(outPemPtr, "\n""-----END ", 10);
+  outPemPtr += 10;
+  memcpy(outPemPtr, headerStr, strlen(headerStr));
+  outPemPtr += strlen(headerStr);
+  memcpy(outPemPtr, "-----", 5);
+  outPemPtr += 5;
+
+  *outPemPtr = '\0';
+
+  *outPemLen = (outPemPtr - outPem);
+
+  return;
+}
 
 static void hex_string_2_bytes_array(uint8_t* hexstr, uint16_t hexstrLen, uint8_t* bytes, uint16_t* bytesLen) {
   uint8_t d;
@@ -332,9 +364,27 @@ int tobExtractAvailableCertificate(uint8_t* cert, int* cert_size, const char* pi
 }
 
 int tobExtractSigningCertificate(uint8_t* cert, int* cert_size, const char* pin) {
-  return tob_x509_crt_extract_se(cert, cert_size, CERT_SIGNING_MIAS_PATH, pin);
+  uint8_t tempCert[CERT_BUFFER_SIZE];
+  int extractedLen = 0;
+  int res = 0;
+  res = tob_x509_crt_extract_se(tempCert, &extractedLen, CERT_SIGNING_MIAS_PATH, pin);
+  if (res == 0) {
+    convert_der_to_pem("CERTIFICATE", (unsigned char *)tempCert, extractedLen, (unsigned char *)cert, cert_size);
+  }
+  return res;
 }
 
 int tobExtractAvailablePrivateKey(uint8_t* pk, int* pk_size, const char* pin) {
   return tob_pk_extract_se(pk, pk_size, PK_MIAS_PATH, pin);
+}
+
+int tobExtractAvailablePrivateKeyAsPem(uint8_t *pk, int *pk_size, const char *pin) {
+  uint8_t cert[PK_BUFFER_SIZE];
+  int extractedLen = 0;
+  int res = 0;
+  res = tob_pk_extract_se(cert, &extractedLen, PK_MIAS_PATH, pin);
+  if (res == 0) {
+    convert_der_to_pem("RSA PRIVATE KEY", cert, extractedLen, pk, pk_size);
+  }
+  return res;
 }

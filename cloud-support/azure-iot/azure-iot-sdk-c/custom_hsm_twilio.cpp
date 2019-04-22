@@ -22,8 +22,6 @@
 
 #include "custom_hsm_twilio.h"
 
-#include "base64.h"
-
 typedef struct TWILIO_TRUST_ONBOARD_HSM_INFO_TAG
 {
     const char* device_path;
@@ -125,35 +123,16 @@ int populate_key(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_pat
   }
 
   int ret = 0;
-  uint8_t pk[PK_BUFFER_SIZE];
+  uint8_t pk[CERT_BUFFER_SIZE];
   int pk_size = 0;
 
   tobInitialize(device_path);
-  ret = tobExtractAvailablePrivateKey(pk, &pk_size, pin);
+  ret = tobExtractAvailablePrivateKeyAsPem(pk, &pk_size, pin);
   if (ret != 0) {
     (void)printf("Failed reading private key\r\n");
     RESULT = 1;
   } else {
-    const char *key_header = "-----BEGIN RSA PRIVATE KEY-----""\n";
-    const char *key_footer = "\n-----END RSA PRIVATE KEY-----";
-
-    int expectedBase64KeyLen = Base64encode_len(pk_size); // includes 1 extra byte for \0 termination
-    int base64KeyBufferSize = strlen(key_header) + expectedBase64KeyLen + strlen(key_footer);
-    char *base64Key = (char *)malloc(base64KeyBufferSize); // owned by TWILIO_TRUST_ONBOARD_HSM_INFO
-    char *base64KeyPtr = base64Key;
-
-    memcpy(base64KeyPtr, key_header, strlen(key_header));
-    base64KeyPtr += strlen(key_header);
-
-    int base64EncodeRet = Base64encode(base64KeyPtr, (const char *)pk, pk_size);
-    base64KeyPtr += base64EncodeRet - 1; // leave off terminating null from Base64encode
-
-    memcpy(base64KeyPtr, key_footer, strlen(key_footer));
-    base64KeyPtr += strlen(key_footer);
-
-    *base64KeyPtr = '\0'; // terminating null
-
-    hsm_info->key = base64Key;
+    hsm_info->key = strdup(pk);
   }
 
   return RESULT;
