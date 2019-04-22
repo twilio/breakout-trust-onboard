@@ -31,6 +31,7 @@ set(LIB_SOURCES
         external_libs/tob_sim/common/src/MIAS.cpp
         external_libs/tob_sim/common/src/NetInterface.cpp
         external_libs/tob_sim/common/src/SEInterface.cpp
+        external_libs/tob_sim/common/src/base64.c
         external_libs/tob_sim/platform/generic_modem/src/ATInterface.cpp
         external_libs/tob_sim/platform/generic_modem/src/GenericModem.cpp
         external_libs/tob_sim/platform/generic_modem/src/LSerial.cpp
@@ -44,6 +45,7 @@ set(LIB_HEADERS
         external_libs/tob_sim/common/inc/MIAS.h
         external_libs/tob_sim/common/inc/NetInterface.h
         external_libs/tob_sim/common/inc/SEInterface.h
+        external_libs/tob_sim/common/inc/base64.h
         external_libs/tob_sim/platform/generic_modem/inc/ATInterface.h
         external_libs/tob_sim/platform/generic_modem/inc/GenericModem.h
         external_libs/tob_sim/platform/generic_modem/inc/LSerial.h
