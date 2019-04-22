@@ -132,7 +132,7 @@ int populate_key(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_pat
     (void)printf("Failed reading private key\r\n");
     RESULT = 1;
   } else {
-    hsm_info->key = strdup(pk);
+    hsm_info->key = strdup((char *)pk);
   }
 
   return RESULT;
