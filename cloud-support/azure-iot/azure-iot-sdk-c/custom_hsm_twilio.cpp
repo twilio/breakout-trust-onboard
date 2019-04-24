@@ -96,7 +96,7 @@ int populate_cert(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_pa
   }
 
   int ret = 0;
-  uint8_t cert[CERT_BUFFER_SIZE];
+  uint8_t cert[PEM_BUFFER_SIZE];
   int cert_size = 0;
 
   tobInitialize(device_path);
@@ -124,7 +124,7 @@ int populate_key(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_pat
   }
 
   int ret = 0;
-  uint8_t pk[CERT_BUFFER_SIZE];
+  uint8_t pk[PEM_BUFFER_SIZE];
   int pk_size = 0;
 
   tobInitialize(device_path);

@@ -13,12 +13,12 @@
 
 int main(int argc, char** argv) {
   int ret = 0;
-  uint8_t cert[CERT_BUFFER_SIZE];
+  uint8_t cert[PEM_BUFFER_SIZE];
   int cert_size = 0;
-  uint8_t pk[CERT_BUFFER_SIZE];
+  uint8_t pk[PEM_BUFFER_SIZE];
   int pk_size = 0;
 
-  uint8_t signing_cert[CERT_BUFFER_SIZE];
+  uint8_t signing_cert[PEM_BUFFER_SIZE];
   int signing_cert_size = 0;
 
   if (argc < 5) {
