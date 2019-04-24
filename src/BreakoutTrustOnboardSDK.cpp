@@ -265,26 +265,14 @@ int tob_x509_crt_extract_se(uint8_t* cert, int* cert_size, const char* path, con
   if (memcmp(path, SE_EF_KEY_NAME_PREFIX, strlen(SE_EF_KEY_NAME_PREFIX)) == 0) {
     // Remove prefix from key path
     path += strlen(SE_EF_KEY_NAME_PREFIX);
-
-    if ((ret = se_read_object(path, cert, cert_size, pin)) == 0) {
-      if (cert != NULL) {
-        cert[*cert_size] = '\0';
-      }
-      *cert_size += 1;
-    }
+    ret = se_read_object(path, cert, cert_size, pin);
   }
 
   // Read Certificate from MIAS P11 Data object
   else if (memcmp(path, SE_MIAS_P11_KEY_NAME_PREFIX, strlen(SE_MIAS_P11_KEY_NAME_PREFIX)) == 0) {
     // Remove prefix from key path
     path += strlen(SE_MIAS_P11_KEY_NAME_PREFIX);
-
-    if ((ret = se_p11_read_object(path, cert, cert_size, pin)) == 0) {
-      if (cert != NULL) {
-        cert[*cert_size] = '\0';
-      }
-      *cert_size += 1;
-    }
+    ret = se_p11_read_object(path, cert, cert_size, pin);
   }
 
   // Read Certificate from MIAS
@@ -306,10 +294,7 @@ int tob_x509_crt_extract_se(uint8_t* cert, int* cert_size, const char* path, con
       uint16_t obj_size;
 
       if (_mias->getCertificateByContainerId(cid, cert, &obj_size)) {
-        if (cert != NULL) {
-          cert[obj_size] = '\0';
-        }
-        *cert_size = obj_size + 1;
+        *cert_size = obj_size;
         ret        = 0;
       }
     }
@@ -319,10 +304,7 @@ int tob_x509_crt_extract_se(uint8_t* cert, int* cert_size, const char* path, con
       uint16_t obj_size;
 
       if (MIAS_get_certificate_by_container_id(_mias, cid, cert, &obj_size)) {
-        if (cert != NULL) {
-          cert[obj_size] = '\0';
-        }
-        *cert_size = obj_size + 1;
+        *cert_size = obj_size;
         ret        = 0;
       }
     }
