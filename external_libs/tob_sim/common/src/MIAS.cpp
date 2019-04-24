@@ -17,6 +17,24 @@
 
 static uint8_t AID[] = {0xA0, 0x00, 0x00, 0x00, 0x18, 0x80, 0x00, 0x00, 0x00, 0x06, 0x62, 0x41, 0x51};
 
+/* CONTAINERS_INFO file is organized into 11 byte long records. Each record has the following structure:
+ *   Off 0   - non-zero indicates a valid record
+ *   Off 4-5 - 0x0000 for decryption key pair or non-zero size in bits for signature key pair (big endian)
+ *   Off 6-7 - size in bits for decription key pair (bif endian)
+ *   Other bytes are reserved/not used here.
+ */
+static uint8_t CONTAINERS_INFO_EF[] = {0x00, 0x02};
+
+/* FILE_DIR file is organized into 21 byte long records. Each record has the following structure:
+ *   Off 0-1 - file ID
+ *   Off 2-3 - file size
+ *   Off 4-11 - File name, padded to the left.
+ *   Off 12-19 - Directory name, padded to the left. We are interested only in files under "mscp".
+ *   Other bytes are reserved/not used here.
+ */
+
+static uint8_t FILE_DIR_EF[] = {0x01, 0x01};
+
 MIAS::MIAS(void) : Applet(AID, sizeof(AID)) {
   _keypairs_num = -1;
 
@@ -41,8 +59,9 @@ bool MIAS::mseSetBeforeHash(uint8_t algorithm) {
   data[1] = 0x01;
   data[2] = algorithm;
 
-  if (transmit(0x00, 0x22, 0x41, 0xAA, data, sizeof(data))) {
-    if (getStatusWord() == 0x9000) {
+  if (transmit(0x00, SCIns::ManageSecurityEnvironment, SCP1::MSECompDecInt | SCP1::MSESet, SCP2::MSETemplateHashCode,
+               data, sizeof(data))) {
+    if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
       return true;
     }
   }
@@ -67,11 +86,11 @@ bool MIAS::psoHashInternally(uint8_t algorithm, uint8_t* data, uint16_t dataLen)
       l = block_size;
     }
 
-    if (!transmit(0x00, 0x2A, 0x90, 0x80, &data[i], l)) {
+    if (!transmit(0x00, SCIns::PerformSecurityOperation, SCP1::PSOHashCode, SCP2::PSOPlain, &data[i], l)) {
       return false;
     }
 
-    if (getStatusWord() != 0x9000) {
+    if (getStatusWord() != (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
       return false;
     }
   }
@@ -82,13 +101,14 @@ bool MIAS::psoHashInternally(uint8_t algorithm, uint8_t* data, uint16_t dataLen)
 bool MIAS::psoHashInternallyFinal(uint8_t* hash, uint16_t* hashLen) {
   uint8_t data[2];
 
-  data[0] = 0x80;
+  data[0] = static_cast<uint8_t>(SCTag::PSOHashInt);
   data[1] = 0x00;
 
   *hashLen = 0;
 
-  if (transmit(0x00, 0x2A, 0x90, 0xA0, data, sizeof(data), 0x00)) {
-    if (getStatusWord() == 0x9000) {
+  if (transmit(0x00, SCIns::PerformSecurityOperation, SCP1::PSOHashCode, SCP2::PSOTemplateHash, data, sizeof(data),
+               0x00)) {
+    if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
       *hashLen = getResponse(hash);
       return true;
     }
@@ -100,7 +120,7 @@ bool MIAS::psoHashInternallyFinal(uint8_t* hash, uint16_t* hashLen) {
 bool MIAS::psoHashExternally(uint8_t algorithm, uint8_t* hash, uint16_t hashLen) {
   uint8_t data[66];
 
-  data[0] = 0x90;
+  data[0] = static_cast<uint8_t>(SCTag::PSOHashExt);
   switch (algorithm) {
     case ALGO_SHA1:
       data[1] = 20;
@@ -127,8 +147,9 @@ bool MIAS::psoHashExternally(uint8_t algorithm, uint8_t* hash, uint16_t hashLen)
   }
   memcpy(&data[2], hash, data[1]);
 
-  if (transmit(0x00, 0x2A, 0x90, 0xA0, data, 2 + data[1], 0x00)) {
-    if (getStatusWord() == 0x9000) {
+  if (transmit(0x00, SCIns::PerformSecurityOperation, SCP1::PSOHashCode, SCP2::PSOTemplateHash, data, 2 + data[1],
+               0x00)) {
+    if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
       return true;
     }
   }
@@ -139,15 +160,16 @@ bool MIAS::psoHashExternally(uint8_t algorithm, uint8_t* hash, uint16_t hashLen)
 bool MIAS::mseSetBeforeSignature(uint8_t algorithm, uint8_t key) {
   uint8_t data[6];
 
-  data[0] = 0x80;
+  data[0] = static_cast<uint8_t>(SCTag::MSEAlgReference);
   data[1] = 0x01;
   data[2] = algorithm;
-  data[3] = 0x84;
+  data[3] = static_cast<uint8_t>(SCTag::MSEPublicKey);
   data[4] = 0x01;
   data[5] = key;
 
-  if (transmit(0x00, 0x22, 0x41, 0xB6, data, sizeof(data))) {
-    if (getStatusWord() == 0x9000) {
+  if (transmit(0x00, SCIns::ManageSecurityEnvironment, SCP1::MSECompDecInt | SCP1::MSESet, SCP2::MSETemplateSignature,
+               data, sizeof(data))) {
+    if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
       return true;
     }
   }
@@ -160,7 +182,7 @@ bool MIAS::psoComputeDigitalSignature(uint8_t* signature, uint16_t* signatureLen
 
   *signatureLen = 0;
 
-  if (transmit(0x00, 0x2A, 0x9E, 0x9A, 0x00)) {
+  if (transmit(0x00, SCIns::PerformSecurityOperation, SCP1::PSOSignature, SCP2::PSOSignatureInput, 0x00)) {
 #ifdef USE_GAT_RESPONSE
     if (_isBasic) {
 #endif
@@ -168,12 +190,13 @@ bool MIAS::psoComputeDigitalSignature(uint8_t* signature, uint16_t* signatureLen
         len = getResponse(signature);
         signature += len;
         *signatureLen += len;
-        if ((getStatusWord() & 0xFF00) == 0x6100) {
+        if ((getStatusWord() & 0xFF00) == SCSW1::OKLengthInSW2) {
           // Transmit GET Response
-          if (transmit(0x00, 0xC0, 0x00, 0x00, getStatusWord() & 0x00FF)) {
+          if (transmit(0x00, SCIns::Envelope, SCP1::ENVELOPEReserved, SCP2::ENVELOPEReserved,
+                       getStatusWord() & 0x00FF)) {
             continue;
           }
-        } else if (getStatusWord() == 0x9000) {
+        } else if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
           return true;
         }
         return false;
@@ -181,19 +204,21 @@ bool MIAS::psoComputeDigitalSignature(uint8_t* signature, uint16_t* signatureLen
 #ifdef USE_GAT_RESPONSE
     } else {
       // GAT format: [DATA1 DATA2 ... ][GAT SW1 SW2][90 00]
-      while ((getStatusWord() == 0x9000) && (_seiface->_apduResponseLen >= 4)) {
+      while ((getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) &&
+             (_seiface->_apduResponseLen >= 4)) {
         // Convert ApduResponse in order to have GAT status word as regular status word
         _seiface->_apduResponseLen -= 2;
 
         len = getResponse(signature);
         signature += len;
         *signatureLen += len;
-        if ((getStatusWord() & 0xFF00) == 0x6100) {
+        if ((getStatusWord() & 0xFF00) == SCSW1::OKLengthinSW2) {
           // Transmit GAT Response
-          if (transmit(0x00, 0xC2, 0x00, 0x00, getStatusWord() & 0x00FF)) {
+          if (transmit(0x00, SCIns::Envelope, SCP1::ENVELOPEReserved, SCP2::ENVELOPEReserved,
+                       getStatusWord() & 0x00FF)) {
             continue;
           }
-        } else if (getStatusWord() == 0x9000) {
+        } else if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
           return true;
         }
         return false;
@@ -208,15 +233,16 @@ bool MIAS::psoComputeDigitalSignature(uint8_t* signature, uint16_t* signatureLen
 bool MIAS::mseSetBeforeDecrypt(uint8_t algorithm, uint8_t key) {
   uint8_t data[6];
 
-  data[0] = 0x80;
+  data[0] = static_cast<uint8_t>(SCTag::MSEAlgReference);
   data[1] = 0x01;
   data[2] = algorithm;
-  data[3] = 0x84;
+  data[3] = static_cast<uint8_t>(SCTag::MSEPublicKey);
   data[4] = 0x01;
   data[5] = key;
 
-  if (transmit(0x00, 0x22, 0x41, 0xB8, data, sizeof(data))) {
-    if (getStatusWord() == 0x9000) {
+  if (transmit(0x00, SCIns::ManageSecurityEnvironment, SCP1::MSECompDecInt | SCP1::MSESet,
+               SCP2::MSETemplateConfidentiality, data, sizeof(data))) {
+    if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
       return true;
     }
   }
@@ -228,32 +254,32 @@ bool MIAS::psoDecipher(uint8_t* data, uint16_t dataLen, uint8_t* plain, uint16_t
   uint8_t buf[255];
 
   if (dataLen < 255) {
-    buf[0] = 0x81;
+    buf[0] = static_cast<uint8_t>(SCTag::PSOPaddingProprietary1);
     memcpy(&buf[1], data, dataLen);
 
-    if (!transmit(0x00, 0x2A, 0x80, 0x86, buf, dataLen + 1)) {
+    if (!transmit(0x00, SCIns::PerformSecurityOperation, SCP1::PSOPlain, SCP2::PSOPadding, buf, dataLen + 1)) {
       return false;
     }
   } else {
-    buf[0] = 0x81;
+    buf[0] = static_cast<uint8_t>(SCTag::PSOPaddingProprietary1);
     memcpy(&buf[1], data, 0xFE);
     data += 0xFE;
     dataLen -= 0xFE;
 
-    if (!transmit(0x10, 0x2A, 0x80, 0x86, buf, 0xFF)) {
+    if (!transmit(0x10, SCIns::PerformSecurityOperation, SCP1::PSOPlain, SCP2::PSOPadding, buf, 0xFF)) {
       return false;
     }
 
-    if (getStatusWord() != 0x9000) {
+    if (getStatusWord() != (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
       return false;
     }
 
-    if (!transmit(0x00, 0x2A, 0x80, 0x86, data, dataLen)) {
+    if (!transmit(0x00, SCIns::PerformSecurityOperation, SCP1::PSOPlain, SCP2::PSOPadding, data, dataLen)) {
       return false;
     }
   }
 
-  if (getStatusWord() == 0x9000) {
+  if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
     *plainLen = getResponse(plain);
     return true;
   }
@@ -261,38 +287,33 @@ bool MIAS::psoDecipher(uint8_t* data, uint16_t dataLen, uint8_t* plain, uint16_t
   return false;
 }
 
-#define TAG_FILE_SIZE 0x81
-#define TAG_FDB 0x82
-#define TAG_FILE_ID 0x83
-#define TAG_LCS 0x8A
-#define TAG_CT_SEC_ATTR 0x8C
-
 bool MIAS::listKeyPairs(void) {
-  uint8_t CONTAINERS_INFO_EF[] = {0x00, 0x02};
-  uint8_t FILE_DIR_EF[]        = {0x01, 0x01};
-  uint16_t size                = 0;
+  uint16_t size = 0;
   mias_key_pair_t* ptr;
 
   if (_keypairs_num != -1) {
     return true;
   }
 
-  if (transmit(0x00, 0xA4, 0x08, 0x04, CONTAINERS_INFO_EF, sizeof(CONTAINERS_INFO_EF), 0x15)) {
-    if (getStatusWord() == 0x9000) {
+  if (transmit(0x00, SCIns::Select, SCP1::SELECTByPathFromMF, SCP2::SELECTFirstOrOnly | SCP2::SELECTFCPTemplate,
+               CONTAINERS_INFO_EF, sizeof(CONTAINERS_INFO_EF), 0x15)) {
+    if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
       if (getResponseLength() > 2) {
-        if (_seiface->_apduResponse[0] == 0x62) {
-          uint8_t i, len;
-          uint8_t t, l;
+        if (_seiface->_apduResponse[0] == SCTag::FileControlInfoFCP) {
+          uint8_t i;
+          uint8_t len;
+          SCTag t;
+          uint8_t l;
           uint16_t offset;
 
           len = _seiface->_apduResponse[1];
 
           for (i = 2, len += 2; i < len;) {
-            t = _seiface->_apduResponse[i];
+            t = static_cast<SCTag>(_seiface->_apduResponse[i]);
             l = _seiface->_apduResponse[i + 1];
 
             switch (t) {
-              case TAG_FILE_SIZE:
+              case SCTag::FCPFileSizeWithInfo:
                 size = (_seiface->_apduResponse[i + 2] << 8) | _seiface->_apduResponse[i + 3];
                 break;
             }
@@ -300,9 +321,10 @@ bool MIAS::listKeyPairs(void) {
             i += 2 + l;
           }
 
+
           for (i = 0, offset = 0; offset < size; i++, offset += 0x0B) {
-            if (transmit(0x00, 0xB0, (offset >> 8) & 0xFF, offset & 0xFF, 0x0B)) {
-              if (getStatusWord() == 0x9000) {
+            if (transmit(0x00, SCIns::ReadBinary, (offset >> 8) & 0xFF, offset & 0xFF, 0x0B)) {
+              if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
                 if (_seiface->_apduResponse[0]) {
                   if (_keypairs_num >= key_pool_size - 1) break;
 
@@ -358,15 +380,21 @@ bool MIAS::listKeyPairs(void) {
           }
           ++_keypairs_num;
 
-          if (transmit(0x00, 0xA4, 0x08, 0x04, FILE_DIR_EF, sizeof(FILE_DIR_EF), 0x15)) {
-            if (getStatusWord() == 0x9000) {
-              if (transmit(0x00, 0xB0, 0x00, 0x00, 0x01)) {
-                if (getStatusWord() == 0x9000) {
+          if (transmit(0x00, SCIns::Select, SCP1::SELECTByPathFromMF, SCP2::SELECTFCPTemplate | SCP2::SELECTFirstOrOnly,
+                       FILE_DIR_EF, sizeof(FILE_DIR_EF), 0x15)) {
+            if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
+              if (transmit(0x00, SCIns::ReadBinary, 0x00, 0x00, 0x01)) {
+                if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
                   size = _seiface->_apduResponse[0];
 
                   for (i = 0, offset = 1; i < size; i++, offset += 0x15) {
-                    if (transmit(0x00, 0xB0, (offset >> 8) & 0xFF, offset & 0xFF, 0x15)) {
-                      if (getStatusWord() == 0x9000) {
+                    if (transmit(0x00, SCIns::ReadBinary, (offset >> 8) & 0xFF, offset & 0xFF, 0x15)) {
+                      if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
+                        /* We are interested in files under "mcsp" directory with names following the patterns
+                         * "kxc??" (decryption keys) and "ksc??" (signature keys).
+                         * ?? is a decimal number for key ID, which is in turn the index in CONTAINER_INFO counting from
+                         * 1 */
+
                         if ((_seiface->_apduResponse[12] == 'm') && (_seiface->_apduResponse[13] == 's') &&
                             (_seiface->_apduResponse[14] == 'c') && (_seiface->_apduResponse[15] == 'p')) {
                           if ((_seiface->_apduResponse[4] == 'k') && (_seiface->_apduResponse[5] == 'x') &&
@@ -428,25 +456,28 @@ bool MIAS::getKeyPairByContainerId(uint8_t containter_id, mias_key_pair_t** kp) 
 }
 
 bool MIAS::getCertificateByContainerId(uint8_t container_id, uint8_t* cert, uint16_t* certLen) {
-  uint8_t i, len;
-  uint8_t t, l;
+  uint8_t i;
+  uint8_t len;
+  SCTag t;
+  uint8_t l;
   uint16_t offset;
   uint16_t ef_size;
   mias_key_pair_t* kp;
 
   if (getKeyPairByContainerId(container_id, &kp)) {
     if (kp->has_cert) {
-      if (transmit(0x00, 0xA4, 0x08, 0x04, kp->pub_file_id, sizeof(kp->pub_file_id), 0x1C)) {
-        if (getStatusWord() == 0x9000) {
-          if (_seiface->_apduResponse[0] == 0x62) {
+      if (transmit(0x00, SCIns::Select, SCP1::SELECTByPathFromMF, SCP2::SELECTFCPTemplate | SCP2::SELECTFirstOrOnly,
+                   kp->pub_file_id, sizeof(kp->pub_file_id), 0x1C)) {
+        if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
+          if (_seiface->_apduResponse[0] == SCTag::FileControlInfoFCP) {
             len = _seiface->_apduResponse[1];
 
             for (i = 2, len += 2; i < len;) {
-              t = _seiface->_apduResponse[i];
+              t = static_cast<SCTag>(_seiface->_apduResponse[i]);
               l = _seiface->_apduResponse[i + 1];
 
               switch (t) {
-                case TAG_FILE_SIZE:
+                case SCTag::FCPFileSizeWithInfo:
                   ef_size = (_seiface->_apduResponse[i + 2] << 8) | _seiface->_apduResponse[i + 3];
                   break;
               }
@@ -467,8 +498,8 @@ bool MIAS::getCertificateByContainerId(uint8_t container_id, uint8_t* cert, uint
                 len = ef_size - offset;
               }
 
-              if (transmit(0x00, 0xB0, (offset >> 8) & 0xFF, offset & 0xFF, len)) {
-                if (getStatusWord() == 0x9000) {
+              if (transmit(0x00, SCIns::ReadBinary, (offset >> 8) & 0xFF, offset & 0xFF, len)) {
+                if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
                   len = getResponse(&(cert[offset]));
                 }
               }
@@ -496,8 +527,8 @@ bool MIAS::getCertificateByContainerId(uint8_t container_id, uint8_t* cert, uint
 /** PUBLIC ********************************************************************/
 
 bool MIAS::verifyPin(uint8_t* pin, uint16_t pinLen) {
-  if (transmit(0x00, 0x20, 0x00, 0x81, pin, pinLen)) {
-    if (getStatusWord() == 0x9000) {
+  if (transmit(0x00, SCIns::Verify, SCP1::VERIFYReserved, SCP2::BasicSecurityDFKey | 0x01, pin, pinLen)) {
+    if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
       return true;
     }
   }
@@ -518,8 +549,9 @@ bool MIAS::changePin(uint8_t* oldPin, uint16_t oldPinLen, uint8_t* newPin, uint1
   memcpy(&data[1], oldPin, oldPinLen);
   memcpy(&data[oldPinLen], newPin, newPinLen);
 
-  if (transmit(0x80, 0x24, 0x00, 0x81, data, dataLen)) {
-    if (getStatusWord() == 0x9000) {
+  if (transmit(0x80, SCIns::ChangeReferenceData, SCP1::CHANGEREFERENCEDATAOldAndNew, SCP2::BasicSecurityDFKey | 0x01,
+               data, dataLen)) {
+    if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
       return true;
     }
   }
@@ -527,7 +559,6 @@ bool MIAS::changePin(uint8_t* oldPin, uint16_t oldPinLen, uint8_t* newPin, uint1
 }
 
 bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t* object, uint16_t* objectLen) {
-  uint8_t data[2];
   uint8_t record[0x15];
   uint16_t i, offset, len, size, trimPos, trimLen;
   mias_file_t* nfile = NULL;
@@ -535,22 +566,19 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t* objec
   *objectLen = 0;
   _files_num = 0;
 
-  // FILE_DIR_EF
-  data[0] = 0x01;
-  data[1] = 0x01;
-
-  if (transmit(0x00, 0xA4, 0x08, 0x04, data, sizeof(data))) {
-    if (getStatusWord() == 0x9000) {
+  if (transmit(0x00, SCIns::Select, SCP1::SELECTByPathFromMF, SCP2::SELECTFCPTemplate | SCP2::SELECTFirstOrOnly,
+               FILE_DIR_EF, sizeof(FILE_DIR_EF))) {
+    if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
       uint8_t nbOfFiles;
 
-      if (transmit(0x00, 0xB0, 0x00, 0x00, 0x01)) {
-        if (getStatusWord() == 0x9000) {
+      if (transmit(0x00, SCIns::ReadBinary, 0x00, 0x00, 0x01)) {
+        if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
           if (getResponse(&nbOfFiles) == 1) {
             for (i = 0; i < nbOfFiles; i++) {
               offset = 1 + (i * 0x15);
 
-              if (transmit(0x00, 0xB0, offset >> 8, offset, 0x15)) {
-                if (getStatusWord() == 0x9000) {
+              if (transmit(0x00, SCIns::ReadBinary, offset >> 8, offset, 0x15)) {
+                if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
                   if (getResponse(record) == 0x15) {
                     nfile       = &_files[_files_num];
                     nfile->efid = (record[0] << 8) | record[1];
@@ -567,19 +595,23 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t* objec
               if ((strcmp((const char*)_files[j].dir, "p11") == 0) &&
                   ((memcmp((const char*)_files[j].name, "pubdat", 6) == 0) ||
                    ((memcmp((const char*)_files[j].name, "pridat", 6) == 0)))) {
-                data[0] = _files[j].efid >> 8;
-                data[1] = _files[j].efid;
+                uint8_t file_id[2];
+                file_id[0] = _files[j].efid >> 8;
+                file_id[1] = _files[j].efid;
 
-                if (transmit(0x00, 0xA4, 0x08, 0x04, data, sizeof(data))) {
-                  if (getStatusWord() == 0x9000) {
+                if (transmit(0x00, SCIns::Select, SCP1::SELECTByPathFromMF,
+                             SCP2::SELECTFCPTemplate | SCP2::SELECTFirstOrOnly, file_id, sizeof(file_id))) {
+                  if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
                     offset = 16;
 
-                    if (transmit(0x00, 0xB0, offset >> 8, offset, 0x01)) {
-                      if (getStatusWord() == 0x9000) {
+                    // CKO_DATA file, contains L-V pairs in the following order:
+                    // label, CKA_APPLICATION, CKA_OBJECT_ID, CKA_VALUE
+                    if (transmit(0x00, SCIns::ReadBinary, offset >> 8, offset, 0x01)) {
+                      if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
                         if (getResponse(record) == 0x01) {
                           offset++;
-                          if (transmit(0x00, 0xB0, offset >> 8, offset, record[0])) {
-                            if (getStatusWord() == 0x9000) {
+                          if (transmit(0x00, SCIns::ReadBinary, offset >> 8, offset, record[0])) {
+                            if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
                               if (getResponseLength() == record[0]) {
                                 getResponse(record);
                                 record[getResponseLength()] = '\0';
@@ -594,20 +626,22 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t* objec
                                   offset += getResponseLength();
 
                                   // Skip CKA_APPLICATION
-                                  if (transmit(0x00, 0xB0, offset >> 8, offset, 0x01)) {
-                                    if (getStatusWord() == 0x9000) {
+                                  if (transmit(0x00, SCIns::ReadBinary, offset >> 8, offset, 0x01)) {
+                                    if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
                                       if (getResponse(record) == 0x01) {
                                         offset += 1 + record[0];
 
                                         // Skip CKA_OBJECT_ID
-                                        if (transmit(0x00, 0xB0, offset >> 8, offset, 0x01)) {
-                                          if (getStatusWord() == 0x9000) {
+                                        if (transmit(0x00, SCIns::ReadBinary, offset >> 8, offset, 0x01)) {
+                                          if (getStatusWord() ==
+                                              (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
                                             if (getResponse(record) == 0x01) {
                                               offset += 1 + record[0];
 
                                               // Read CKA_VALUE
-                                              if (transmit(0x00, 0xB0, offset >> 8, offset, 0x05)) {
-                                                if (getStatusWord() == 0x9000) {
+                                              if (transmit(0x00, SCIns::ReadBinary, offset >> 8, offset, 0x05)) {
+                                                if (getStatusWord() ==
+                                                    (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
                                                   if (getResponse(record) == 0x05) {
                                                     if (record[0] < 0x80) {
                                                       size = record[0];
@@ -631,8 +665,9 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t* objec
                                                         len = size - i;
                                                       }
 
-                                                      if (transmit(0x00, 0xB0, offset >> 8, offset, len)) {
-                                                        if (getStatusWord() == 0x9000) {
+                                                      if (transmit(0x00, SCIns::ReadBinary, offset >> 8, offset, len)) {
+                                                        if (getStatusWord() ==
+                                                            (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
                                                           len = getResponse(&(object[i]));
                                                         }
                                                       }

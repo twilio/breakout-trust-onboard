@@ -42,22 +42,27 @@ class Applet {
   // Transmit an APDU case 1 to the applet through the corresponding
   // channel.
   // Returns true in case transmit was successful, false otherwise.
-  bool transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2);
+  bool transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2);
 
   // Transmit an APDU case 2 to the applet through the corresponding
   // channel.
   // Returns true in case transmit was successful, false otherwise.
-  bool transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t le);
+  bool transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, uint8_t le);
+
+  // case 2 for READ BINARY command to avoid excessive casts
+  bool transmit(uint8_t cla, SCIns ins, uint8_t p1, uint8_t p2, uint8_t le) {
+    return transmit(cla, ins, static_cast<SCP1>(p1), static_cast<SCP2>(p2), le);
+  }
 
   // Transmit an APDU case 3 to the applet through the corresponding
   // channel.
   // Returns true in case transmit was successful, false otherwise.
-  bool transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data, uint16_t dataLen);
+  bool transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, uint8_t* data, uint16_t dataLen);
 
   // Transmit an APDU case 4 to the applet through the corresponding
   // channel.
   // Returns true in case transmit was successful, false otherwise.
-  bool transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data, uint16_t dataLen, uint8_t le);
+  bool transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, uint8_t* data, uint16_t dataLen, uint8_t le);
 
   // Returns the status word received after the last successful transmit,
   // 0 otherwise.
