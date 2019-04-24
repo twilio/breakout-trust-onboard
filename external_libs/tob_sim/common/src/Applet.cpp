@@ -8,6 +8,7 @@
  */
 
 #include "Applet.h"
+#include "ISO7816.h"
 
 Applet::Applet(uint8_t* aid, uint16_t aidLen) {
   _seiface    = NULL;
@@ -28,7 +29,7 @@ Applet::~Applet(void) {
 void Applet::closeAllChannels(SEInterface* seiface) {
   if (seiface != NULL) {
     for (int i = 1; i <= APPLET_MAX_CHANNEL; i++) {
-      seiface->transmit(0x00, 0x70, 0x80, i, 0x01);
+      seiface->transmit(0x00, SCIns::ManageChannel, SCP1::MANAGECHANNELClose, static_cast<SCP2>(i), 0x01);
     }
   }
 }
@@ -48,27 +49,32 @@ bool Applet::select(bool isBasic) {
     if (isBasic) {
       _channel = 0;
 
-      if (_seiface->transmit(0x00, 0xA4, 0x04, 0x00, _aid, _aidLen)) {
-        if ((_seiface->getStatusWord() == 0x9000) || ((_seiface->getStatusWord() & 0xFF00) == 0x6100)) {
+      if (_seiface->transmit(0x00, SCIns::Select, SCP1::SELECTByDFName,
+                             SCP2::SELECTFCITemplate | SCP2::SELECTFirstOrOnly, _aid, _aidLen)) {
+        if ((_seiface->getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) ||
+            ((_seiface->getStatusWord() & 0xFF00) == SCSW1::OKLengthInSW2)) {
           _isSelected = true;
           _isBasic    = true;
           return true;
         }
       }
     } else {
-      if (_seiface->transmit(0x00, 0x70, 0x00, 0x00, 0x01)) {
-        if (_seiface->getStatusWord() == 0x9000) {
+      if (_seiface->transmit(0x00, SCIns::ManageChannel, SCP1::MANAGECHANNELOpen, SCP2::MANAGECHANNELAllocateChannel,
+                             0x01)) {
+        if (_seiface->getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
           _seiface->getResponse(&_channel);
 
-          if (_seiface->transmit(0x00 | _channel, 0xA4, 0x04, 0x00, _aid, _aidLen)) {
-            if ((_seiface->getStatusWord() == 0x9000) || ((_seiface->getStatusWord() & 0xFF00) == 0x6100)) {
+          if (_seiface->transmit(0x00 | _channel, SCIns::Select, SCP1::SELECTByDFName,
+                                 SCP2::SELECTFCITemplate | SCP2::SELECTFirstOrOnly, _aid, _aidLen)) {
+            if ((_seiface->getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) ||
+                ((_seiface->getStatusWord() & 0xFF00) == SCSW1::OKLengthInSW2)) {
               _isSelected = true;
               _isBasic    = false;
               return true;
             }
           }
 
-          _seiface->transmit(0x00, 0x70, 0x80, _channel, 0x01);
+          _seiface->transmit(0x00, SCIns::ManageChannel, SCP1::MANAGECHANNELClose, static_cast<SCP2>(_channel), 0x01);
         }
       }
     }
@@ -80,8 +86,8 @@ bool Applet::select(bool isBasic) {
 bool Applet::deselect(void) {
   if (_seiface != NULL) {
     if (_isSelected && !_isBasic) {
-      if (_seiface->transmit(0x00, 0x70, 0x80, _channel, 0x01)) {
-        if (_seiface->getStatusWord() == 0x9000) {
+      if (_seiface->transmit(0x00, SCIns::ManageChannel, SCP1::MANAGECHANNELClose, static_cast<SCP2>(_channel), 0x01)) {
+        if (_seiface->getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
           _isSelected = false;
         }
       }
@@ -92,28 +98,28 @@ bool Applet::deselect(void) {
   return _isSelected;
 }
 
-bool Applet::transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2) {
+bool Applet::transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2) {
   if (_isSelected) {
     return _seiface->transmit(cla | _channel, ins, p1, p2);
   }
   return false;
 }
 
-bool Applet::transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t le) {
+bool Applet::transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, uint8_t le) {
   if (_isSelected) {
     return _seiface->transmit(cla | _channel, ins, p1, p2, le);
   }
   return false;
 }
 
-bool Applet::transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data, uint16_t dataLen) {
+bool Applet::transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, uint8_t* data, uint16_t dataLen) {
   if (_isSelected) {
     return _seiface->transmit(cla | _channel, ins, p1, p2, data, dataLen);
   }
   return false;
 }
 
-bool Applet::transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data, uint16_t dataLen, uint8_t le) {
+bool Applet::transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, uint8_t* data, uint16_t dataLen, uint8_t le) {
   if (_isSelected) {
     return _seiface->transmit(cla | _channel, ins, p1, p2, data, dataLen, le);
   }
@@ -181,21 +187,22 @@ extern "C" bool Applet_deselect(Applet* applet) {
 }
 
 extern "C" bool Applet_transmit_case1(Applet* applet, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2) {
-  return applet->transmit(cla, ins, p1, p2);
+  return applet->transmit(cla, static_cast<SCIns>(ins), static_cast<SCP1>(p1), static_cast<SCP2>(p2));
 }
 
 extern "C" bool Applet_transmit_case2(Applet* applet, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t le) {
-  return applet->transmit(cla, ins, p1, p2, le);
+  return applet->transmit(cla, static_cast<SCIns>(ins), static_cast<SCP1>(p1), static_cast<SCP2>(p2), le);
 }
 
 extern "C" bool Applet_transmit_case3(Applet* applet, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data,
                                       uint16_t data_len) {
-  return applet->transmit(cla, ins, p1, p2, data, data_len);
+  return applet->transmit(cla, static_cast<SCIns>(ins), static_cast<SCP1>(p1), static_cast<SCP2>(p2), data, data_len);
 }
 
 extern "C" bool Applet_transmit_case4(Applet* applet, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data,
                                       uint16_t data_len, uint8_t le) {
-  return applet->transmit(cla, ins, p1, p2, data, data_len, le);
+  return applet->transmit(cla, static_cast<SCIns>(ins), static_cast<SCP1>(p1), static_cast<SCP2>(p2), data, data_len,
+                          le);
 }
 
 extern "C" uint16_t Applet_get_status_word(Applet* applet) {
