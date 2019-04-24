@@ -19,8 +19,8 @@
 #define ERR_SE_EF_READ_OBJECT_ERROR -0x5580   /**< EF read object failed. */
 #define ERR_SE_BAD_KEY_NAME_ERROR -0x5600     /**< No matching key found with the given name. */
 
-#define CERT_BUFFER_SIZE 10 * 1024
-#define PK_BUFFER_SIZE 2 * 1024
+#define PEM_BUFFER_SIZE 10 * 1024
+#define DER_BUFFER_SIZE 2 * 1024
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,7 +40,7 @@ extern int tobInitialize(const char *device);
  * buffer will contain the device certificate itself and its preceding
  * intemediate certificates.
  * @param cert - buffer to receive the PEM certificate chain - should be allocated with at least size of
- * CERT_BUFFER_SIZE
+ * PEM_BUFFER_SIZE
  * @param cert_size - pointer to int that will receive the true number of bytes for the PEM certificate chain
  * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
  * @return 0 if successful, otherwise one of the following error codes:
@@ -57,8 +57,8 @@ extern int tobExtractAvailableCertificate(uint8_t *cert, int *cert_size, const c
  * NOTE: Care should be taken to secure the output of this function, the
  * private key should be kept secret.
  *
- * @param pk - buffer to receive the PEM certificate chain - should be allocated with at least size of CERT_BUFFER_SIZE
- * @param pk_size - pointer to int that will receive the true number of bytes for the PEM certificate chain
+ * @param pk - buffer to receive the DER private key - should be allocated with at least size of DER_BUFFER_SIZE
+ * @param pk_size - pointer to int that will receive the true number of bytes for the DER private key.
  * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
  * @return 0 if successful, otherwise one of the following error codes:
  *   ERR_SE_BAD_KEY_NAME_ERROR
@@ -69,10 +69,27 @@ extern int tobExtractAvailableCertificate(uint8_t *cert, int *cert_size, const c
 extern int tobExtractAvailablePrivateKey(uint8_t *pk, int *pk_size, const char *pin);
 
 /**
- * Extract the Signing public certificate in DER form.  The certificate
+ * Extract the Available private key in PEM form.
+ *
+ * NOTE: Care should be taken to secure the output of this function, the
+ * private key should be kept secret.
+ *
+ * @param pk - buffer to receive the PEM private key - should be allocated with at least size of PEM_BUFFER_SIZE
+ * @param pk_size - pointer to int that will receive the true number of bytes for the PEM private key.
+ * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
+ * @return 0 if successful, otherwise one of the following error codes:
+ *   ERR_SE_BAD_KEY_NAME_ERROR
+ *   ERR_SE_EF_INVALID_NAME_ERROR
+ *   ERR_SE_EF_VERIFY_PIN_ERROR
+ *   ERR_SE_MIAS_READ_OBJECT_ERROR
+ */
+extern int tobExtractAvailablePrivateKeyAsPem(uint8_t *pk, int *pk_size, const char *pin);
+
+/**
+ * Extract the Signing public certificate in PEM form.  The certificate
  * buffer will contain the device certificate itself and its preceding
  * intemediate certificates.
- * @param cert - buffer to receive the DER certificate chain - should be allocated with at least size of CERT_BUFFER_SIZE
+ * @param cert - buffer to receive the PEM certificate chain - should be allocated with at least size of PEM_BUFFER_SIZE
  * @param cert_size - pointer to int that will receive the true number of bytes for the PEM certificate chain
  * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
  * @return 0 if successful, otherwise one of the following error codes:

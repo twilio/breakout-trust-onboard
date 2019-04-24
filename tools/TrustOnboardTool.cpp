@@ -13,19 +13,19 @@
 
 int main(int argc, char** argv) {
   int ret = 0;
-  uint8_t cert[CERT_BUFFER_SIZE];
+  uint8_t cert[PEM_BUFFER_SIZE];
   int cert_size = 0;
-  uint8_t pk[PK_BUFFER_SIZE];
+  uint8_t pk[PEM_BUFFER_SIZE];
   int pk_size = 0;
 
-  uint8_t signing_cert[CERT_BUFFER_SIZE];
+  uint8_t signing_cert[PEM_BUFFER_SIZE];
   int signing_cert_size = 0;
 
   if (argc < 5) {
     printf("%s [device] [pin] [cert outfile] [key outfile] {[signing cert outfile]}\n", argv[0]);
-    printf("\nExample: %s /dev/ttyACM1 0000 certificate-chain.pem key.der\n", argv[0]);
+    printf("\nExample: %s /dev/ttyACM1 0000 certificate-chain.pem key.pem\n", argv[0]);
 #ifdef PCSC_SUPPORT
-    printf("\nExample (pcsclite): %s pcsc:0 0000 certificate-chain.pem key.der\n", argv[0]);
+    printf("\nExample (pcsclite): %s pcsc:0 0000 certificate-chain.pem key.pem\n", argv[0]);
 #endif
     return -1;
   }
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  ret = tobExtractAvailablePrivateKey(pk, &pk_size, pin);
+  ret = tobExtractAvailablePrivateKeyAsPem(pk, &pk_size, pin);
   if (ret != 0) {
     printf("Error reading private key: %d\n", ret);
     return -1;

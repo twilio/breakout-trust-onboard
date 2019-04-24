@@ -43,9 +43,9 @@ TEST_CASE( "Initialize module", "[tob]" ) {
 TEST_CASE( "Read Type A Certificate", "[available] [cert]") {
 
   int ret = 0;
-  uint8_t cert[CERT_BUFFER_SIZE];
+  uint8_t cert[PEM_BUFFER_SIZE];
   int cert_size = 0;
-  uint8_t pk[PK_BUFFER_SIZE];
+  uint8_t pk[DER_BUFFER_SIZE];
   int pk_size = 0;
 
   REQUIRE ( tobInitialize(device) == 0 );
@@ -53,14 +53,14 @@ TEST_CASE( "Read Type A Certificate", "[available] [cert]") {
   SECTION( "read certificate" ) {
     REQUIRE ( tobExtractAvailableCertificate(cert, &cert_size, pin) == 0 );
     REQUIRE ( cert_size > 0 );
-    REQUIRE ( cert_size <= CERT_BUFFER_SIZE );
+    REQUIRE ( cert_size <= PEM_BUFFER_SIZE );
     printf("cert_size: %d\n", cert_size);
   }
 
   SECTION( "read key" ) {
     REQUIRE ( tobExtractAvailablePrivateKey(pk, &pk_size, pin) == 0 );
     REQUIRE ( pk_size > 0 );
-    REQUIRE ( pk_size <= PK_BUFFER_SIZE );
+    REQUIRE ( pk_size <= DER_BUFFER_SIZE );
     printf("pk_size: %d\n", pk_size);
   }
 
