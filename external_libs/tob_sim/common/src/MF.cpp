@@ -121,8 +121,6 @@ bool MF::readEF(uint8_t* path, uint16_t pathLen, uint8_t* data, uint16_t* dataLe
           }
         }
 
-        data[i] = '\0';
-        *dataLen += 1;
         return true;
       }
     }

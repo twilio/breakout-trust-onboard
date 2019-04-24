@@ -456,7 +456,7 @@ bool MIAS::getCertificateByContainerId(uint8_t container_id, uint8_t* cert, uint
           }
 
           if (ef_size) {
-            *certLen = ef_size + 1;
+            *certLen = ef_size;
             if (cert == NULL) {
               return true;
             }
@@ -475,7 +475,6 @@ bool MIAS::getCertificateByContainerId(uint8_t container_id, uint8_t* cert, uint
 
               offset += len;
             }
-            cert[offset] = '\0';
 
             if ((cert[0] == 0x01) && (cert[1] == 0x00)) {
               // Compressed
@@ -621,7 +620,7 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t* objec
 
                                                     offset++;
 
-                                                    *objectLen = size + 1;
+                                                    *objectLen = size;
                                                     if (object == NULL) {
                                                       return true;
                                                     }
@@ -641,7 +640,6 @@ bool MIAS::p11GetObjectByLabel(uint8_t* label, uint16_t labelLen, uint8_t* objec
                                                       offset += len;
                                                       i += len;
                                                     }
-                                                    object[i] = '\0';
 
                                                     return true;
                                                   }
