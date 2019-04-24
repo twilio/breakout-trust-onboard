@@ -352,7 +352,7 @@ int tobExtractAvailableCertificate(uint8_t* cert, int* cert_size, const char* pi
 }
 
 int tobExtractSigningCertificate(uint8_t* cert, int* cert_size, const char* pin) {
-  uint8_t tempCert[CERT_BUFFER_SIZE];
+  uint8_t tempCert[PEM_BUFFER_SIZE];
   int extractedLen = 0;
   int res          = 0;
   res              = tob_x509_crt_extract_se(tempCert, &extractedLen, CERT_SIGNING_MIAS_PATH, pin);
@@ -367,7 +367,7 @@ int tobExtractAvailablePrivateKey(uint8_t* pk, int* pk_size, const char* pin) {
 }
 
 int tobExtractAvailablePrivateKeyAsPem(uint8_t* pk, int* pk_size, const char* pin) {
-  uint8_t cert[PK_BUFFER_SIZE];
+  uint8_t cert[DER_BUFFER_SIZE];
   int extractedLen = 0;
   int res          = 0;
   res              = tob_pk_extract_se(cert, &extractedLen, PK_MIAS_PATH, pin);
