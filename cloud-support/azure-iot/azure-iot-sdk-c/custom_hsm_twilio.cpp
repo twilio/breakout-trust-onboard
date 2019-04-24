@@ -105,8 +105,9 @@ int populate_cert(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_pa
     (void)printf("Failed reading certificate\r\n");
     RESULT = 1;
   } else {
-    hsm_info->certificate = (const char *)malloc(cert_size);
+    hsm_info->certificate = (const char *)malloc(cert_size+1);
     memcpy((void *)(hsm_info->certificate), cert, cert_size);
+    hsm_info->certificate[cert_size] = '\0';
   }
 
   (void)subjectName((const char *)cert, cert_size, (char **)&(hsm_info->common_name));
@@ -132,7 +133,9 @@ int populate_key(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_pat
     (void)printf("Failed reading private key\r\n");
     RESULT = 1;
   } else {
-    hsm_info->key = strdup((char *)pk);
+    hsm_info->key = (const char *)malloc(pk_size+1);
+    memcpy((void *)(hsm_info->key), pk, pk_size);
+    hsm_info->key[pk_size] = '\0';
   }
 
   return RESULT;
