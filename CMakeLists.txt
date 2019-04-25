@@ -40,6 +40,7 @@ set(LIB_SOURCES
 	)
 
 set(LIB_HEADERS
+        external_libs/tob_sim/common/inc/ISO7816.h
         external_libs/tob_sim/common/inc/Applet.h
         external_libs/tob_sim/common/inc/MF.h
         external_libs/tob_sim/common/inc/MIAS.h

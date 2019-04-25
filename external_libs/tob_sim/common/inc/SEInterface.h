@@ -14,6 +14,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "ISO7816.h"
+
 #define APDU_CLA_OFFSET 0
 #define APDU_INS_OFFSET 1
 #define APDU_P1_OFFSET 2
@@ -37,18 +39,31 @@ class SEInterface {
   // Transmit an APDU case 1
   // Returns true in case transmit was successful, false otherwise.
   bool transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2);
+  bool transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2) {
+    return transmit(cla, static_cast<uint8_t>(ins), static_cast<uint8_t>(p1), static_cast<uint8_t>(p2));
+  }
 
   // Transmit an APDU case 2
   // Returns true in case transmit was successful, false otherwise.
   bool transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t le);
+  bool transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, uint8_t le) {
+    return transmit(cla, static_cast<uint8_t>(ins), static_cast<uint8_t>(p1), static_cast<uint8_t>(p2), le);
+  }
 
   // Transmit an APDU case 3
   // Returns true in case transmit was successful, false otherwise.
   bool transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data, uint16_t dataLen);
+  bool transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, uint8_t* data, uint16_t dataLen) {
+    return transmit(cla, static_cast<uint8_t>(ins), static_cast<uint8_t>(p1), static_cast<uint8_t>(p2), data, dataLen);
+  }
 
   // Transmit an APDU case 4
   // Returns true in case transmit was successful, false otherwise.
   bool transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data, uint16_t dataLen, uint8_t le);
+  bool transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, uint8_t* data, uint16_t dataLen, uint8_t le) {
+    return transmit(cla, static_cast<uint8_t>(ins), static_cast<uint8_t>(p1), static_cast<uint8_t>(p2), data, dataLen,
+                    le);
+  }
 
   // Returns the status word received after the last successful transmit, 0 otherwise.
   uint16_t getStatusWord(void);

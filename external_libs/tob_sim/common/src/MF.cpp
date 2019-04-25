@@ -25,12 +25,12 @@ static bool getEFSize(uint8_t* data, uint16_t dataLen, uint16_t* size) {
 
   i = 0;
 
-  // FCP Tag
-  if (data[i] == 0x62) {
-    i += 2;
+  if (data[i] == SCTag::FileControlInfoFCP) {
+    i += 2;  // ignore length, we already know it from dataLen
 
+    // iterate over a sequence of T-L-V triples
     while (i < dataLen) {
-      if (data[i] == 0x80) {
+      if (data[i] == SCTag::FCPFileSizeWithoutInfo) {
         i += 1;
         l = data[i];
         i += 1;
@@ -63,8 +63,8 @@ bool MF::verifyPin(uint8_t* pin, uint16_t pinLen) {
 
   memcpy(pinData, pin, pinLen);
 
-  if (transmit(0x00, 0x20, 0x00, 0x01, pinData, sizeof(pinData))) {
-    if (getStatusWord() == 0x9000) {
+  if (transmit(0x00, SCIns::Verify, SCP1::VERIFYReserved, SCP2::BasicSecurityMFKey | 0x01, pinData, sizeof(pinData))) {
+    if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
       return true;
     }
   }
@@ -82,8 +82,9 @@ bool MF::changePin(uint8_t* oldPin, uint16_t oldPinLen, uint8_t* newPin, uint16_
   memcpy(&pinData[0], oldPin, oldPinLen);
   memcpy(&pinData[8], newPin, newPinLen);
 
-  if (transmit(0x00, 0x24, 0x00, 0x01, pinData, sizeof(pinData))) {
-    if (getStatusWord() == 0x9000) {
+  if (transmit(0x00, SCIns::ChangeReferenceData, SCP1::CHANGEREFERENCEDATAOldAndNew, SCP2::BasicSecurityMFKey | 0x01,
+               pinData, sizeof(pinData))) {
+    if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
       return true;
     }
   }
@@ -92,8 +93,9 @@ bool MF::changePin(uint8_t* oldPin, uint16_t oldPinLen, uint8_t* newPin, uint16_
 }
 
 bool MF::readEF(uint8_t* path, uint16_t pathLen, uint8_t* data, uint16_t* dataLen) {
-  if (transmit(0x00, 0xA4, 0x08, 0x04, path, pathLen, 0x00)) {
-    if (getStatusWord() == 0x9000) {
+  if (transmit(0x00, SCIns::Select, SCP1::SELECTByPathFromMF, SCP2::SELECTFCPTemplate | SCP2::SELECTFirstOrOnly, path,
+               pathLen, 0x00)) {
+    if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
       if (getEFSize(_seiface->_apduResponse, _seiface->getResponseLength(), dataLen)) {
         uint16_t i;
         uint8_t toread;
@@ -110,8 +112,8 @@ bool MF::readEF(uint8_t* path, uint16_t pathLen, uint8_t* data, uint16_t* dataLe
             toread = *dataLen - i;
           }
 
-          if (transmit(0x00, 0xB0, i >> 8, i, toread)) {
-            if (getStatusWord() == 0x9000) {
+          if (transmit(0x00, SCIns::ReadBinary, i >> 8, i, toread)) {
+            if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
               i += getResponse(&(data[i]));
             } else {
               return false;
