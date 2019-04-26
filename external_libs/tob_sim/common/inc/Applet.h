@@ -57,12 +57,12 @@ class Applet {
   // Transmit an APDU case 3 to the applet through the corresponding
   // channel.
   // Returns true in case transmit was successful, false otherwise.
-  bool transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, uint8_t* data, uint16_t dataLen);
+  bool transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, const uint8_t* data, uint16_t dataLen);
 
   // Transmit an APDU case 4 to the applet through the corresponding
   // channel.
   // Returns true in case transmit was successful, false otherwise.
-  bool transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, uint8_t* data, uint16_t dataLen, uint8_t le);
+  bool transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, const uint8_t* data, uint16_t dataLen, uint8_t le);
 
   // Returns the status word received after the last successful transmit,
   // 0 otherwise.
@@ -100,9 +100,9 @@ bool Applet_deselect(Applet* applet);
 
 bool Applet_transmit_case1(Applet* applet, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2);
 bool Applet_transmit_case2(Applet* applet, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t le);
-bool Applet_transmit_case3(Applet* applet, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data,
+bool Applet_transmit_case3(Applet* applet, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, const uint8_t* data,
                            uint16_t data_len);
-bool Applet_transmit_case4(Applet* applet, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data,
+bool Applet_transmit_case4(Applet* applet, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, const uint8_t* data,
                            uint16_t data_len, uint8_t le);
 
 uint16_t Applet_get_status_word(Applet* applet);

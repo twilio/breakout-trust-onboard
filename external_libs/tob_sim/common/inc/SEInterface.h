@@ -52,15 +52,15 @@ class SEInterface {
 
   // Transmit an APDU case 3
   // Returns true in case transmit was successful, false otherwise.
-  bool transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data, uint16_t dataLen);
-  bool transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, uint8_t* data, uint16_t dataLen) {
+  bool transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, const uint8_t* data, uint16_t dataLen);
+  bool transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, const uint8_t* data, uint16_t dataLen) {
     return transmit(cla, static_cast<uint8_t>(ins), static_cast<uint8_t>(p1), static_cast<uint8_t>(p2), data, dataLen);
   }
 
   // Transmit an APDU case 4
   // Returns true in case transmit was successful, false otherwise.
-  bool transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data, uint16_t dataLen, uint8_t le);
-  bool transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, uint8_t* data, uint16_t dataLen, uint8_t le) {
+  bool transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, const uint8_t* data, uint16_t dataLen, uint8_t le);
+  bool transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, const uint8_t* data, uint16_t dataLen, uint8_t le) {
     return transmit(cla, static_cast<uint8_t>(ins), static_cast<uint8_t>(p1), static_cast<uint8_t>(p2), data, dataLen,
                     le);
   }
@@ -104,10 +104,10 @@ bool SEInterface_unlock(SEInterface* seiface);
 
 bool SEInterface_transmit_case1(SEInterface* seiface, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2);
 bool SEInterface_transmit_case2(SEInterface* seiface, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t le);
-bool SEInterface_transmit_case3(SEInterface* seiface, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data,
-                                uint16_t data_len);
-bool SEInterface_transmit_case4(SEInterface* seiface, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data,
-                                uint16_t data_len, uint8_t le);
+bool SEInterface_transmit_case3(SEInterface* seiface, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2,
+                                const uint8_t* data, uint16_t data_len);
+bool SEInterface_transmit_case4(SEInterface* seiface, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2,
+                                const uint8_t* data, uint16_t data_len, uint8_t le);
 
 uint16_t SEInterface_get_status_word(SEInterface* seiface);
 uint16_t SEInterface_get_response(SEInterface* seiface, uint8_t* data);

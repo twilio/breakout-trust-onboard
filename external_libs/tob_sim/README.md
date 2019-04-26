@@ -111,7 +111,7 @@ Usage of signing certificate and private key is somewhat more complicated and de
     mias->getKeyPairByContainerId(0, &key);
 
     // some data to sign arrived
-    mias->signInit(RSA_PKCS1_PADDING, key->kid);
+    mias->signInit(RSA_WITH_PKCS1_PADDING, key->kid);
 
     uint8_t sig[4096];
     uint16_t sig_len;

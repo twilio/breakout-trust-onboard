@@ -69,7 +69,7 @@ bool MIAS::mseSetBeforeHash(uint8_t algorithm) {
   return false;
 }
 
-bool MIAS::psoHashInternally(uint8_t algorithm, uint8_t* data, uint16_t dataLen) {
+bool MIAS::psoHashInternally(uint8_t algorithm, const uint8_t* data, uint16_t dataLen) {
   uint8_t block_size;
   uint16_t i, l;
 
@@ -117,7 +117,7 @@ bool MIAS::psoHashInternallyFinal(uint8_t* hash, uint16_t* hashLen) {
   return false;
 }
 
-bool MIAS::psoHashExternally(uint8_t algorithm, uint8_t* hash, uint16_t hashLen) {
+bool MIAS::psoHashExternally(uint8_t algorithm, const uint8_t* hash, uint16_t hashLen) {
   uint8_t data[66];
 
   data[0] = static_cast<uint8_t>(SCTag::PSOHashExt);
@@ -250,7 +250,7 @@ bool MIAS::mseSetBeforeDecrypt(uint8_t algorithm, uint8_t key) {
   return false;
 }
 
-bool MIAS::psoDecipher(uint8_t* data, uint16_t dataLen, uint8_t* plain, uint16_t* plainLen) {
+bool MIAS::psoDecipher(const uint8_t* data, uint16_t dataLen, uint8_t* plain, uint16_t* plainLen) {
   uint8_t buf[255];
 
   if (dataLen < 255) {
@@ -711,7 +711,7 @@ bool MIAS::hashInit(uint8_t algorithm) {
   return mseSetBeforeHash(_hashAlgo);
 }
 
-bool MIAS::hashUpdate(uint8_t* data, uint16_t dataLen) {
+bool MIAS::hashUpdate(const uint8_t* data, uint16_t dataLen) {
   return psoHashInternally(_hashAlgo, data, dataLen);
 }
 
@@ -725,7 +725,7 @@ bool MIAS::signInit(uint8_t algorithm, uint8_t key) {
   return mseSetBeforeSignature(_signAlgo, _signKey);
 }
 
-bool MIAS::signFinal(uint8_t* hash, uint16_t hashLen, uint8_t* signature, uint16_t* signatureLen) {
+bool MIAS::signFinal(const uint8_t* hash, uint16_t hashLen, uint8_t* signature, uint16_t* signatureLen) {
   if (psoHashExternally(_signAlgo & 0xF0, hash, hashLen)) {
     if (psoComputeDigitalSignature(signature, signatureLen)) {
       return true;
@@ -740,7 +740,7 @@ bool MIAS::decryptInit(uint8_t algorithm, uint8_t key) {
   return mseSetBeforeDecrypt(_decryptAlgo, _decryptKey);
 }
 
-bool MIAS::decryptFinal(uint8_t* data, uint16_t dataLen, uint8_t* plain, uint16_t* plainLen) {
+bool MIAS::decryptFinal(const uint8_t* data, uint16_t dataLen, uint8_t* plain, uint16_t* plainLen) {
   return psoDecipher(data, dataLen, plain, plainLen);
 }
 
