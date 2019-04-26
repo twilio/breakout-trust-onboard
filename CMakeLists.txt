@@ -13,6 +13,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(TOOL_BINARY trust_onboard_tool)
+set(TOB_ENGINE trust_onboard_engine)
 
 #set(CMAKE_BUILD_TYPE Debug)
 #add_definitions(-DAT_DEBUG)
@@ -70,12 +71,23 @@ else(BUILD_SHARED)
 	add_library(TwilioTrustOnboard STATIC ${LIB_SOURCES} ${LIB_HEADERS})
 endif(BUILD_SHARED)
 
+set_property(TARGET TwilioTrustOnboard PROPERTY POSITION_INDEPENDENT_CODE ON)
+
 add_executable(
         ${TOOL_BINARY}
         tools/TrustOnboardTool.cpp)
 
+add_library(
+	${TOB_ENGINE} SHARED
+	tools/OpenSSLEngine.cpp)
+
 target_link_libraries(
         ${TOOL_BINARY}
+        TwilioTrustOnboard
+  )
+
+target_link_libraries(
+	${TOB_ENGINE}
         TwilioTrustOnboard
   )
 
@@ -84,10 +96,17 @@ if(PCSC_SUPPORT)
 		${TOOL_BINARY}
                 ${PCSC_LIBRARIES}
         )
+
+	target_link_libraries(
+		${TOB_ENGINE}
+                ${PCSC_LIBRARIES}
+        )
 endif(PCSC_SUPPORT)
 
 set(TOOLS_SOURCES
-        tools/TrustOnboardTool.cpp)
+        tools/TrustOnboardTool.cpp
+	tools/OpenSSLEngine.cpp
+	)
 
 add_custom_target(format COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/service-scripts/format.sh ${LIB_SOURCES} ${LIB_HEADERS} ${TOOLS_SOURCES} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
