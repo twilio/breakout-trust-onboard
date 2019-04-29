@@ -1,8 +1,10 @@
-# Sample Azure IoT Registration Client
+# Sample Azure IoT Registration Client Helper
 
 This simple client uses the Azure IoT C SDK to register a device using the Device Provisioning Service.
 
-The only piece of metadata needed by the client is your DPS instance's ID Scope.  For the Critical IoT kit, this can be configured by Command (SMS) from Twilio and populated into the ~/azure_id_scope.txt text file.
+The purpose of this client is to support DPS provisioning operations with the current Python Azure IoT SDK.  A near-future version of the Python Azure IoT SDK will be supported for Twilio Trust Onboard without this additional piece.
+
+The client, when run, will read the DPS ID Scope either from a file (by default, `/home/pi/azure_id_scope.txt`) or an AZURE_ID_SCOPE environment variable if set.  It will use the Trust Onboard `available` certificate on your Twilio Trust Onboard SIM and register a device with Azure IoT Hub.  The output of this command will be a JSON encoded hash with connection information and the Trust Onboard `available` certificate and key in cleartext.
 
 ## Building in an environment other than the Critical IoT Kit
 
@@ -39,20 +41,17 @@ To build the sample using the default module device (/dev/ttyACM1) and SIM PIN (
 
 To run the sample, your DPS ID Scope must be set in the environment.  To do this as a one-liner, using the azure_id_scope.txt file:
 
-    AZURE_DPS_ID_SCOPE=$(cat ~/azure_id_scope.txt) bin/hello_register 
+    bin/python_tob_helper
 
 The expected result is something similar to the following output:
 
-    Provisioning API Version: 1.2.13
-    calling register device
-    Opening serial port...Found serial /dev/ttyACM1 3
-    Provisioning Status: PROV_DEVICE_REG_STATUS_CONNECTED
-    Provisioning Status: PROV_DEVICE_REG_STATUS_ASSIGNING
-    Provisioning Status: PROV_DEVICE_REG_STATUS_ASSIGNING
-    Registration Information received from service: <youriothubname>.azure-devices.net!
-    registration succeeded:
-      iothub_uri: <youriothubname>.azure-devices.net
-      device_id: WCxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    {
+      status: "SUCCESS",
+      iothub_uri: "...",
+      device_id: "...",
+      certificate: "...",
+      key: "..."
+    }
 
 ### Cross-compilation
 Please refer to Azure's [documentation](https://github.com/Azure/azure-iot-sdk-c/blob/master/doc/SDK_cross_compile_example.md) on cross-compilation to build Azure IoT SDK. You can use the toolchain file provided for your device.
@@ -65,7 +64,4 @@ For cross-compilation you need to set the toolchain for CMake. E.g. for Raspberr
     cd cmake
     cmake -DCMAKE_TOOLCHAIN_FILE=../../../../device-support/Seeed-LTE_Cat_1_Pi_HAT/toolchain.cmake ..
     make
-
-    # optionally you can make a deb file to install on the device
-    cpack
 ```
