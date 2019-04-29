@@ -97,6 +97,7 @@ char *obtain_id_scope() {
 
   if (fp && (fgets(buf, 256, fp) != NULL)) {
     fclose(fp);
+    buf[strcspn(buf, "\r\n")] = 0;
     return strdup(buf);
   }
 
