@@ -102,7 +102,7 @@ int populate_cert(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_pa
   tobInitialize(device_path);
   ret = tobExtractAvailableCertificate(cert, &cert_size, pin);
   if (ret != 0) {
-    (void)printf("Failed reading certificate\r\n");
+    (void)fprintf(stderr, "Failed reading certificate\r\n");
     RESULT = 1;
   } else {
     hsm_info->certificate = (const char *)malloc(cert_size+1);
@@ -130,7 +130,7 @@ int populate_key(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_pat
   tobInitialize(device_path);
   ret = tobExtractAvailablePrivateKeyAsPem(pk, &pk_size, pin);
   if (ret != 0) {
-    (void)printf("Failed reading private key\r\n");
+    (void)fprintf(stderr, "Failed reading private key\r\n");
     RESULT = 1;
   } else {
     hsm_info->key = (const char *)malloc(pk_size+1);
@@ -148,7 +148,7 @@ HSM_CLIENT_HANDLE custom_hsm_create()
   memset(hsm_info, 0, sizeof(TWILIO_TRUST_ONBOARD_HSM_INFO));
   if (hsm_info == NULL)
   {
-    (void)printf("Failed allocating hsm info\r\n");
+    (void)fprintf(stderr, "Failed allocating hsm info\r\n");
     result = NULL;
   }
   else
@@ -161,6 +161,7 @@ HSM_CLIENT_HANDLE custom_hsm_create()
 
 void custom_hsm_destroy(HSM_CLIENT_HANDLE handle)
 {
+  fprintf(stderr, "destroying custom hsm\n");
     if (handle != NULL)
     {
         TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info = (TWILIO_TRUST_ONBOARD_HSM_INFO*)handle;
@@ -178,7 +179,7 @@ char* custom_hsm_get_certificate(HSM_CLIENT_HANDLE handle)
     char* result;
     if (handle == NULL)
     {
-        (void)printf("Invalid handle value specified\r\n");
+        (void)fprintf(stderr, "Invalid handle value specified\r\n");
         result = NULL;
     }
     else
@@ -187,7 +188,7 @@ char* custom_hsm_get_certificate(HSM_CLIENT_HANDLE handle)
         if (hsm_info->certificate == NULL)
         {
           if (populate_cert(hsm_info, hsm_info->device_path, hsm_info->sim_pin) != 0) {
-            (void)printf("Failed reading certificate\r\n");
+            (void)fprintf(stderr, "Failed reading certificate\r\n");
             result = NULL;
           }
         }
@@ -203,7 +204,7 @@ char* custom_hsm_get_certificate(HSM_CLIENT_HANDLE handle)
           size_t len = strlen(hsm_info->certificate);
           if ((result = (char*)malloc(len + 1)) == NULL)
           {
-            (void)printf("Failure allocating certificate\r\n");
+            (void)fprintf(stderr, "Failure allocating certificate\r\n");
             result = NULL;
           }
           else
@@ -220,7 +221,7 @@ char* custom_hsm_get_key(HSM_CLIENT_HANDLE handle)
   char* result;
   if (handle == NULL)
   {
-    (void)printf("Invalid handle value specified\r\n");
+    (void)fprintf(stderr, "Invalid handle value specified\r\n");
     result = NULL;
   }
   else
@@ -229,7 +230,7 @@ char* custom_hsm_get_key(HSM_CLIENT_HANDLE handle)
     if (hsm_info->key == NULL)
     {
       if (populate_key(hsm_info, hsm_info->device_path, hsm_info->sim_pin) != 0) {
-        (void)printf("Failed reading key\r\n");
+        (void)fprintf(stderr, "Failed reading key\r\n");
         result = NULL;
       }
     }
@@ -246,7 +247,7 @@ char* custom_hsm_get_key(HSM_CLIENT_HANDLE handle)
       size_t len = strlen(hsm_info->key);
       if ((result = (char*)malloc(len + 1)) == NULL)
       {
-        (void)printf("Failure allocating certificate\r\n");
+        (void)fprintf(stderr, "Failure allocating certificate\r\n");
         result = NULL;
       }
       else
@@ -263,7 +264,7 @@ char* custom_hsm_get_common_name(HSM_CLIENT_HANDLE handle)
     char* result;
     if (handle == NULL)
     {
-        (void)printf("Invalid handle value specified\r\n");
+        (void)fprintf(stderr, "Invalid handle value specified\r\n");
         result = NULL;
     }
     else
@@ -272,7 +273,7 @@ char* custom_hsm_get_common_name(HSM_CLIENT_HANDLE handle)
         if (hsm_info->common_name == NULL)
         {
           if (populate_cert(hsm_info, hsm_info->device_path, hsm_info->sim_pin) != 0) {
-            (void)printf("Failed reading certificate\r\n");
+            (void)fprintf(stderr, "Failed reading certificate\r\n");
             result = NULL;
           }
         }
@@ -288,7 +289,7 @@ char* custom_hsm_get_common_name(HSM_CLIENT_HANDLE handle)
           size_t len = strlen(hsm_info->common_name);
           if ((result = (char*)malloc(len + 1)) == NULL)
           {
-            (void)printf("Failure allocating certificate\r\n");
+            (void)fprintf(stderr, "Failure allocating certificate\r\n");
             result = NULL;
           }
           else
@@ -305,7 +306,7 @@ int custom_hsm_set_data(HSM_CLIENT_HANDLE handle, const void* data)
   int result;
   if (handle == NULL)
   {
-	(void)printf("Invalid handle value specified\r\n");
+	(void)fprintf(stderr, "Invalid handle value specified\r\n");
 	result = __LINE__;
   }
   else

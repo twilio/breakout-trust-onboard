@@ -33,7 +33,9 @@ LSerial::~LSerial(void) {
 
 
 bool LSerial::start(void) {
+#ifdef SERIAL_DEBUG
   printf("Opening serial port...");
+#endif
 
   int port;
   struct termios serial;
@@ -54,7 +56,9 @@ bool LSerial::start(void) {
     tcsetattr(m_uart, TCSANOW, &serial);  // Apply configuration
     fcntl(m_uart, F_SETFL, 0);
 
+#ifdef SERIAL_DEBUG
     printf("Found serial %s %d\r\n", _device, m_uart);
+#endif
     return true;
   }
 
@@ -134,10 +138,14 @@ bool LSerial::recv(char* data, unsigned long int toRead, unsigned long int* size
 }
 
 bool LSerial::stop(void) {
+#ifdef SERIAL_DEBUG
   printf("Closing serial port...");
+#endif
   if (m_uart >= 0) {
     close(m_uart);
   }
+#ifdef SERIAL_DEBUG
   printf("OK\n");
+#endif
   return true;
 }
