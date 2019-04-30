@@ -70,18 +70,18 @@ static void register_device_callback(PROV_DEVICE_RESULT register_result, const c
 
 void print_success(const char *iothub_uri, const char *device_id, const char *cert, const char *pk) {
   printf("{");
-  printf("  status: \"SUCCESS\",\r\n");
-  printf("  iothub_uri: \"%s\",\r\n", iothub_uri);
-  printf("  device_id: \"%s\",\r\n", device_id);
-  printf("  certificate: \"%s\",\r\n", cert);
-  printf("  key: \"%s\"\r\n", pk);
+  printf("  \"status\": \"SUCCESS\",\r\n");
+  printf("  \"iothub_uri\": \"%s\",\r\n", iothub_uri);
+  printf("  \"device_id\": \"%s\",\r\n", device_id);
+  printf("  \"certificate\": \"%s\",\r\n", cert);
+  printf("  \"key\": \"%s\"\r\n", pk);
   printf("}");
 }
 
 void print_failure(const char *message) {
     printf("{");
-    printf("  status: \"FAILURE\",\r\n");
-    printf("  message: \"%s\"\r\n", message);
+    printf("  \"status\": \"FAILURE\",\r\n");
+    printf("  \"message\": \"%s\"\r\n", message);
     printf("}");
 }
 
