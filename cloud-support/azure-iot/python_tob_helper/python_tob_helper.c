@@ -69,20 +69,29 @@ static void register_device_callback(PROV_DEVICE_RESULT register_result, const c
 }
 
 void print_success(const char *iothub_uri, const char *device_id, const char *cert, const char *pk) {
-  printf("{");
-  printf("  \"status\": \"SUCCESS\",\r\n");
-  printf("  \"iothub_uri\": \"%s\",\r\n", iothub_uri);
-  printf("  \"device_id\": \"%s\",\r\n", device_id);
-  printf("  \"certificate\": \"%s\",\r\n", cert);
-  printf("  \"key\": \"%s\"\r\n", pk);
-  printf("}");
+  char *part = NULL;
+  printf("status: SUCCESS\n");
+  printf("iothub_uri: %s\n", iothub_uri);
+  printf("device_id: %s\n", device_id);
+  printf("certificate: \"");
+  part = strtok((char *)cert, "\n");
+  while (part != NULL) {
+    printf("%s\\n", part);
+    part = strtok(NULL, "\n");
+  }
+  printf("\"\n");
+  printf("key: \"");
+  part = strtok((char *)pk, "\n");
+  while (part != NULL) {
+    printf("%s\\n", part);
+    part = strtok(NULL, "\n");
+  }
+  printf("\"\n");
 }
 
 void print_failure(const char *message) {
-    printf("{");
-    printf("  \"status\": \"FAILURE\",\r\n");
-    printf("  \"message\": \"%s\"\r\n", message);
-    printf("}");
+  printf("status: FAILURE\n");
+  printf("message: %s\n", message);
 }
 
 char *obtain_id_scope() {

@@ -4,7 +4,7 @@ This simple client uses the Azure IoT C SDK to register a device using the Devic
 
 The purpose of this client is to support DPS provisioning operations with the current Python Azure IoT SDK.  A near-future version of the Python Azure IoT SDK will be supported for Twilio Trust Onboard without this additional piece.
 
-The client, when run, will read the DPS ID Scope either from a file (by default, `/home/pi/azure_id_scope.txt`) or an AZURE_ID_SCOPE environment variable if set.  It will use the Trust Onboard `available` certificate on your Twilio Trust Onboard SIM and register a device with Azure IoT Hub.  The output of this command will be a JSON encoded hash with connection information and the Trust Onboard `available` certificate and key in cleartext.
+The client, when run, will read the DPS ID Scope either from a file (by default, `/home/pi/azure_id_scope.txt`) or an AZURE_ID_SCOPE environment variable if set.  It will use the Trust Onboard `available` certificate on your Twilio Trust Onboard SIM and register a device with Azure IoT Hub.  The output of this command will be a YAML encoded hash with connection information and the Trust Onboard `available` certificate and key in cleartext.
 
 ## Building in an environment other than the Critical IoT Kit
 
@@ -45,13 +45,11 @@ To run the sample, your DPS ID Scope must be set in the environment.  To do this
 
 The expected result is something similar to the following output:
 
-    {
-      status: "SUCCESS",
-      iothub_uri: "...",
-      device_id: "...",
-      certificate: "...",
-      key: "..."
-    }
+    status: SUCCESS
+    iothub_uri: ...
+    device_id: ...
+    certificate: "..."
+    key: "..."
 
 ### Cross-compilation
 Please refer to Azure's [documentation](https://github.com/Azure/azure-iot-sdk-c/blob/master/doc/SDK_cross_compile_example.md) on cross-compilation to build Azure IoT SDK. You can use the toolchain file provided for your device.
