@@ -1,0 +1,17 @@
+[Unit]
+Description=Seeed LTE Pi Hat Initialization
+After=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+Restart=no
+ExecStart=/usr/bin/python -u seeed_lte_hat.py on
+ExecStop=/usr/bin/python -u seeed_lte_hat.py off
+WorkingDirectory=/usr/local/seeed_lte_hat
+StandardOutput=inherit
+StandardError=inherit
+User=pi
+
+[Install]
+WantedBy=multi-user.target

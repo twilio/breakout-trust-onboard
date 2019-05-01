@@ -1,0 +1,17 @@
+[Unit]
+Description=Twilio PPP Startup
+Wants=dev-ttyACM0.device
+After=dev-ttyACM0.device
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+Restart=no
+ExecStart=/usr/bin/pon twilio
+ExecStop=/usr/bin/poff twilio
+StandardOutput=inherit
+StandardError=inherit
+User=root
+
+[Install]
+WantedBy=multi-user.target
