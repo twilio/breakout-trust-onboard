@@ -124,7 +124,7 @@ static int tob_engine_init(ENGINE* engine) {
     ctx->mias = new MIAS();
     ctx->mias->init(ctx->interface);
 
-    ctx->sim_lock = CRYPTO_THREAD_lock_new();
+    ctx->sim_lock    = CRYPTO_THREAD_lock_new();
     ctx->initialized = 1;
   }
   return 1;
@@ -139,7 +139,8 @@ static int tob_engine_finish(ENGINE* engine) {
 
   // take ownership of the SIM before destroying applets
   if (ctx->sim_lock) {
-    while(!CRYPTO_THREAD_write_lock(ctx->sim_lock));
+    while (!CRYPTO_THREAD_write_lock(ctx->sim_lock))
+      ;
   }
 
   if (ctx->mias) {
@@ -149,7 +150,7 @@ static int tob_engine_finish(ENGINE* engine) {
   if (ctx->interface) {
     delete ctx->interface;
   }
-  
+
   if (ctx->pin) {
     free(ctx->pin);
   }
@@ -211,7 +212,8 @@ static int tob_key_sign(const unsigned char* m, unsigned int m_length, unsigned 
     return 0;
   }
 
-  while (!CRYPTO_THREAD_write_lock(key_info->tob_ctx->sim_lock));
+  while (!CRYPTO_THREAD_write_lock(key_info->tob_ctx->sim_lock))
+    ;
 
   if (!key_info->tob_ctx->mias->select(false)) {
     CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
@@ -267,7 +269,8 @@ static int tob_key_decrypt(int flen, const unsigned char* from, unsigned char* t
     return 0;
   }
 
-  while (!CRYPTO_THREAD_write_lock(key_info->tob_ctx->sim_lock));
+  while (!CRYPTO_THREAD_write_lock(key_info->tob_ctx->sim_lock))
+    ;
 
   if (!key_info->tob_ctx->mias->select(false)) {
     CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
@@ -320,7 +323,7 @@ static int tob_engine_rsa_finish(RSA* rsa) {
     return 1;
   }
 
-  void *priv = RSA_get_ex_data(rsa, rsa_ex_data_idx);
+  void* priv = RSA_get_ex_data(rsa, rsa_ex_data_idx);
   free(priv);
 
   RSA_set_ex_data(rsa, rsa_ex_data_idx, NULL);
@@ -347,7 +350,8 @@ static EVP_PKEY* tob_read_pubkey_ll(tob_ctx_t* ctx, uint8_t container_id) {
   uint16_t cert_len;
   EVP_PKEY* res = NULL;
 
-  while (!CRYPTO_THREAD_write_lock(ctx->sim_lock));
+  while (!CRYPTO_THREAD_write_lock(ctx->sim_lock))
+    ;
 
   if (!ctx->mias->select(false)) {
     fprintf(stderr, "Couldn't select MIAS applet\n");
@@ -448,7 +452,8 @@ static EVP_PKEY* tob_engine_load_privkey_function(ENGINE* engine, const char* na
 
   mias_key_pair_t* mias_key_pair = NULL;
 
-  while (!CRYPTO_THREAD_write_lock(ctx->sim_lock));
+  while (!CRYPTO_THREAD_write_lock(ctx->sim_lock))
+    ;
 
   if (!ctx->mias->select(false)) {
     fprintf(stderr, "Couldn't select MIAS applet\n");
