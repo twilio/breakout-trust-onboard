@@ -3,7 +3,8 @@ project(breakout-tob)
 
 set(CMAKE_CXX_STANDARD 14)
 
-option(PCSC_SUPPORT "Support fot pcsc-lite" OFF)
+option(PCSC_SUPPORT "Support for pcsc-lite" OFF)
+option(SIGNING_SUPPORT "Support for signing key with OpenSSL 1.1+ support" OFF)
 option(BUILD_SHARED "Build as a shared library" OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/)
@@ -13,7 +14,9 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(TOOL_BINARY trust_onboard_tool)
-set(TOB_ENGINE trust_onboard_engine)
+if(SIGNING_SUPPORT)
+	set(TOB_ENGINE trust_onboard_engine)
+endif(SIGNING_SUPPORT)
 
 #set(CMAKE_BUILD_TYPE Debug)
 #add_definitions(-DAT_DEBUG)
@@ -77,9 +80,11 @@ add_executable(
         ${TOOL_BINARY}
         tools/TrustOnboardTool.cpp)
 
-add_library(
-	${TOB_ENGINE} SHARED
-	tools/OpenSSLEngine.cpp)
+if(SIGNING_SUPPORT)
+	add_library(
+		${TOB_ENGINE} SHARED
+		tools/OpenSSLEngine.cpp)
+endif(SIGNING_SUPPORT)
 
 target_link_libraries(
         ${TOOL_BINARY}
@@ -105,8 +110,14 @@ endif(PCSC_SUPPORT)
 
 set(TOOLS_SOURCES
         tools/TrustOnboardTool.cpp
-	tools/OpenSSLEngine.cpp
 	)
+
+if(SIGNING_SUPPORT)
+	set(TOOLS_SOURCES
+		${TOOLS_SOURCES}
+		tools/OpenSSLEngine.cpp
+		)
+endif(SIGNING_SUPPORT)
 
 add_custom_target(format COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/service-scripts/format.sh ${LIB_SOURCES} ${LIB_HEADERS} ${TOOLS_SOURCES} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
