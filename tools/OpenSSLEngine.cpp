@@ -189,7 +189,7 @@ static int tob_engine_ctrl(ENGINE* e, int cmd, long i, void* p, void (*f)(void))
 static int tob_key_sign(const unsigned char* m, unsigned int m_length, unsigned char* sigret, unsigned int* siglen,
                         tob_key_t* key_info) {
   if (key_info == NULL || key_info->tob_ctx == NULL || key_info->tob_ctx->mias == NULL) {
-    fprintf(stderr, "TOB encryption: invalid key_info\n");
+    fprintf(stderr, "TOB signing: invalid key_info\n");
     return 0;
   }
 
@@ -203,7 +203,22 @@ static int tob_key_sign(const unsigned char* m, unsigned int m_length, unsigned 
     return 0;
   }
 
-  if (!key_info->tob_ctx->mias->signInit(ALGO_SHA512_WITH_RSA_PKCS1_PADDING, key_info->kid)) {
+  uint8_t sign_alg;
+  switch (m_length) {
+    case 32:
+      sign_alg = ALGO_SHA256_WITH_RSA_PKCS1_PADDING;
+      break;
+    case 48:
+      sign_alg = ALGO_SHA384_WITH_RSA_PKCS1_PADDING;
+      break;
+    case 64:
+      sign_alg = ALGO_SHA512_WITH_RSA_PKCS1_PADDING;
+      break;
+    default:
+      return 0;
+  }
+
+  if (!key_info->tob_ctx->mias->signInit(sign_alg, key_info->kid)) {
     key_info->tob_ctx->mias->deselect();
     return 0;
   }
@@ -214,55 +229,6 @@ static int tob_key_sign(const unsigned char* m, unsigned int m_length, unsigned 
     return 0;
   }
   *siglen = sig_size;
-
-  key_info->tob_ctx->mias->deselect();
-  return 1;
-}
-
-static int tob_key_encrypt(int flen, const unsigned char* from, unsigned char* to, tob_key_t* key_info,
-                           int mias_padding) {
-  if (key_info == NULL || key_info->tob_ctx == NULL || key_info->tob_ctx->mias == NULL) {
-    fprintf(stderr, "TOB encryption: invalid key_info\n");
-    return 0;
-  }
-
-  uint8_t mias_hash_alg;
-
-  switch (flen) {
-    case 20:
-      mias_hash_alg = ALGO_SHA1;
-      break;
-    case 28:
-      mias_hash_alg = ALGO_SHA224;
-      break;
-    case 32:
-      mias_hash_alg = ALGO_SHA256;
-      break;
-    case 48:
-      mias_hash_alg = ALGO_SHA384;
-      break;
-    case 64:
-      mias_hash_alg = ALGO_SHA512;
-      break;
-    default:
-      fprintf(stderr, "TOB encryption: invalid hash length: %d\n", flen);
-      return 0;
-  }
-
-  // TODO: some lock needs to be held here, also investigate MIAS multichannel capabilities
-  if (!key_info->tob_ctx->mias->select(false)) {
-    return 0;
-  }
-  if (!key_info->tob_ctx->mias->signInit(mias_hash_alg | mias_padding, key_info->kid)) {
-    key_info->tob_ctx->mias->deselect();
-    return 0;
-  }
-
-  uint16_t sig_size;  // ignored, OpenSSL knows the expected size
-  if (!key_info->tob_ctx->mias->signFinal(from, flen, to, &sig_size)) {
-    key_info->tob_ctx->mias->deselect();
-    return 0;
-  }
 
   key_info->tob_ctx->mias->deselect();
   return 1;
@@ -306,16 +272,6 @@ static int tob_engine_rsa_sign(int type, const unsigned char* m, unsigned int m_
   return tob_key_sign(m, m_length, sigret, siglen, key_info);
 }
 
-// Encrypt with a private key
-static int tob_engine_rsa_encrypt(int flen, const unsigned char* from, unsigned char* to, RSA* rsa, int padding) {
-  if (padding != RSA_PKCS1_PADDING) {
-    fprintf(stderr, "Only PKCS1 padding is supported in %s\n", engine_id);
-  }
-
-  tob_key_t* key_info = (tob_key_t*)RSA_get_ex_data(rsa, rsa_ex_data_idx);
-  return tob_key_encrypt(flen, from, to, key_info, RSA_WITH_PKCS1_PADDING);
-}
-
 // Decrypt with a private key
 static int tob_engine_rsa_decrypt(int flen, const unsigned char* from, unsigned char* to, RSA* rsa, int padding) {
   if (padding != RSA_PKCS1_PADDING) {
@@ -333,7 +289,6 @@ static RSA_METHOD* tob_engine_rsa(void) {
     tob_engine_meth = RSA_meth_dup(RSA_get_default_method());
     RSA_meth_set1_name(tob_engine_meth, "Trust Onboard RSA method");
     RSA_meth_set_flags(tob_engine_meth, 0);
-    // RSA_meth_set_priv_enc(tob_engine_meth, tob_engine_rsa_encrypt);
     RSA_meth_set_sign(tob_engine_meth, tob_engine_rsa_sign);
     RSA_meth_set_priv_dec(tob_engine_meth, tob_engine_rsa_decrypt);
     // RSA_meth_set_finish(tob_engine_meth, tob_engine_finish_method);

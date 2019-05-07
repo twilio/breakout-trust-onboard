@@ -111,6 +111,7 @@ set(TOOLS_SOURCES
 add_custom_target(format COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/service-scripts/format.sh ${LIB_SOURCES} ${LIB_HEADERS} ${TOOLS_SOURCES} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 install(TARGETS TwilioTrustOnboard DESTINATION lib)
+install(TARGETS ${TOB_ENGINE} DESTINATION lib)
 install(TARGETS ${TOOL_BINARY} DESTINATION bin)
 # TODO: set group to dialout?
 install(FILES include/BreakoutTrustOnboardSDK.h DESTINATION include)
