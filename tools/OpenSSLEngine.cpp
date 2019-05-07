@@ -37,19 +37,15 @@ struct tob_ctx_t {
   int pcsc_idx;
   SEInterface* interface;
   MIAS* mias;
+  CRYPTO_RWLOCK* sim_lock;
 };
 
 // Private data given to OpenSSL RSA structs
 struct tob_key_t {
-  // uint8_t mias_alg;
   uint8_t kid;
-  // EVP_PKEY* evp_key;
   tob_ctx_t* tob_ctx;
 };
 
-/*
- * Based on eng_dyn
- */
 static int tob_set_ctx(ENGINE* e, tob_ctx_t** ctx) {
   tob_ctx_t* c = (tob_ctx_t*)calloc(1, sizeof(tob_ctx_t));
   int ret      = 1;
@@ -119,11 +115,16 @@ static int tob_engine_init(ENGINE* engine) {
     }
 
     if (!ctx->interface->open()) {
+      delete ctx->interface;
       return 0;
     }
 
+    Applet::closeAllChannels(ctx->interface);
+
     ctx->mias = new MIAS();
     ctx->mias->init(ctx->interface);
+
+    ctx->sim_lock = CRYPTO_THREAD_lock_new();
     ctx->initialized = 1;
   }
   return 1;
@@ -133,22 +134,39 @@ static int tob_engine_finish(ENGINE* engine) {
   tob_ctx_t* ctx = tob_get_ctx(engine);
 
   if (ctx == NULL) {
-    return 0;
+    return 1;
   }
 
-  // TODO: do the clean-up
-  return 0;
-}
-
-static int tob_engine_destroy(ENGINE* engine) {
-  tob_ctx_t* ctx = tob_get_ctx(engine);
-
-  if (ctx == NULL) {
-    return 0;
+  // take ownership of the SIM before destroying applets
+  if (ctx->sim_lock) {
+    while(!CRYPTO_THREAD_write_lock(ctx->sim_lock));
   }
 
-  // TODO: do the clean-up
-  return 0;
+  if (ctx->mias) {
+    delete ctx->mias;
+  }
+
+  if (ctx->interface) {
+    delete ctx->interface;
+  }
+  
+  if (ctx->pin) {
+    free(ctx->pin);
+  }
+
+  if (ctx->modem_device) {
+    free(ctx->modem_device);
+  }
+
+  if (ctx->sim_lock) {
+    CRYPTO_THREAD_unlock(ctx->sim_lock);
+    CRYPTO_THREAD_lock_free(ctx->sim_lock);
+  }
+
+  free(ctx);
+
+  ENGINE_set_ex_data(engine, ex_data_idx, NULL);
+  return 1;
 }
 
 static int tob_engine_ctrl(ENGINE* e, int cmd, long i, void* p, void (*f)(void)) {
@@ -193,13 +211,16 @@ static int tob_key_sign(const unsigned char* m, unsigned int m_length, unsigned 
     return 0;
   }
 
-  // TODO: some lock needs to be held here, also investigate MIAS multichannel capabilities
+  while (!CRYPTO_THREAD_write_lock(key_info->tob_ctx->sim_lock));
+
   if (!key_info->tob_ctx->mias->select(false)) {
+    CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
     return 0;
   }
 
   if (!key_info->tob_ctx->mias->verifyPin((uint8_t*)key_info->tob_ctx->pin, strlen(key_info->tob_ctx->pin))) {
     key_info->tob_ctx->mias->deselect();
+    CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
     return 0;
   }
 
@@ -215,22 +236,27 @@ static int tob_key_sign(const unsigned char* m, unsigned int m_length, unsigned 
       sign_alg = ALGO_SHA512_WITH_RSA_PKCS1_PADDING;
       break;
     default:
+      key_info->tob_ctx->mias->deselect();
+      CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
       return 0;
   }
 
   if (!key_info->tob_ctx->mias->signInit(sign_alg, key_info->kid)) {
     key_info->tob_ctx->mias->deselect();
+    CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
     return 0;
   }
 
   uint16_t sig_size;
   if (!key_info->tob_ctx->mias->signFinal(m, m_length, sigret, &sig_size)) {
     key_info->tob_ctx->mias->deselect();
+    CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
     return 0;
   }
   *siglen = sig_size;
 
   key_info->tob_ctx->mias->deselect();
+  CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
   return 1;
 }
 
@@ -240,28 +266,35 @@ static int tob_key_decrypt(int flen, const unsigned char* from, unsigned char* t
     fprintf(stderr, "TOB decryption: invalid key_info\n");
     return 0;
   }
-  // TODO: some lock needs to be held here, also investigate MIAS multichannel capabilities
+
+  while (!CRYPTO_THREAD_write_lock(key_info->tob_ctx->sim_lock));
+
   if (!key_info->tob_ctx->mias->select(false)) {
+    CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
     return 0;
   }
 
   if (!key_info->tob_ctx->mias->verifyPin((uint8_t*)key_info->tob_ctx->pin, strlen(key_info->tob_ctx->pin))) {
     key_info->tob_ctx->mias->deselect();
+    CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
     return 0;
   }
 
   if (!key_info->tob_ctx->mias->decryptInit(mias_padding, key_info->kid)) {
     key_info->tob_ctx->mias->deselect();
+    CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
     return 0;
   }
 
   uint16_t plain_size;  // ignored, OpenSSL knows the expected size
   if (!key_info->tob_ctx->mias->decryptFinal(from, flen, to, &plain_size)) {
     key_info->tob_ctx->mias->deselect();
+    CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
     return 0;
   }
 
   key_info->tob_ctx->mias->deselect();
+  CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
   return 1;
 }
 
@@ -282,6 +315,19 @@ static int tob_engine_rsa_decrypt(int flen, const unsigned char* from, unsigned 
   return tob_key_decrypt(flen, from, to, key_info, RSA_WITH_PKCS1_PADDING);
 }
 
+static int tob_engine_rsa_finish(RSA* rsa) {
+  if (rsa_ex_data_idx < 0) {
+    return 1;
+  }
+
+  void *priv = RSA_get_ex_data(rsa, rsa_ex_data_idx);
+  free(priv);
+
+  RSA_set_ex_data(rsa, rsa_ex_data_idx, NULL);
+
+  return 1;
+}
+
 static RSA_METHOD* tob_engine_rsa(void) {
   static RSA_METHOD* tob_engine_meth = NULL;
 
@@ -291,7 +337,7 @@ static RSA_METHOD* tob_engine_rsa(void) {
     RSA_meth_set_flags(tob_engine_meth, 0);
     RSA_meth_set_sign(tob_engine_meth, tob_engine_rsa_sign);
     RSA_meth_set_priv_dec(tob_engine_meth, tob_engine_rsa_decrypt);
-    // RSA_meth_set_finish(tob_engine_meth, tob_engine_finish_method);
+    RSA_meth_set_finish(tob_engine_meth, tob_engine_rsa_finish);
   }
 
   return tob_engine_meth;
@@ -301,19 +347,24 @@ static EVP_PKEY* tob_read_pubkey_ll(tob_ctx_t* ctx, uint8_t container_id) {
   uint16_t cert_len;
   EVP_PKEY* res = NULL;
 
+  while (!CRYPTO_THREAD_write_lock(ctx->sim_lock));
+
   if (!ctx->mias->select(false)) {
     fprintf(stderr, "Couldn't select MIAS applet\n");
+    CRYPTO_THREAD_unlock(ctx->sim_lock);
     return NULL;
   }
 
   if (!ctx->mias->verifyPin((uint8_t*)ctx->pin, strlen(ctx->pin))) {
     ctx->mias->deselect();
+    CRYPTO_THREAD_unlock(ctx->sim_lock);
     return 0;
   }
 
   if (!ctx->mias->getCertificateByContainerId(container_id, NULL, &cert_len)) {
     fprintf(stderr, "Certificate with ID %d isn't found\n", (int)container_id);
     ctx->mias->deselect();
+    CRYPTO_THREAD_unlock(ctx->sim_lock);
     return NULL;
   }
 
@@ -322,16 +373,19 @@ static EVP_PKEY* tob_read_pubkey_ll(tob_ctx_t* ctx, uint8_t container_id) {
   if (!cert) {
     fprintf(stderr, "Couldn't allocate memory for certificate\n");
     ctx->mias->deselect();
+    CRYPTO_THREAD_unlock(ctx->sim_lock);
     return NULL;
   }
 
   if (!ctx->mias->getCertificateByContainerId(container_id, cert, &cert_len)) {
     fprintf(stderr, "Couldn't read certificate with ID %d\n", (int)container_id);
     ctx->mias->deselect();
+    CRYPTO_THREAD_unlock(ctx->sim_lock);
     return NULL;
   }
 
   ctx->mias->deselect();
+  CRYPTO_THREAD_unlock(ctx->sim_lock);
 
   BIO* cert_bio = BIO_new_mem_buf(cert, cert_len);
   if (!cert_bio) {
@@ -394,22 +448,28 @@ static EVP_PKEY* tob_engine_load_privkey_function(ENGINE* engine, const char* na
 
   mias_key_pair_t* mias_key_pair = NULL;
 
+  while (!CRYPTO_THREAD_write_lock(ctx->sim_lock));
+
   if (!ctx->mias->select(false)) {
     fprintf(stderr, "Couldn't select MIAS applet\n");
+    CRYPTO_THREAD_unlock(ctx->sim_lock);
     return NULL;
   }
 
   if (!ctx->mias->verifyPin((uint8_t*)ctx->pin, strlen(ctx->pin))) {
     ctx->mias->deselect();
+    CRYPTO_THREAD_unlock(ctx->sim_lock);
     return NULL;
   }
 
   if (!ctx->mias->getKeyPairByContainerId(container_id, &mias_key_pair) || mias_key_pair == NULL) {
     fprintf(stderr, "Key with ID %s isn't found\n", name);
+    CRYPTO_THREAD_unlock(ctx->sim_lock);
     return NULL;
   }
 
   ctx->mias->deselect();
+  CRYPTO_THREAD_unlock(ctx->sim_lock);
 
   EVP_PKEY* pubkey = tob_read_pubkey_ll(ctx, container_id);
   if (!pubkey) {
@@ -452,8 +512,6 @@ static EVP_PKEY* tob_engine_load_privkey_function(ENGINE* engine, const char* na
   key_private->kid       = mias_key_pair->kid;
   key_private->tob_ctx   = ctx;
   RSA_set_ex_data(rsa_key, rsa_ex_data_idx, key_private);
-
-  RSA_set_method(rsa_key, tob_engine_rsa());
 
   EVP_PKEY* res = EVP_PKEY_new();
 
@@ -503,11 +561,6 @@ static int bind(ENGINE* e, const char* id) {
 
   if (!ENGINE_set_finish_function(e, tob_engine_finish)) {
     fprintf(stderr, "ENGINE_set_finish_function failed\n");
-    goto err;
-  }
-
-  if (!ENGINE_set_destroy_function(e, tob_engine_destroy)) {
-    fprintf(stderr, "ENGINE_set_destroy_function failed\n");
     goto err;
   }
 
