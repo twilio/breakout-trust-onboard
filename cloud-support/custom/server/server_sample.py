@@ -4,6 +4,7 @@ from http.server import HTTPServer,BaseHTTPRequestHandler
 import socket
 import ssl
 import argparse
+import sys
 
 class MiasExampleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -20,7 +21,11 @@ def main():
     parser.add_argument("clientCA", help="client CA certificate chain")
     args = parser.parse_args()
 
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    if sys.version_info >= (3,6):
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    else:
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS)
+
     context.load_cert_chain(args.certificate, args.pkey)
     context.load_verify_locations(args.clientCA)
     context.verify_mode = ssl.CERT_REQUIRED
