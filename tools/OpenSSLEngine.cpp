@@ -37,8 +37,51 @@ struct tob_ctx_t {
   int pcsc_idx;
   SEInterface* interface;
   MIAS* mias;
+#if OPENSSL_VERSION_NUMBER >= 0x10100004L
   CRYPTO_RWLOCK* sim_lock;
+#else
+  int sim_lock;
+#endif
 };
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100004L
+
+static inline CRYPTO_RWLOCK* ssl_lock_universal_new() {
+  return CRYPTO_THREAD_lock_new();
+}
+
+static inline void ssl_lock_universal_free(CRYPTO_RWLOCK* lock) {
+  CRYPTO_THREAD_lock_free(lock);
+}
+
+static inline void ssl_lock_universal_lock(CRYPTO_RWLOCK* lock) {
+  while (!CRYPTO_THREAD_write_lock(lock))
+    ;
+}
+
+static inline void ssl_lock_universal_unlock(CRYPTO_RWLOCK* lock) {
+  CRYPTO_THREAD_unlock(lock);
+}
+
+#else
+
+static inline int ssl_lock_universal_new() {
+  return CRYPTO_get_dynlock_create_callback() ? CRYPTO_get_new_dynlockid() : 0;
+}
+
+static inline void ssl_lock_universal_free(int lock) {
+  CRYPTO_destroy_dynlockid(lock);
+}
+
+static inline void ssl_lock_universal_lock(int lock) {
+  CRYPTO_w_lock(lock);
+}
+
+static inline void ssl_lock_universal_unlock(int lock) {
+  CRYPTO_w_unlock(lock);
+}
+
+#endif
 
 // Private data given to OpenSSL RSA structs
 struct tob_key_t {
@@ -124,7 +167,7 @@ static int tob_engine_init(ENGINE* engine) {
     ctx->mias = new MIAS();
     ctx->mias->init(ctx->interface);
 
-    ctx->sim_lock    = CRYPTO_THREAD_lock_new();
+    ctx->sim_lock    = ssl_lock_universal_new();
     ctx->initialized = 1;
   }
   return 1;
@@ -139,8 +182,7 @@ static int tob_engine_finish(ENGINE* engine) {
 
   // take ownership of the SIM before destroying applets
   if (ctx->sim_lock) {
-    while (!CRYPTO_THREAD_write_lock(ctx->sim_lock))
-      ;
+    ssl_lock_universal_lock(ctx->sim_lock);
   }
 
   if (ctx->mias) {
@@ -160,8 +202,8 @@ static int tob_engine_finish(ENGINE* engine) {
   }
 
   if (ctx->sim_lock) {
-    CRYPTO_THREAD_unlock(ctx->sim_lock);
-    CRYPTO_THREAD_lock_free(ctx->sim_lock);
+    ssl_lock_universal_unlock(ctx->sim_lock);
+    ssl_lock_universal_free(ctx->sim_lock);
   }
 
   free(ctx);
@@ -212,17 +254,16 @@ static int tob_key_sign(const unsigned char* m, unsigned int m_length, unsigned 
     return 0;
   }
 
-  while (!CRYPTO_THREAD_write_lock(key_info->tob_ctx->sim_lock))
-    ;
+  ssl_lock_universal_lock(key_info->tob_ctx->sim_lock);
 
   if (!key_info->tob_ctx->mias->select(false)) {
-    CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
+    ssl_lock_universal_unlock(key_info->tob_ctx->sim_lock);
     return 0;
   }
 
   if (!key_info->tob_ctx->mias->verifyPin((uint8_t*)key_info->tob_ctx->pin, strlen(key_info->tob_ctx->pin))) {
     key_info->tob_ctx->mias->deselect();
-    CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
+    ssl_lock_universal_unlock(key_info->tob_ctx->sim_lock);
     return 0;
   }
 
@@ -239,26 +280,26 @@ static int tob_key_sign(const unsigned char* m, unsigned int m_length, unsigned 
       break;
     default:
       key_info->tob_ctx->mias->deselect();
-      CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
+      ssl_lock_universal_unlock(key_info->tob_ctx->sim_lock);
       return 0;
   }
 
   if (!key_info->tob_ctx->mias->signInit(sign_alg, key_info->kid)) {
     key_info->tob_ctx->mias->deselect();
-    CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
+    ssl_lock_universal_unlock(key_info->tob_ctx->sim_lock);
     return 0;
   }
 
   uint16_t sig_size;
   if (!key_info->tob_ctx->mias->signFinal(m, m_length, sigret, &sig_size)) {
     key_info->tob_ctx->mias->deselect();
-    CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
+    ssl_lock_universal_unlock(key_info->tob_ctx->sim_lock);
     return 0;
   }
   *siglen = sig_size;
 
   key_info->tob_ctx->mias->deselect();
-  CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
+  ssl_lock_universal_unlock(key_info->tob_ctx->sim_lock);
   return 1;
 }
 
@@ -269,35 +310,34 @@ static int tob_key_decrypt(int flen, const unsigned char* from, unsigned char* t
     return 0;
   }
 
-  while (!CRYPTO_THREAD_write_lock(key_info->tob_ctx->sim_lock))
-    ;
+  ssl_lock_universal_lock(key_info->tob_ctx->sim_lock);
 
   if (!key_info->tob_ctx->mias->select(false)) {
-    CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
+    ssl_lock_universal_unlock(key_info->tob_ctx->sim_lock);
     return 0;
   }
 
   if (!key_info->tob_ctx->mias->verifyPin((uint8_t*)key_info->tob_ctx->pin, strlen(key_info->tob_ctx->pin))) {
     key_info->tob_ctx->mias->deselect();
-    CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
+    ssl_lock_universal_unlock(key_info->tob_ctx->sim_lock);
     return 0;
   }
 
   if (!key_info->tob_ctx->mias->decryptInit(mias_padding, key_info->kid)) {
     key_info->tob_ctx->mias->deselect();
-    CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
+    ssl_lock_universal_unlock(key_info->tob_ctx->sim_lock);
     return 0;
   }
 
   uint16_t plain_size;  // ignored, OpenSSL knows the expected size
   if (!key_info->tob_ctx->mias->decryptFinal(from, flen, to, &plain_size)) {
     key_info->tob_ctx->mias->deselect();
-    CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
+    ssl_lock_universal_unlock(key_info->tob_ctx->sim_lock);
     return 0;
   }
 
   key_info->tob_ctx->mias->deselect();
-  CRYPTO_THREAD_unlock(key_info->tob_ctx->sim_lock);
+  ssl_lock_universal_unlock(key_info->tob_ctx->sim_lock);
   return 1;
 }
 
@@ -335,12 +375,25 @@ static RSA_METHOD* tob_engine_rsa(void) {
   static RSA_METHOD* tob_engine_meth = NULL;
 
   if (tob_engine_meth == NULL) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100005L
     tob_engine_meth = RSA_meth_dup(RSA_get_default_method());
     RSA_meth_set1_name(tob_engine_meth, "Trust Onboard RSA method");
     RSA_meth_set_flags(tob_engine_meth, 0);
     RSA_meth_set_sign(tob_engine_meth, tob_engine_rsa_sign);
     RSA_meth_set_priv_dec(tob_engine_meth, tob_engine_rsa_decrypt);
     RSA_meth_set_finish(tob_engine_meth, tob_engine_rsa_finish);
+#else
+    static const RSA_METHOD* default_method = RSA_get_default_method();
+    tob_engine_meth = (RSA_METHOD*)OPENSSL_malloc(sizeof(RSA_METHOD));
+    if (tob_engine_meth == NULL) return NULL;
+    memcpy(tob_engine_meth, default_method, sizeof(RSA_METHOD));
+
+    tob_engine_meth->name = OPENSSL_strdup("Trust Onboard RSA method");
+    tob_engine_meth->flags = RSA_FLAG_SIGN_VER;
+    tob_engine_meth->rsa_sign = tob_engine_rsa_sign;
+    tob_engine_meth->rsa_priv_dec = tob_engine_rsa_decrypt;
+    tob_engine_meth->finish = tob_engine_rsa_finish;
+#endif
   }
 
   return tob_engine_meth;
@@ -350,25 +403,24 @@ static EVP_PKEY* tob_read_pubkey_ll(tob_ctx_t* ctx, uint8_t container_id) {
   uint16_t cert_len;
   EVP_PKEY* res = NULL;
 
-  while (!CRYPTO_THREAD_write_lock(ctx->sim_lock))
-    ;
+  ssl_lock_universal_lock(ctx->sim_lock);
 
   if (!ctx->mias->select(false)) {
     fprintf(stderr, "Couldn't select MIAS applet\n");
-    CRYPTO_THREAD_unlock(ctx->sim_lock);
+    ssl_lock_universal_unlock(ctx->sim_lock);
     return NULL;
   }
 
   if (!ctx->mias->verifyPin((uint8_t*)ctx->pin, strlen(ctx->pin))) {
     ctx->mias->deselect();
-    CRYPTO_THREAD_unlock(ctx->sim_lock);
+    ssl_lock_universal_unlock(ctx->sim_lock);
     return 0;
   }
 
   if (!ctx->mias->getCertificateByContainerId(container_id, NULL, &cert_len)) {
     fprintf(stderr, "Certificate with ID %d isn't found\n", (int)container_id);
     ctx->mias->deselect();
-    CRYPTO_THREAD_unlock(ctx->sim_lock);
+    ssl_lock_universal_unlock(ctx->sim_lock);
     return NULL;
   }
 
@@ -377,19 +429,19 @@ static EVP_PKEY* tob_read_pubkey_ll(tob_ctx_t* ctx, uint8_t container_id) {
   if (!cert) {
     fprintf(stderr, "Couldn't allocate memory for certificate\n");
     ctx->mias->deselect();
-    CRYPTO_THREAD_unlock(ctx->sim_lock);
+    ssl_lock_universal_unlock(ctx->sim_lock);
     return NULL;
   }
 
   if (!ctx->mias->getCertificateByContainerId(container_id, cert, &cert_len)) {
     fprintf(stderr, "Couldn't read certificate with ID %d\n", (int)container_id);
     ctx->mias->deselect();
-    CRYPTO_THREAD_unlock(ctx->sim_lock);
+    ssl_lock_universal_unlock(ctx->sim_lock);
     return NULL;
   }
 
   ctx->mias->deselect();
-  CRYPTO_THREAD_unlock(ctx->sim_lock);
+  ssl_lock_universal_unlock(ctx->sim_lock);
 
   BIO* cert_bio = BIO_new_mem_buf(cert, cert_len);
   if (!cert_bio) {
@@ -452,36 +504,40 @@ static EVP_PKEY* tob_engine_load_privkey_function(ENGINE* engine, const char* na
 
   mias_key_pair_t* mias_key_pair = NULL;
 
-  while (!CRYPTO_THREAD_write_lock(ctx->sim_lock))
-    ;
+  ssl_lock_universal_lock(ctx->sim_lock);
 
   if (!ctx->mias->select(false)) {
     fprintf(stderr, "Couldn't select MIAS applet\n");
-    CRYPTO_THREAD_unlock(ctx->sim_lock);
+    ssl_lock_universal_unlock(ctx->sim_lock);
     return NULL;
   }
 
   if (!ctx->mias->verifyPin((uint8_t*)ctx->pin, strlen(ctx->pin))) {
     ctx->mias->deselect();
-    CRYPTO_THREAD_unlock(ctx->sim_lock);
+    ssl_lock_universal_unlock(ctx->sim_lock);
     return NULL;
   }
 
   if (!ctx->mias->getKeyPairByContainerId(container_id, &mias_key_pair) || mias_key_pair == NULL) {
     fprintf(stderr, "Key with ID %s isn't found\n", name);
-    CRYPTO_THREAD_unlock(ctx->sim_lock);
+    ssl_lock_universal_unlock(ctx->sim_lock);
     return NULL;
   }
 
   ctx->mias->deselect();
-  CRYPTO_THREAD_unlock(ctx->sim_lock);
+  ssl_lock_universal_unlock(ctx->sim_lock);
 
   EVP_PKEY* pubkey = tob_read_pubkey_ll(ctx, container_id);
   if (!pubkey) {
     return NULL;
   }
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100003L
   RSA* pubkey_rsa = EVP_PKEY_get0_RSA(pubkey);
+#else
+  RSA* pubkey_rsa = pubkey->pkey.rsa;
+#endif
+
   if (!pubkey_rsa) {
     EVP_PKEY_free(pubkey);
     return NULL;
@@ -499,8 +555,8 @@ static EVP_PKEY* tob_engine_load_privkey_function(ENGINE* engine, const char* na
   RSA_get0_key(pubkey_rsa, &pub_n, &pub_e, NULL);
   RSA_set0_key(rsa_key, BN_dup(pub_n), BN_dup(pub_e), NULL);
 #else
-  rsa_key->e = BN_dup(pub_e);
-  rsa_key->n = BN_dup(pub_n);
+  rsa_key->e = BN_dup(pubkey_rsa->e);
+  rsa_key->n = BN_dup(pubkey_rsa->n);
 #endif
 
   EVP_PKEY_free(pubkey);
