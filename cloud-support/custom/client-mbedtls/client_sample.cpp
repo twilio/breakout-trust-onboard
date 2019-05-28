@@ -19,7 +19,7 @@
 
 static void print_usage() {
   std::cerr << "tob_client targetdomain.tld <port> /remote/resource/path /path/to/client/cert.pem "
-               "/path/to/server/rootCA.pem <device_path>"
+               "/path/to/server/rootCA.pem <device_path> <mias_pin>"
             << std::endl;
 }
 
@@ -51,7 +51,7 @@ static bool map_file(const char* filename, unsigned char** buf, int* len) {
 }
 
 int main(int argc, const char** argv) {
-  if (argc != 7) {
+  if (argc != 8) {
     print_usage();
     return 1;
   }
@@ -62,6 +62,7 @@ int main(int argc, const char** argv) {
   const char* client_cert = argv[4];
   const char* root_ca     = argv[5];
   const char* device_path = argv[6];
+  const char* pin         = argv[8];
 
   std::string result;
 
@@ -132,7 +133,7 @@ int main(int argc, const char** argv) {
   mbedtls_ssl_conf_rng(&conf, mbedtls_ctr_drbg_random, &ctr_drbg);
   mbedtls_ssl_conf_dbg(&conf, debug_out, stdout);
 
-  tob_mbedtls_init(device_path, "0000");
+  tob_mbedtls_init(device_path, pin);
 
   if (!tob_mbedtls_signing_key(&device_key, 0)) {
     std::cerr << "Failed to initialize signing key" << std::endl;

@@ -90,10 +90,11 @@ endif(SIGNING_SUPPORT)
 if(MBEDTLS_SUPPORT)
 	find_package(MbedTLS REQUIRED)
 	add_library(
-		tob_mbed STATIC
-		tools/TobMbedtls.cpp
-		tools/TobMbedtls.h)
+		tob_mbed SHARED
+		src/TobMbedtlsLL.cpp
+		src/TobMbedtls.cpp)
 	target_include_directories(tob_mbed PUBLIC ${MBEDTLS_INCLUDE_DIRS})
+	target_link_libraries(tob_mbed ${MBEDTLS_LIBRARIES} TwilioTrustOnboard)
 endif(MBEDTLS_SUPPORT)
 
 target_link_libraries(
@@ -116,6 +117,11 @@ if(PCSC_SUPPORT)
 		${TOB_ENGINE}
                 ${PCSC_LIBRARIES}
         )
+
+	target_link_libraries(
+		tob_mbed
+                ${PCSC_LIBRARIES}
+        )
 endif(PCSC_SUPPORT)
 
 set(TOOLS_SOURCES
@@ -135,7 +141,7 @@ install(TARGETS TwilioTrustOnboard DESTINATION lib)
 install(TARGETS ${TOB_ENGINE} DESTINATION lib)
 if(MBEDTLS_SUPPORT)
 	install(TARGETS tob_mbed DESTINATION lib)
-	install(FILES tools/TobMbedtls.h DESTINATION include)
+	install(FILES include/TobMbedtls.h DESTINATION include)
 endif(MBEDTLS_SUPPORT)
 install(TARGETS ${TOOL_BINARY} DESTINATION bin)
 # TODO: set group to dialout?

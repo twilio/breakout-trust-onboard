@@ -7,8 +7,8 @@
  * SPDX-License-Identifier:  Apache-2.0
  */
 
-#ifndef __MBEDTLS_PRIVATE_TOB_H__
-#define __MBEDTLS_PRIVATE_TOB_H__
+#ifndef __TOB_MBEDTLS_H__
+#define __TOB_MBEDTLS_H__
 
 #include <mbedtls/ssl.h>
 
@@ -17,7 +17,7 @@ extern "C" {
 #endif
 
 // Initialize Trust Onboard
-// @param iface - serial interface to use. Either of form "/dev/myserialdevice" or "pcsc:X"
+// @param iface_name - serial interface to use. Either of form "/dev/myserialdevice" or "pcsc:X"
 // @param pin - PIN code for MIAS applet
 // @return success status
 bool tob_mbedtls_init(const char* iface_name, const char* pin);
@@ -32,4 +32,4 @@ bool tob_mbedtls_signing_key(mbedtls_pk_context* pk, uint8_t key_id);
 }
 #endif
 
-#endif  // __MBEDTLS_PRIVATE_TOB_H__
+#endif  // __TOB_MBEDTLS_H__
