@@ -38,3 +38,18 @@ In the project you build above, you should now have an executable `bin/trust_onb
     trust_onboard_tool /dev/ttyACM1 0000 temp/certificate-chain.pem temp/key.pem
 
 The certificate and private key can now be used in your applications.  We also offer direct access to the Trust Onboard SDK to access the certificate and private key in your code without an intermediate file.  See the [BreakoutTrustOnboardSDK.h](include/BreakoutTrustOnboardSDK.h) header for more details.
+
+# OpenSSL engine
+
+When built with `SIGNING_SUPPORT` a [dynamic engine](https://github.com/openssl/openssl/blob/master/README.ENGINE) for OpenSSL is produced that uses a signing key in the MIAS applet to establish a TLS connection. The engine supports the following control commands
+
+    * `PIN` - MIAS PIN code (normally "0000")
+    * `PCSC` - binary (0/1) command setting whether the engine uses a SIM connected over PC/SC interface (1) or to a modem accessed via a serial device (0)
+    * `MODEM_DEVICE` - if PCSC is 0, a path to the serial device, otherwise ignored.
+    * `PCSC_IDX` - if PCSC is 1, an index in the list returned by libpcsclite's `SCardListReaders`, otherwise ignored
+
+# MbedTLS key
+
+When built with `MBEDTLS_SUPPORT` a dynamic library is produced providing an API to let MbedTLS key use the signing key. See the [header file](include/TobMbedtls.h) for the details.
+
+In a resource-constrained application you most likely don't want to use this library, and probably have your own way to connect to the modem/SIM. In this way you can statically link to the low-level library. The [API](include/TbMbedtlsLL.h) allows you to substitute your own implementation of the [interface to the modem](external_libs/tob_sim/common/inc/SEInterface.h). The library doesn't use dynamic memory or multithreading.

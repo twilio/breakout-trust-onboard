@@ -1,12 +1,16 @@
 # Samples for using Trust Onboard SIMs with custom back end
 
-## client
+## client-openssl
 
 Sample client using libcurl and OpenSSL with Trust Onboard engine to establish a mutually authenticated connection to a custom server.
 
 For the client to be able to find the engine, it should be run with `OPENSSL_CONF` environment variable to point to either
   - `client/test_engine_pcsc.conf` file to interface to the SIM card via PC/SC interface or
   - `client/test_engine_acm.conf` file to interface via serial modem connected to `/dev/ACM0` device.
+
+## client-mbedtls
+
+Sample client using mbedtls. The client depends on the Trust Onboard library built with `MBEDTLS_SUPPORT` flag and dynamically-linked mbedtls library in default configuration.
 
 ## server
 

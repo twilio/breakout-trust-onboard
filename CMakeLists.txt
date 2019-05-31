@@ -4,7 +4,8 @@ project(breakout-tob)
 set(CMAKE_CXX_STANDARD 14)
 
 option(PCSC_SUPPORT "Support for pcsc-lite" OFF)
-option(SIGNING_SUPPORT "Support for signing key with OpenSSL 1.1+ support" OFF)
+option(SIGNING_SUPPORT "Support for signing key with OpenSSL support" OFF)
+option(MBEDTLS_SUPPORT "Private crypto device shims for MbedTLS 2.11+" OFF)
 option(BUILD_SHARED "Build as a shared library" OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/)
@@ -86,6 +87,16 @@ if(SIGNING_SUPPORT)
 		tools/OpenSSLEngine.cpp)
 endif(SIGNING_SUPPORT)
 
+if(MBEDTLS_SUPPORT)
+	find_package(MbedTLS REQUIRED)
+	add_library(
+		tob_mbed SHARED
+		src/TobMbedtlsLL.cpp
+		src/TobMbedtls.cpp)
+	target_include_directories(tob_mbed PUBLIC ${MBEDTLS_INCLUDE_DIRS})
+	target_link_libraries(tob_mbed ${MBEDTLS_LIBRARIES} TwilioTrustOnboard)
+endif(MBEDTLS_SUPPORT)
+
 target_link_libraries(
         ${TOOL_BINARY}
         TwilioTrustOnboard
@@ -106,6 +117,11 @@ if(PCSC_SUPPORT)
 		${TOB_ENGINE}
                 ${PCSC_LIBRARIES}
         )
+
+	target_link_libraries(
+		tob_mbed
+                ${PCSC_LIBRARIES}
+        )
 endif(PCSC_SUPPORT)
 
 set(TOOLS_SOURCES
@@ -123,6 +139,10 @@ add_custom_target(format COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/service-scripts/for
 
 install(TARGETS TwilioTrustOnboard DESTINATION lib)
 install(TARGETS ${TOB_ENGINE} DESTINATION lib)
+if(MBEDTLS_SUPPORT)
+	install(TARGETS tob_mbed DESTINATION lib)
+	install(FILES include/TobMbedtls.h DESTINATION include)
+endif(MBEDTLS_SUPPORT)
 install(TARGETS ${TOOL_BINARY} DESTINATION bin)
 # TODO: set group to dialout?
 install(FILES include/BreakoutTrustOnboardSDK.h DESTINATION include)
