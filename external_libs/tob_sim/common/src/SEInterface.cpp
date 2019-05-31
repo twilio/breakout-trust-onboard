@@ -40,7 +40,7 @@ bool SEInterface::transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uin
   return transmit();
 }
 
-bool SEInterface::transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data, uint16_t dataLen) {
+bool SEInterface::transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, const uint8_t* data, uint16_t dataLen) {
   _apdu[APDU_CLA_OFFSET] = cla;
   _apdu[APDU_INS_OFFSET] = ins;
   _apdu[APDU_P1_OFFSET]  = p1;
@@ -51,7 +51,7 @@ bool SEInterface::transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uin
   return transmit();
 }
 
-bool SEInterface::transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data, uint16_t dataLen,
+bool SEInterface::transmit(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, const uint8_t* data, uint16_t dataLen,
                            uint8_t le) {
   _apdu[APDU_CLA_OFFSET] = cla;
   _apdu[APDU_INS_OFFSET] = ins;

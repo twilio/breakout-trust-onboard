@@ -36,6 +36,7 @@ enum class SCP1 : uint8_t {
   CHANGEREFERENCEDATAOldAndNew = 0x00,
   CHANGEREFERENCEDATAOnlyNew   = 0x01,
   PSOPlain                     = 0x80,
+  PSOPadding                   = 0x86,
   PSOHashCode                  = 0x90,
   PSOSignature                 = 0x9E,
   MANAGECHANNELOpen            = 0x00,
@@ -87,6 +88,7 @@ enum class SCTag : uint8_t {
 
   MSEAlgReference = 0x80,
   MSEPublicKey    = 0x84,
+  MSEPrivateKey   = 0x92,
 };
 
 enum class SCSW1 : uint16_t {

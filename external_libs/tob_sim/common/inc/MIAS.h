@@ -22,28 +22,28 @@
 
 /*** SIGN ALGORITHM **********************************************************/
 
-#define RSA_ISO9796_2_PADDING 0x01
-#define RSA_PKCS1_PADDING 0x02
-#define RSA_RFC_2409_PADDING 0x03
+#define RSA_WITH_ISO9796_2_PADDING 0x01
+#define RSA_WITH_PKCS1_PADDING 0x02
+#define RSA_WITH_RFC_2409_PADDING 0x03
 #define ECDSA 0x04
 
-#define ALGO_SHA1_WITH_RSA_ISO9796_2_PADDING (ALGO_SHA1 | RSA_ISO9796_2_PADDING)
-#define ALGO_SHA224_WITH_RSA_ISO9796_2_PADDING (ALGO_SHA224 | RSA_ISO9796_2_PADDING)
-#define ALGO_SHA256_WITH_RSA_ISO9796_2_PADDING (ALGO_SHA256 | RSA_ISO9796_2_PADDING)
-#define ALGO_SHA384_WITH_RSA_ISO9796_2_PADDING (ALGO_SHA384 | RSA_ISO9796_2_PADDING)
-#define ALGO_SHA512_WITH_RSA_ISO9796_2_PADDING (ALGO_SHA512 | RSA_ISO9796_2_PADDING)
+#define ALGO_SHA1_WITH_RSA_ISO9796_2_PADDING (ALGO_SHA1 | RSA_WITH_ISO9796_2_PADDING)
+#define ALGO_SHA224_WITH_RSA_ISO9796_2_PADDING (ALGO_SHA224 | RSA_WITH_ISO9796_2_PADDING)
+#define ALGO_SHA256_WITH_RSA_ISO9796_2_PADDING (ALGO_SHA256 | RSA_WITH_ISO9796_2_PADDING)
+#define ALGO_SHA384_WITH_RSA_ISO9796_2_PADDING (ALGO_SHA384 | RSA_WITH_ISO9796_2_PADDING)
+#define ALGO_SHA512_WITH_RSA_ISO9796_2_PADDING (ALGO_SHA512 | RSA_WITH_ISO9796_2_PADDING)
 
-#define ALGO_SHA1_WITH_RSA_PKCS1_PADDING (ALGO_SHA1 | RSA_PKCS1_PADDING)
-#define ALGO_SHA224_WITH_RSA_PKCS1_PADDING (ALGO_SHA224 | RSA_PKCS1_PADDING)
-#define ALGO_SHA256_WITH_RSA_PKCS1_PADDING (ALGO_SHA256 | RSA_PKCS1_PADDING)
-#define ALGO_SHA384_WITH_RSA_PKCS1_PADDING (ALGO_SHA384 | RSA_PKCS1_PADDING)
-#define ALGO_SHA512_WITH_RSA_PKCS1_PADDING (ALGO_SHA512 | RSA_PKCS1_PADDING)
+#define ALGO_SHA1_WITH_RSA_PKCS1_PADDING (ALGO_SHA1 | RSA_WITH_PKCS1_PADDING)
+#define ALGO_SHA224_WITH_RSA_PKCS1_PADDING (ALGO_SHA224 | RSA_WITH_PKCS1_PADDING)
+#define ALGO_SHA256_WITH_RSA_PKCS1_PADDING (ALGO_SHA256 | RSA_WITH_PKCS1_PADDING)
+#define ALGO_SHA384_WITH_RSA_PKCS1_PADDING (ALGO_SHA384 | RSA_WITH_PKCS1_PADDING)
+#define ALGO_SHA512_WITH_RSA_PKCS1_PADDING (ALGO_SHA512 | RSA_WITH_PKCS1_PADDING)
 
-#define ALGO_SHA1_WITH_RSA_RFC_2409_PADDING (ALGO_SHA1 | RSA_RFC_2409_PADDING)
-#define ALGO_SHA224_WITH_RSA_RFC_2409_PADDING (ALGO_SHA224 | RSA_RFC_2409_PADDING)
-#define ALGO_SHA256_WITH_RSA_RFC_2409_PADDING (ALGO_SHA256 | RSA_RFC_2409_PADDING)
-#define ALGO_SHA384_WITH_RSA_RFC_2409_PADDING (ALGO_SHA384 | RSA_RFC_2409_PADDING)
-#define ALGO_SHA512_WITH_RSA_RFC_2409_PADDING (ALGO_SHA512 | RSA_RFC_2409_PADDING)
+#define ALGO_SHA1_WITH_RSA_RFC_2409_PADDING (ALGO_SHA1 | RSA_WITH_RFC_2409_PADDING)
+#define ALGO_SHA224_WITH_RSA_RFC_2409_PADDING (ALGO_SHA224 | RSA_WITH_RFC_2409_PADDING)
+#define ALGO_SHA256_WITH_RSA_RFC_2409_PADDING (ALGO_SHA256 | RSA_WITH_RFC_2409_PADDING)
+#define ALGO_SHA384_WITH_RSA_RFC_2409_PADDING (ALGO_SHA384 | RSA_WITH_RFC_2409_PADDING)
+#define ALGO_SHA512_WITH_RSA_RFC_2409_PADDING (ALGO_SHA512 | RSA_WITH_RFC_2409_PADDING)
 
 #define ALGO_SHA1_WITH_ECDSA (ALGO_SHA1 | ECDSA)
 #define ALGO_SHA224_WITH_ECDSA (ALGO_SHA224 | ECDSA)
@@ -124,7 +124,7 @@ class MIAS : public Applet {
 
   // Send chunk of data to be hashed. May be called several times.
   // Returns true in case sending chunk of data was successful, false otherwise.
-  bool hashUpdate(uint8_t* data, uint16_t dataLen);
+  bool hashUpdate(const uint8_t* data, uint16_t dataLen);
 
   // Compute hash on previously received data.
   // Hash parameter is a buffer which will contain the resulted hash.
@@ -141,7 +141,7 @@ class MIAS : public Applet {
   // Hash parameter is a buffer which contain data to encrypt using key to compute signature.
   // Signature parameter is a buffer which will contain the resulted signature.
   // Returns true in case signing was successful, false otherwise.
-  bool signFinal(uint8_t* hash, uint16_t hashLen, uint8_t* signature, uint16_t* signatureLen);
+  bool signFinal(const uint8_t* hash, uint16_t hashLen, uint8_t* signature, uint16_t* signatureLen);
 
   // Prepare context in applet prior decrypting data.
   // Algorithm parameter is the targetted decrypt algorithm.
@@ -151,7 +151,7 @@ class MIAS : public Applet {
 
   // Decrypt provided data and returns the corresponding plain data.
   // Returns true in case decrypting was successful, false otherwise.
-  bool decryptFinal(uint8_t* data, uint16_t dataLen, uint8_t* plain, uint16_t* plainLen);
+  bool decryptFinal(const uint8_t* data, uint16_t dataLen, uint8_t* plain, uint16_t* plainLen);
 
 
   // List existing key pairs.
@@ -175,15 +175,15 @@ class MIAS : public Applet {
 
 
   bool mseSetBeforeHash(uint8_t algorithm);
-  bool psoHashInternally(uint8_t algorithm, uint8_t* data, uint16_t dataLen);
+  bool psoHashInternally(uint8_t algorithm, const uint8_t* data, uint16_t dataLen);
   bool psoHashInternallyFinal(uint8_t* hash, uint16_t* hashLen);
-  bool psoHashExternally(uint8_t algorithm, uint8_t* hash, uint16_t hashLen);
+  bool psoHashExternally(uint8_t algorithm, const uint8_t* hash, uint16_t hashLen);
 
   bool mseSetBeforeSignature(uint8_t algorithm, uint8_t key);
   bool psoComputeDigitalSignature(uint8_t* signature, uint16_t* signatureLen);
 
   bool mseSetBeforeDecrypt(uint8_t algorithm, uint8_t key);
-  bool psoDecipher(uint8_t* data, uint16_t dataLen, uint8_t* plain, uint16_t* plainLen);
+  bool psoDecipher(const uint8_t* data, uint16_t dataLen, uint8_t* plain, uint16_t* plainLen);
 };
 
 #else

@@ -112,14 +112,14 @@ bool Applet::transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, uint8_t le) {
   return false;
 }
 
-bool Applet::transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, uint8_t* data, uint16_t dataLen) {
+bool Applet::transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, const uint8_t* data, uint16_t dataLen) {
   if (_isSelected) {
     return _seiface->transmit(cla | _channel, ins, p1, p2, data, dataLen);
   }
   return false;
 }
 
-bool Applet::transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, uint8_t* data, uint16_t dataLen, uint8_t le) {
+bool Applet::transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2, const uint8_t* data, uint16_t dataLen, uint8_t le) {
   if (_isSelected) {
     return _seiface->transmit(cla | _channel, ins, p1, p2, data, dataLen, le);
   }
@@ -194,13 +194,13 @@ extern "C" bool Applet_transmit_case2(Applet* applet, uint8_t cla, uint8_t ins, 
   return applet->transmit(cla, static_cast<SCIns>(ins), static_cast<SCP1>(p1), static_cast<SCP2>(p2), le);
 }
 
-extern "C" bool Applet_transmit_case3(Applet* applet, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data,
-                                      uint16_t data_len) {
+extern "C" bool Applet_transmit_case3(Applet* applet, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2,
+                                      const uint8_t* data, uint16_t data_len) {
   return applet->transmit(cla, static_cast<SCIns>(ins), static_cast<SCP1>(p1), static_cast<SCP2>(p2), data, data_len);
 }
 
-extern "C" bool Applet_transmit_case4(Applet* applet, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t* data,
-                                      uint16_t data_len, uint8_t le) {
+extern "C" bool Applet_transmit_case4(Applet* applet, uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2,
+                                      const uint8_t* data, uint16_t data_len, uint8_t le) {
   return applet->transmit(cla, static_cast<SCIns>(ins), static_cast<SCP1>(p1), static_cast<SCP2>(p2), data, data_len,
                           le);
 }
