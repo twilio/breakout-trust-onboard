@@ -13,10 +13,12 @@
 #include "ATInterface.h"
 #include "SEInterface.h"
 
+#ifdef __cplusplus
+
 class GenericModem : public SEInterface {
  public:
   // Create an instance of Generic Modem.
-  GenericModem(const char* const device);
+  GenericModem(const char* device);
   ~GenericModem(void);
 
   bool open(void) override {
@@ -33,5 +35,13 @@ class GenericModem : public SEInterface {
  private:
   ATInterface _at;
 };
+
+#else /* __cplusplus */
+
+SEInterface* GenericModem_create(const char* device);
+void GenericModem_destroy(SEInterface* iface);
+int GenericModem_open(SEInterface* iface);
+
+#endif /* __cplusplus */
 
 #endif /* __GENERIC_MODEM_H__ */

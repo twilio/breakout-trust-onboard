@@ -14,6 +14,8 @@
 
 #include "SEInterface.h"
 
+#ifdef __cplusplus
+
 class PcscSEInterface : public SEInterface {
  public:
   // Create an instance of Generic Modem.
@@ -34,5 +36,13 @@ class PcscSEInterface : public SEInterface {
   DWORD _protocol{SCARD_PROTOCOL_T0};
   bool _initialized{false};
 };
+
+#else /* __cplusplus */
+
+SEInterface* PcscSEInterface_create(int reader_idx);
+void PcscSEInterface_destroy(SEInterface* iface);
+int PcscSEInterface_open(SEInterface* iface);
+
+#endif /* __cplusplus */
 
 #endif /* __GENERIC_MODEM_H__ */

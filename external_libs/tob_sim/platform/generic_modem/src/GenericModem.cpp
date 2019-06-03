@@ -60,3 +60,15 @@ bool GenericModem::transmitApdu(uint8_t* apdu, uint16_t apduLen, uint8_t* respon
 
   return ret;
 }
+
+extern "C" SEInterface* GenericModem_create(const char* device) {
+  return new GenericModem(device);
+}
+
+extern "C" void GenericModem_destroy(SEInterface* iface) {
+  delete static_cast<GenericModem*>(iface);
+}
+
+extern "C" int GenericModem_open(SEInterface* iface) {
+  return static_cast<GenericModem*>(iface)->open();
+}

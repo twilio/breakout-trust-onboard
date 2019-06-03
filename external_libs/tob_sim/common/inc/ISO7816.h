@@ -10,6 +10,7 @@
 #ifndef __ISO7816_H__
 #define __ISO7816_H__
 
+#ifdef __cplusplus
 /* Instruction codes with P1, P2 and tag values defined in ISO/IEC 7816*/
 
 enum class SCIns : uint8_t {
@@ -126,5 +127,7 @@ static inline bool operator==(int l, SCSW1 r) {
 static inline bool operator==(uint8_t l, SCTag r) {
   return l == static_cast<uint8_t>(r);
 }
+
+#endif  // __cplusplus
 
 #endif  // __ISO7816_H__

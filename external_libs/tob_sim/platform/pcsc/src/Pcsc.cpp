@@ -93,3 +93,15 @@ bool PcscSEInterface::transmitApdu(uint8_t* apdu, uint16_t apduLen, uint8_t* res
   *responseLen = (uint16_t)resp_len_long;
   return true;
 }
+
+extern "C" SEInterface* PcscSEInterface_create(int reader_idx) {
+  return new PcscSEInterface(reader_idx);
+}
+
+extern "C" void PcscSEInterface_destroy(SEInterface* iface) {
+  delete static_cast<PcscSEInterface*>(iface);
+}
+
+extern "C" int PcscSEInterface_open(SEInterface* iface) {
+  return static_cast<PcscSEInterface*>(iface)->open();
+}
