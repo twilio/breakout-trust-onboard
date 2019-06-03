@@ -8,10 +8,12 @@ import sys
 
 class MiasExampleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
+        resp = '{"hello":"mias"}\n'
         self.send_response(200)
         self.send_header('Content-type','application/json')
+        self.send_header('Content-Length',len(resp))
         self.end_headers()
-        self.wfile.write('{"hello":"mias"}\n'.encode())
+        self.wfile.write(resp.encode())
 
 def main():
     parser = argparse.ArgumentParser()
