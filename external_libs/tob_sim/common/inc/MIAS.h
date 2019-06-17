@@ -206,10 +206,10 @@ bool MIAS_hash_update(MIAS* mias, uint8_t* data, uint16_t data_len);
 bool MIAS_hash_final(MIAS* mias, uint8_t* hash, uint16_t* hash_len);
 
 bool MIAS_sign_init(MIAS* mias, uint8_t algorithm, uint8_t key);
-bool MIAS_sign_final(MIAS* mias, uint8_t* hash, uint16_t hash_len, uint8_t* signature, uint16_t* signature_len);
+bool MIAS_sign_final(MIAS* mias, const uint8_t* hash, uint16_t hash_len, uint8_t* signature, uint16_t* signature_len);
 
 bool MIAS_decrypt_init(MIAS* mias, uint8_t algorithm, uint8_t key);
-bool MIAS_decrypt_final(MIAS* mias, uint8_t* data, uint16_t data_len, uint8_t* plain, uint16_t* plain_len);
+bool MIAS_decrypt_final(MIAS* mias, const uint8_t* data, uint16_t data_len, uint8_t* plain, uint16_t* plain_len);
 
 #endif
 

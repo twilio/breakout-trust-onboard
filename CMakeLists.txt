@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.7)
 project(breakout-tob)
 
 set(CMAKE_CXX_STANDARD 14)
-
 option(PCSC_SUPPORT "Support for pcsc-lite" OFF)
 option(SIGNING_SUPPORT "Support for signing key with OpenSSL support" OFF)
 option(MBEDTLS_SUPPORT "Private crypto device shims for MbedTLS 2.11+" OFF)
@@ -122,6 +121,11 @@ if(PCSC_SUPPORT)
 		tob_mbed
                 ${PCSC_LIBRARIES}
         )
+
+	target_link_libraries(
+		TwilioTrustOnboard
+		${PCSC_LIBRARIES}
+	)
 endif(PCSC_SUPPORT)
 
 set(TOOLS_SOURCES
@@ -144,8 +148,21 @@ if(MBEDTLS_SUPPORT)
 	install(FILES include/TobMbedtls.h DESTINATION include)
 endif(MBEDTLS_SUPPORT)
 install(TARGETS ${TOOL_BINARY} DESTINATION bin)
-# TODO: set group to dialout?
 install(FILES include/BreakoutTrustOnboardSDK.h DESTINATION include)
+
+set(tob_ll_headers
+	external_libs/tob_sim/common/inc/Applet.h
+	external_libs/tob_sim/common/inc/ISO7816.h
+	external_libs/tob_sim/common/inc/MF.h
+	external_libs/tob_sim/common/inc/MIAS.h
+	external_libs/tob_sim/common/inc/SEInterface.h
+	external_libs/tob_sim/platform/generic_modem/inc/ATInterface.h
+	external_libs/tob_sim/platform/generic_modem/inc/GenericModem.h
+	external_libs/tob_sim/platform/generic_modem/inc/LSerial.h
+	external_libs/tob_sim/platform/generic_modem/inc/Serial.h
+	external_libs/tob_sim/platform/pcsc/inc/Pcsc.h
+	)
+install(FILES ${tob_ll_headers} DESTINATION include/trust_onboard)
 
 set(CPACK_COMPONENTS_ALL_IN_ONE_PACKAGE 1)
 
