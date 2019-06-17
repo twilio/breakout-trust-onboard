@@ -6,6 +6,7 @@ option(PCSC_SUPPORT "Support for pcsc-lite" OFF)
 option(SIGNING_SUPPORT "Support for signing key with OpenSSL support" OFF)
 option(MBEDTLS_SUPPORT "Private crypto device shims for MbedTLS 2.11+" OFF)
 option(BUILD_SHARED "Build as a shared library" OFF)
+option(BUILD_TESTS "Build tests" OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/)
 
@@ -110,20 +111,26 @@ if(PCSC_SUPPORT)
                 ${PCSC_LIBRARIES}
         )
 
-	target_link_libraries(
-		${TOB_ENGINE}
-                ${PCSC_LIBRARIES}
-        )
+	if(BUILD_SHARED)
+		target_link_libraries(
+			TwilioTrustOnboard
+			${PCSC_LIBRARIES}
+		)
+	endif(BUILD_SHARED)
 
-	target_link_libraries(
-		tob_mbed
-                ${PCSC_LIBRARIES}
-        )
+	if(SIGNING_SUPPORT)
+		target_link_libraries(
+			${TOB_ENGINE}
+			${PCSC_LIBRARIES}
+	        )
+	endif(SIGNING_SUPPORT)
 
-	target_link_libraries(
-		TwilioTrustOnboard
-		${PCSC_LIBRARIES}
-	)
+	if(MBEDTLS_SUPPORT)
+		target_link_libraries(
+			tob_mbed
+			${PCSC_LIBRARIES}
+	        )
+	endif(MBEDTLS_SUPPORT)
 endif(PCSC_SUPPORT)
 
 set(TOOLS_SOURCES
@@ -183,4 +190,6 @@ endif(TOB_DEVICE)
 
 include(CPack)
 
-add_subdirectory(tests)
+if (BUILD_TESTS)
+	add_subdirectory(tests)
+endif (BUILD_TESTS)

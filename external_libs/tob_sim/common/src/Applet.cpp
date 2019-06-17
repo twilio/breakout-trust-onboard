@@ -95,7 +95,7 @@ bool Applet::deselect(void) {
       _isSelected = false;
     }
   }
-  return _isSelected;
+  return !_isSelected;
 }
 
 bool Applet::transmit(uint8_t cla, SCIns ins, SCP1 p1, SCP2 p2) {

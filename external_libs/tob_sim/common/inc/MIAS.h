@@ -96,12 +96,6 @@ class MIAS : public Applet {
   // Returns true in case change pin was successful, false otherwise.
   bool changePin(uint8_t* oldPin, uint16_t oldPinLen, uint8_t* newPin, uint16_t newPinLen);
 
-  // Change user's pin value used to unlock applet features.
-  // Returns true in case change pin was successful, false otherwise.
-  bool bind(uint8_t* pin, uint16_t pinLen, uint8_t* name, uint16_t nameLen) {
-    return changePin(pin, pinLen, name, nameLen);
-  }
-
   // Get key pair stored on the container identify by the provided id.
   // Kp parameter is a pointer of the found key pair, NULL otherwise.
   // Returns true in case operation was successful, false otherwise.
