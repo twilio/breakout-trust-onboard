@@ -21,6 +21,7 @@ enum class SCIns : uint8_t {
   ManageChannel             = 0x70,
   Select                    = 0xA4,
   ReadBinary                = 0xB0,
+  GetResponse               = 0xC0,
   Envelope                  = 0xC2,
 };
 

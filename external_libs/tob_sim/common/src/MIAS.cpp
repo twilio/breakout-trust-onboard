@@ -262,11 +262,11 @@ bool MIAS::psoDecipher(const uint8_t* data, uint16_t dataLen, uint8_t* plain, ui
     }
   } else {
     buf[0] = static_cast<uint8_t>(SCTag::PSOPaddingProprietary1);
-    memcpy(&buf[1], data, 0xFE);
-    data += 0xFE;
-    dataLen -= 0xFE;
+    memcpy(&buf[1], data, 254);
+    data += 254;
+    dataLen -= 254;
 
-    if (!transmit(0x10, SCIns::PerformSecurityOperation, SCP1::PSOPlain, SCP2::PSOPadding, buf, 0xFF)) {
+    if (!transmit(0x10, SCIns::PerformSecurityOperation, SCP1::PSOPlain, SCP2::PSOPadding, buf, 255)) {
       return false;
     }
 
@@ -281,7 +281,19 @@ bool MIAS::psoDecipher(const uint8_t* data, uint16_t dataLen, uint8_t* plain, ui
 
   if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
     *plainLen = getResponse(plain);
-    return true;
+
+    // No data returned -> let's try to retrieve it explicitly
+    if (*plainLen == 0) {
+      if (!transmit(0x00, SCIns::GetResponse, SCP1::ENVELOPEReserved, SCP2::ENVELOPEReserved)) {
+        return false;
+      }
+      if (getStatusWord() == (SCSW1::OKNoQualification | SCSW2::OKNoQualification)) {
+        *plainLen = getResponse(plain);
+        return true;
+      }
+    } else {
+      return true;
+    }
   }
 
   return false;
