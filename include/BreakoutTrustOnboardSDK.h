@@ -22,6 +22,30 @@
 #define PEM_BUFFER_SIZE 10 * 1024
 #define DER_BUFFER_SIZE 2 * 1024
 
+#define TOB_MD_SHA1   0x10
+#define TOB_MD_SHA224 0x30
+#define TOB_MD_SHA256 0x40
+#define TOB_MD_SHA384 0x50
+
+#define TOB_ALGO_RSA_ISO9796_2 0x01
+#define TOB_ALGO_RSA_PKCS1     0x02
+#define TOB_ALGO_RSA_RFC_2409  0x03
+
+typedef enum {
+  TOB_ALGO_SHA1_RSA_PKCS1       = TOB_ALGO_RSA_PKCS1 | TOB_MD_SHA1,
+  TOB_ALGO_SHA224_RSA_PKCS1     = TOB_ALGO_RSA_PKCS1 | TOB_MD_SHA224,
+  TOB_ALGO_SHA256_RSA_PKCS1     = TOB_ALGO_RSA_PKCS1 | TOB_MD_SHA256,
+  TOB_ALGO_SHA384_RSA_PKCS1     = TOB_ALGO_RSA_PKCS1 | TOB_MD_SHA384,
+  TOB_ALGO_SHA1_RSA_ISO9796_2   = TOB_ALGO_RSA_ISO9796_2 | TOB_MD_SHA1,
+  TOB_ALGO_SHA224_RSA_ISO9796_2 = TOB_ALGO_RSA_ISO9796_2 | TOB_MD_SHA224,
+  TOB_ALGO_SHA256_RSA_ISO9796_2 = TOB_ALGO_RSA_ISO9796_2 | TOB_MD_SHA256,
+  TOB_ALGO_SHA384_RSA_ISO9796_2 = TOB_ALGO_RSA_ISO9796_2 | TOB_MD_SHA384,
+  TOB_ALGO_SHA1_RSA_RFC_2409    = TOB_ALGO_RSA_RFC_2409 | TOB_MD_SHA1,
+  TOB_ALGO_SHA224_RSA_RFC_2409  = TOB_ALGO_RSA_RFC_2409 | TOB_MD_SHA224,
+  TOB_ALGO_SHA256_RSA_RFC_2409  = TOB_ALGO_RSA_RFC_2409 | TOB_MD_SHA256,
+  TOB_ALGO_SHA384_RSA_RFC_2409  = TOB_ALGO_RSA_RFC_2409 | TOB_MD_SHA384,
+} tob_algorithm_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -99,6 +123,34 @@ extern int tobExtractAvailablePrivateKeyAsPem(uint8_t *pk, int *pk_size, const c
  *   ERR_SE_EF_VERIFY_PIN_ERROR
  */
 extern int tobExtractSigningCertificate(uint8_t *cert, int *cert_size, const char *pin);
+
+/**
+ * Sign a message digest with a signing key
+ * @param algorithm - signing algoritm and digest to use
+ * @param hash - digest to sign
+ * @param hash_len - length of the digest in bytes
+ * @param signature - signature output buffer (allocate a large enough in advance!)
+ * @param signature_len - length of the signature in bytes
+ * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
+ * @return 0 if successful, otherwise one of the following error codes:
+ *   ERR_SE_BAD_KEY_NAME_ERROR
+ *   ERR_SE_EF_VERIFY_PIN_ERROR
+ */
+extern int tobSigningSign(tob_algorithm_t algorithm, const uint8_t *hash, int hash_len, uint8_t* signature, int* signature_len, const char* pin);
+
+/**
+ * Decrypt data with a signing key
+ * @param cipher - data to decrypt
+ * @param cipher_len - length of the data
+ * @param plain - buffer for the decrypted data (allocate a large enough in advance!)
+ * @param plain_len - length of the decrypted data in bytes
+ * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
+ * @return 0 if successful, otherwise one of the following error codes:
+ *   ERR_SE_BAD_KEY_NAME_ERROR
+ *   ERR_SE_EF_VERIFY_PIN_ERROR
+ */
+
+extern int tobSigningDecrypt(const uint8_t *cipher, int cipher_len, uint8_t* plain, int* plain_len, const char* pin);
 
 #ifdef __cplusplus
 }
