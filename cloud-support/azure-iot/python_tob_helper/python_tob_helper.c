@@ -14,23 +14,21 @@
 
 #include <BreakoutTrustOnboardSDK.h>
 
-static const char* global_prov_uri = "global.azure-devices-provisioning.net";
+static const char *global_prov_uri = "global.azure-devices-provisioning.net";
 
-#define MESSAGES_TO_SEND            2
-#define TIME_BETWEEN_MESSAGES       2
+#define MESSAGES_TO_SEND 2
+#define TIME_BETWEEN_MESSAGES 2
 
-typedef struct CLIENT_SAMPLE_INFO_TAG
-{
+typedef struct CLIENT_SAMPLE_INFO_TAG {
   unsigned int sleep_time;
-  char* iothub_uri;
-  char* access_key_name;
-  char* device_key;
-  char* device_id;
+  char *iothub_uri;
+  char *access_key_name;
+  char *device_key;
+  char *device_id;
   int registration_complete;
 } CLIENT_SAMPLE_INFO;
 
-typedef struct IOTHUB_CLIENT_SAMPLE_INFO_TAG
-{
+typedef struct IOTHUB_CLIENT_SAMPLE_INFO_TAG {
   int connected;
   int stop_running;
 } IOTHUB_CLIENT_SAMPLE_INFO;
@@ -38,31 +36,25 @@ typedef struct IOTHUB_CLIENT_SAMPLE_INFO_TAG
 MU_DEFINE_ENUM_STRINGS(PROV_DEVICE_RESULT, PROV_DEVICE_RESULT_VALUE);
 MU_DEFINE_ENUM_STRINGS(PROV_DEVICE_REG_STATUS, PROV_DEVICE_REG_STATUS_VALUES);
 
-static void registation_status_callback(PROV_DEVICE_REG_STATUS reg_status, void* user_context)
-{
+static void registation_status_callback(PROV_DEVICE_REG_STATUS reg_status, void *user_context) {
   (void)user_context;
   fprintf(stderr, "Provisioning Status: %s\r\n", MU_ENUM_TO_STRING(PROV_DEVICE_REG_STATUS, reg_status));
 }
 
-static void register_device_callback(PROV_DEVICE_RESULT register_result, const char* iothub_uri, const char* device_id, void* user_context)
-{
-  if (user_context == NULL)
-  {
+static void register_device_callback(PROV_DEVICE_RESULT register_result, const char *iothub_uri, const char *device_id,
+                                     void *user_context) {
+  if (user_context == NULL) {
     fprintf(stderr, "user_context is NULL\r\n");
-  }
-  else
-  {
-    CLIENT_SAMPLE_INFO* user_ctx = (CLIENT_SAMPLE_INFO*)user_context;
-    if (register_result == PROV_DEVICE_RESULT_OK)
-    {
+  } else {
+    CLIENT_SAMPLE_INFO *user_ctx = (CLIENT_SAMPLE_INFO *)user_context;
+    if (register_result == PROV_DEVICE_RESULT_OK) {
       fprintf(stderr, "Registration Information received from service: %s!\r\n", iothub_uri);
       (void)mallocAndStrcpy_s(&user_ctx->iothub_uri, iothub_uri);
       (void)mallocAndStrcpy_s(&user_ctx->device_id, device_id);
       user_ctx->registration_complete = 1;
-    }
-    else
-    {
-      fprintf(stderr, "Failure encountered on registration %s\r\n", MU_ENUM_TO_STRING(PROV_DEVICE_RESULT, register_result) );
+    } else {
+      fprintf(stderr, "Failure encountered on registration %s\r\n",
+              MU_ENUM_TO_STRING(PROV_DEVICE_RESULT, register_result));
       user_ctx->registration_complete = 2;
     }
   }
@@ -113,8 +105,7 @@ char *obtain_id_scope() {
   return NULL;
 }
 
-int main(char **argc, int argv)
-{
+int main(char **argc, int argv) {
   int result = 0;
 
   char *id_scope = obtain_id_scope();
@@ -138,50 +129,41 @@ int main(char **argc, int argv)
 
   // Set ini
   user_ctx.registration_complete = 0;
-  user_ctx.sleep_time = 10;
+  user_ctx.sleep_time            = 10;
 
-  TWILIO_TRUST_ONBOARD_HSM_CONFIG* config = NULL;
+  TWILIO_TRUST_ONBOARD_HSM_CONFIG *config = NULL;
   PROV_DEVICE_LL_HANDLE handle;
-  if ((handle = Prov_Device_LL_Create(global_prov_uri, id_scope, prov_transport)) == NULL)
-  {
+  if ((handle = Prov_Device_LL_Create(global_prov_uri, id_scope, prov_transport)) == NULL) {
     print_failure("Failed calling Prov_Device_LL_Create");
-  }
-  else
-  {
-    config = (TWILIO_TRUST_ONBOARD_HSM_CONFIG *)malloc(sizeof(TWILIO_TRUST_ONBOARD_HSM_CONFIG));
+  } else {
+    config              = (TWILIO_TRUST_ONBOARD_HSM_CONFIG *)malloc(sizeof(TWILIO_TRUST_ONBOARD_HSM_CONFIG));
     config->device_path = strdup(MODULE_DEVICE);
-    config->sim_pin = strdup(SIM_PIN);
+    config->sim_pin     = strdup(SIM_PIN);
 #ifdef USE_SIGNING
     config->signing = 1;
 #else
     config->signing = 0;
 #endif
 
-    Prov_Device_LL_SetOption(handle, PROV_HSM_CONFIG_DATA, (void*)config);
+    Prov_Device_LL_SetOption(handle, PROV_HSM_CONFIG_DATA, (void *)config);
 
     Prov_Device_LL_SetOption(handle, PROV_OPTION_LOG_TRACE, &traceOn);
 
-    if (Prov_Device_LL_Register_Device(handle, register_device_callback, &user_ctx, registation_status_callback, &user_ctx) != PROV_DEVICE_RESULT_OK)
-    {
+    if (Prov_Device_LL_Register_Device(handle, register_device_callback, &user_ctx, registation_status_callback,
+                                       &user_ctx) != PROV_DEVICE_RESULT_OK) {
       print_failure("Failed calling Prov_Device_LL_Register_Device");
-    }
-    else
-    {
-      do
-      {
+    } else {
+      do {
         Prov_Device_LL_DoWork(handle);
         ThreadAPI_Sleep(user_ctx.sleep_time);
       } while (user_ctx.registration_complete == 0);
     }
     Prov_Device_LL_Destroy(handle);
-  }   
-
-  if (user_ctx.registration_complete != 1)
-  {
-    print_failure("Registration failed!");
   }
-  else
-  {
+
+  if (user_ctx.registration_complete != 1) {
+    print_failure("Registration failed!");
+  } else {
     int ret = 0;
     uint8_t cert[PEM_BUFFER_SIZE];
     int cert_size = 0;
@@ -199,7 +181,7 @@ int main(char **argc, int argv)
 
     strcpy(pk, "INTERNAL TO THE SIM");
 #else
-    ret = tobExtractAvailableCertificate(cert, &cert_size, SIM_PIN);
+    ret             = tobExtractAvailableCertificate(cert, &cert_size, SIM_PIN);
     if (ret != 0) {
       print_failure("Failed extracting certificate.");
       return -1;
@@ -210,7 +192,7 @@ int main(char **argc, int argv)
       print_failure("Failed extracting key.");
       return -1;
     }
-#endif // USE_SIGNING
+#endif  // USE_SIGNING
 
     print_success(user_ctx.iothub_uri, user_ctx.device_id, cert, pk);
   }
