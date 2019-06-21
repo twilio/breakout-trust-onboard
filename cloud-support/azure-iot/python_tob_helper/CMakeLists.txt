@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.7)
 # cmake -DMODULE_DEVICE="/dev/cu.usbmodem14103" -DSIM_PIN="0000" ..
 # cmake -DMODULE_DEVICE="/dev/ttyACM1" -DSIM_PIN="0000" ..
 
+option (USE_SIGNING "Use signing key and certificate" ON)
+
 if (NOT MODULE_DEVICE)
   set(MODULE_DEVICE "/dev/ttyACM1")
 endif()
@@ -18,6 +20,10 @@ endif()
 add_definitions(-DMODULE_DEVICE="${MODULE_DEVICE}")
 add_definitions(-DSIM_PIN="${SIM_PIN}")
 add_definitions(-DAZURE_ID_SCOPE_PATH="${AZURE_ID_SCOPE_PATH}")
+
+if (USE_SIGNING)
+  add_definitions(-DUSE_SIGNING)
+endif (USE_SIGNING)
 
 set(TOOL_BINARY python_tob_helper)
 

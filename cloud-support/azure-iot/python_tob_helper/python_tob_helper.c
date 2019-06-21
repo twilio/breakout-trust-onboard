@@ -35,13 +35,13 @@ typedef struct IOTHUB_CLIENT_SAMPLE_INFO_TAG
   int stop_running;
 } IOTHUB_CLIENT_SAMPLE_INFO;
 
-DEFINE_ENUM_STRINGS(PROV_DEVICE_RESULT, PROV_DEVICE_RESULT_VALUE);
-DEFINE_ENUM_STRINGS(PROV_DEVICE_REG_STATUS, PROV_DEVICE_REG_STATUS_VALUES);
+MU_DEFINE_ENUM_STRINGS(PROV_DEVICE_RESULT, PROV_DEVICE_RESULT_VALUE);
+MU_DEFINE_ENUM_STRINGS(PROV_DEVICE_REG_STATUS, PROV_DEVICE_REG_STATUS_VALUES);
 
 static void registation_status_callback(PROV_DEVICE_REG_STATUS reg_status, void* user_context)
 {
   (void)user_context;
-  fprintf(stderr, "Provisioning Status: %s\r\n", ENUM_TO_STRING(PROV_DEVICE_REG_STATUS, reg_status));
+  fprintf(stderr, "Provisioning Status: %s\r\n", MU_ENUM_TO_STRING(PROV_DEVICE_REG_STATUS, reg_status));
 }
 
 static void register_device_callback(PROV_DEVICE_RESULT register_result, const char* iothub_uri, const char* device_id, void* user_context)
@@ -62,7 +62,7 @@ static void register_device_callback(PROV_DEVICE_RESULT register_result, const c
     }
     else
     {
-      fprintf(stderr, "Failure encountered on registration %s\r\n", ENUM_TO_STRING(PROV_DEVICE_RESULT, register_result) );
+      fprintf(stderr, "Failure encountered on registration %s\r\n", MU_ENUM_TO_STRING(PROV_DEVICE_RESULT, register_result) );
       user_ctx->registration_complete = 2;
     }
   }
@@ -151,6 +151,12 @@ int main(char **argc, int argv)
     config = (TWILIO_TRUST_ONBOARD_HSM_CONFIG *)malloc(sizeof(TWILIO_TRUST_ONBOARD_HSM_CONFIG));
     config->device_path = strdup(MODULE_DEVICE);
     config->sim_pin = strdup(SIM_PIN);
+#ifdef USE_SIGNING
+    config->signing = 1;
+#else
+    config->signing = 0;
+#endif
+
     Prov_Device_LL_SetOption(handle, PROV_HSM_CONFIG_DATA, (void*)config);
 
     Prov_Device_LL_SetOption(handle, PROV_OPTION_LOG_TRACE, &traceOn);
@@ -184,6 +190,15 @@ int main(char **argc, int argv)
 
     tobInitialize(MODULE_DEVICE);
 
+#if USE_SIGNING
+    ret = tobExtractSigningCertificate(cert, &cert_size, SIM_PIN);
+    if (ret != 0) {
+      print_failure("Failed extracting certificate.");
+      return -1;
+    }
+
+    strcpy(pk, "INTERNAL TO THE SIM");
+#else
     ret = tobExtractAvailableCertificate(cert, &cert_size, SIM_PIN);
     if (ret != 0) {
       print_failure("Failed extracting certificate.");
@@ -195,6 +210,7 @@ int main(char **argc, int argv)
       print_failure("Failed extracting key.");
       return -1;
     }
+#endif // USE_SIGNING
 
     print_success(user_ctx.iothub_uri, user_ctx.device_id, cert, pk);
   }
