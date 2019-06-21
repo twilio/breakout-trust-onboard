@@ -26,9 +26,11 @@ typedef struct TWILIO_TRUST_ONBOARD_HSM_INFO_TAG
 {
     const char* device_path;
     const char* sim_pin;
+    int signing;
     const char* certificate;
     const char* common_name;
     const char* key;
+    TLSIO_CRYPTODEV_PKEY* signing_key;
 } TWILIO_TRUST_ONBOARD_HSM_INFO;
 
 int hsm_client_x509_init()
@@ -49,7 +51,7 @@ void hsm_client_tpm_deinit()
 {
 }
 
-int subjectName(const char *cert, size_t certLen, char **subjectName)
+static int subjectName(const char *cert, size_t certLen, char **subjectName)
 {
   BIO* certBio = BIO_new(BIO_s_mem());
   BIO_write(certBio, cert, certLen);
@@ -87,7 +89,7 @@ int subjectName(const char *cert, size_t certLen, char **subjectName)
   return EXIT_SUCCESS;
 }
 
-int populate_cert(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_path, const char* pin)
+static int populate_cert(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_path, const char* pin)
 {
   int RESULT = 0;
 
@@ -100,7 +102,11 @@ int populate_cert(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_pa
   int cert_size = 0;
 
   tobInitialize(device_path);
-  ret = tobExtractAvailableCertificate(cert, &cert_size, pin);
+  if (hsm_info->signing) {
+    ret = tobExtractSigningCertificate(cert, &cert_size, pin);
+  } else {
+    ret = tobExtractAvailableCertificate(cert, &cert_size, pin);
+  }
   if (ret != 0) {
     (void)fprintf(stderr, "Failed reading certificate\r\n");
     RESULT = 1;
@@ -115,7 +121,7 @@ int populate_cert(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_pa
   return RESULT;
 }
 
-int populate_key(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_path, const char* pin)
+static int populate_key(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_path, const char* pin)
 {
   int RESULT = 0;
 
@@ -141,7 +147,73 @@ int populate_key(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_pat
   return RESULT;
 }
 
-HSM_CLIENT_HANDLE custom_hsm_create()
+static int hsm_signing_sign(const uint8_t* data, int datalen, uint8_t* signature, int* signature_len, void* priv) {
+  TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info = (TWILIO_TRUST_ONBOARD_HSM_INFO*)priv;
+
+  if (!hsm_info) {
+    return 0;
+  }
+
+  // TODO: support for other paddings and ECC
+  tob_algorithm_t algo;
+  switch (datalen) {
+    case 20:
+      algo = TOB_ALGO_SHA1_RSA_PKCS1;
+      break;
+
+    case 28:
+      algo = TOB_ALGO_SHA224_RSA_PKCS1;
+      break;
+
+    case 32:
+      algo = TOB_ALGO_SHA256_RSA_PKCS1;
+      break;
+
+    case 48:
+      algo = TOB_ALGO_SHA384_RSA_PKCS1;
+      break;
+
+    default:
+      return 0;
+  }
+  return (tobSigningSign(algo, data, datalen, signature, signature_len, hsm_info->sim_pin) == 0);
+}
+
+static int hsm_signing_decrypt(const uint8_t* cipher, int cipherlen, uint8_t* plain, int* plain_len, void* priv) {
+  TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info = (TWILIO_TRUST_ONBOARD_HSM_INFO*)priv;
+
+  if (!hsm_info) {
+    return 0;
+  }
+
+  return (tobSigningDecrypt(cipher, cipherlen, plain, plain_len, hsm_info->sim_pin) == 0);
+}
+
+static int hsm_signing_destroy(void* priv) {
+  return 1;
+}
+
+static int populate_signing_key(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* device_path, const char* pin)
+{
+  if (hsm_info->signing_key != nullptr) {
+    return 0;
+  }
+  hsm_info->signing_key = (TLSIO_CRYPTODEV_PKEY *)malloc(sizeof(TLSIO_CRYPTODEV_PKEY));
+  if (hsm_info->signing_key == NULL) {
+    return 1;
+  }
+  hsm_info->signing_key->sign = hsm_signing_sign;
+  hsm_info->signing_key->decrypt = hsm_signing_decrypt;
+  hsm_info->signing_key->destroy = hsm_signing_destroy;
+  hsm_info->signing_key->type = TLSIO_CRYPTODEV_PKEY_TYPE_RSA; // TODO: ECC support
+  hsm_info->signing_key->private_data = hsm_info;
+
+  tobInitialize(device_path);
+
+  return 0;
+}
+
+static HSM_CLIENT_HANDLE custom_hsm_create()
 {
   HSM_CLIENT_HANDLE result;
   TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info = (TWILIO_TRUST_ONBOARD_HSM_INFO *)malloc(sizeof(TWILIO_TRUST_ONBOARD_HSM_INFO));
@@ -159,7 +231,7 @@ HSM_CLIENT_HANDLE custom_hsm_create()
   return result;
 }
 
-void custom_hsm_destroy(HSM_CLIENT_HANDLE handle)
+static void custom_hsm_destroy(HSM_CLIENT_HANDLE handle)
 {
   fprintf(stderr, "destroying custom hsm\n");
     if (handle != NULL)
@@ -174,7 +246,7 @@ void custom_hsm_destroy(HSM_CLIENT_HANDLE handle)
     }
 }
 
-char* custom_hsm_get_certificate(HSM_CLIENT_HANDLE handle)
+static char* custom_hsm_get_certificate(HSM_CLIENT_HANDLE handle)
 {
     char* result;
     if (handle == NULL)
@@ -216,7 +288,7 @@ char* custom_hsm_get_certificate(HSM_CLIENT_HANDLE handle)
     return result;
 }
 
-char* custom_hsm_get_key(HSM_CLIENT_HANDLE handle)
+static char* custom_hsm_get_key(HSM_CLIENT_HANDLE handle)
 {
   char* result;
   if (handle == NULL)
@@ -227,39 +299,75 @@ char* custom_hsm_get_key(HSM_CLIENT_HANDLE handle)
   else
   {
     TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info = (TWILIO_TRUST_ONBOARD_HSM_INFO*)handle;
-    if (hsm_info->key == NULL)
-    {
-      if (populate_key(hsm_info, hsm_info->device_path, hsm_info->sim_pin) != 0) {
-        (void)fprintf(stderr, "Failed reading key\r\n");
-        result = NULL;
-      }
-    }
-
-    if (hsm_info->key == NULL)
-    {
-      result = NULL;
-    }
-    else
-    {
-      // TODO: Malloc the private key for the iothub sdk to free
-      // this value will be sent unmodified to the tlsio
-      // layer to be processed
-      size_t len = strlen(hsm_info->key);
-      if ((result = (char*)malloc(len + 1)) == NULL)
+    if (!hsm_info->signing) {
+      if (hsm_info->key == NULL)
       {
-        (void)fprintf(stderr, "Failure allocating certificate\r\n");
+        if (populate_key(hsm_info, hsm_info->device_path, hsm_info->sim_pin) != 0) {
+          (void)fprintf(stderr, "Failed reading key\r\n");
+          result = NULL;
+        }
+      }
+
+      if (hsm_info->key == NULL)
+      {
         result = NULL;
       }
       else
       {
-        strcpy(result, hsm_info->key);
+        // TODO: Malloc the private key for the iothub sdk to free
+        // this value will be sent unmodified to the tlsio
+        // layer to be processed
+        size_t len = strlen(hsm_info->key);
+        if ((result = (char*)malloc(len + 1)) == NULL)
+        {
+          (void)fprintf(stderr, "Failure allocating private key\r\n");
+          result = NULL;
+        }
+        else
+        {
+          strcpy(result, hsm_info->key);
+        }
       }
+    }
+    else
+    {
+      result = NULL;
     }
   }
 return result;
 }
 
-char* custom_hsm_get_common_name(HSM_CLIENT_HANDLE handle)
+static TLSIO_CRYPTODEV_PKEY* custom_hsm_get_key_cryptodev(HSM_CLIENT_HANDLE handle)
+{
+  TLSIO_CRYPTODEV_PKEY* result;
+  if (handle == NULL)
+  {
+    (void)fprintf(stderr, "Invalid handle value specified\r\n");
+    result = NULL;
+  }
+  else
+  {
+    TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info = (TWILIO_TRUST_ONBOARD_HSM_INFO*)handle;
+    if (hsm_info->signing) {
+      if (hsm_info->signing_key == NULL)
+      {
+        if (populate_signing_key(hsm_info, hsm_info->device_path, hsm_info->sim_pin) != 0) {
+          (void)fprintf(stderr, "Failed reading key\r\n");
+          result = NULL;
+        }
+      }
+
+      result = hsm_info->signing_key;
+    }
+    else
+    {
+      result = NULL;
+    }
+  }
+return result;
+}
+
+static char* custom_hsm_get_common_name(HSM_CLIENT_HANDLE handle)
 {
     char* result;
     if (handle == NULL)
@@ -301,7 +409,7 @@ char* custom_hsm_get_common_name(HSM_CLIENT_HANDLE handle)
     return result;
 }
 
-int custom_hsm_set_data(HSM_CLIENT_HANDLE handle, const void* data)
+static int custom_hsm_set_data(HSM_CLIENT_HANDLE handle, const void* data)
 {
   int result;
   if (handle == NULL)
@@ -316,7 +424,8 @@ int custom_hsm_set_data(HSM_CLIENT_HANDLE handle, const void* data)
   	TWILIO_TRUST_ONBOARD_HSM_CONFIG* config = (TWILIO_TRUST_ONBOARD_HSM_CONFIG*)data;
     hsm_info->device_path = strdup(config->device_path);
     hsm_info->sim_pin = strdup(config->sim_pin);
-  	result = 0;
+    hsm_info->signing = config->signing;
+    result = 0;
   }
   return result;
 }
@@ -328,6 +437,7 @@ static const HSM_CLIENT_X509_INTERFACE x509_interface =
     custom_hsm_destroy,
     custom_hsm_get_certificate,
     custom_hsm_get_key,
+    custom_hsm_get_key_cryptodev,
     custom_hsm_get_common_name,
     custom_hsm_set_data 
 };
