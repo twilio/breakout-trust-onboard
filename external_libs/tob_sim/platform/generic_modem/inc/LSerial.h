@@ -15,7 +15,7 @@
 class LSerial : public Serial {
  public:
   // Create an instance of WSerial.
-  LSerial(const char* const device);
+  LSerial(const char* const device, int baudrate = 115200);
   ~LSerial(void);
 
   bool start(void);
@@ -25,6 +25,7 @@ class LSerial : public Serial {
 
  private:
   char* _device = nullptr;
+  int _baudrate = 0;
   int32_t m_uart;
 };
 

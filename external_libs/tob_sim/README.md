@@ -168,10 +168,10 @@ Two interface implementations are already provided: `GenericModem` for a baselin
 Can be instantiated as:
 
 ```
-    GenericModem modem("/dev/ttyUSB0");
+    GenericModem modem("/dev/ttyUSB0", 115200);
 ```
 
-substituting path to your serial device. The serial interface should be connected to a AT modem capable of processing `AT+CSIM` command according to section 8.17 of [ETSI TS 127 007](https://www.etsi.org/deliver/etsi_ts/127000_127099/127007/13.04.00_60/ts_127007v130400p.pdf).
+substituting path to your serial device and baud rate. The serial interface should be connected to a AT modem capable of processing `AT+CSIM` command according to section 8.17 of [ETSI TS 127 007](https://www.etsi.org/deliver/etsi_ts/127000_127099/127007/13.04.00_60/ts_127007v130400p.pdf).
 
 ### PcscSEInterface
 

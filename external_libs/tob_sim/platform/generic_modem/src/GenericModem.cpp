@@ -13,7 +13,7 @@
 
 //#define MODEM_DEBUG
 
-GenericModem::GenericModem(const char* const device) : _at(new LSerial(device)) {
+GenericModem::GenericModem(const char* const device, int baudrate) : _at(new LSerial(device, baudrate)) {
 }
 
 GenericModem::~GenericModem(void) {
@@ -61,8 +61,8 @@ bool GenericModem::transmitApdu(uint8_t* apdu, uint16_t apduLen, uint8_t* respon
   return ret;
 }
 
-extern "C" SEInterface* GenericModem_create(const char* device) {
-  return new GenericModem(device);
+extern "C" SEInterface* GenericModem_create(const char* device, int baudrate) {
+  return new GenericModem(device, baudrate);
 }
 
 extern "C" void GenericModem_destroy(SEInterface* iface) {

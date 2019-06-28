@@ -35,6 +35,7 @@
 #include <string>
 
 static SEInterface* modem = nullptr;
+int baudrate              = 115200;
 static std::string pin    = "0000";
 
 TEST_CASE("Select MIAS applet", "[mias][select]") {
@@ -311,6 +312,7 @@ int main(int argc, char* argv[]) {
   using namespace Catch::clara;
   auto cli = session.cli() |
              Opt(device, "device")["-m"]["--device"]("Path to the device or pcsc:N for a PC/SC interface") |
+             Opt(baudrate, "baudrate")["-g"]["--baudrate"]("Baud rate for the serial device") |
              Opt(pin, "pin")["-p"]["--pin"]("PIN code for the Trust Onboard SIM");
 
   // Now pass the new composite back to Catch so it uses that
@@ -330,7 +332,7 @@ int main(int argc, char* argv[]) {
     return 1;
 #endif
   } else {
-    modem = new GenericModem(device.c_str());
+    modem = new GenericModem(device.c_str(), baudrate);
   }
 
   if (modem == nullptr || !modem->open()) {

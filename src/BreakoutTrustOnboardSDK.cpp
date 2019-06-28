@@ -246,7 +246,7 @@ int tob_se_init_with_interface(SEInterface* seiface) {
   return 0;
 }
 
-int tobInitialize(const char* device) {
+int tobInitialize(const char* device, int baudrate) {
   if (_modem != nullptr) {
     return 0;
   }
@@ -265,7 +265,7 @@ int tobInitialize(const char* device) {
     return -1;
 #endif
   } else {
-    _modem = new GenericModem(device);
+    _modem = new GenericModem(device, baudrate);
   }
 
   if (!_modem->open()) {
