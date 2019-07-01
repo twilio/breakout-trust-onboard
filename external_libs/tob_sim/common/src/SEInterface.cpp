@@ -93,6 +93,9 @@ bool SEInterface::transmit(void) {
 
   if ((_apduResponseLen == 2) && (_apduResponse[0] == 0x6C)) {
     _apdu[4] = _apduResponse[1];
+    if (_apduLen < 5) {
+      _apduLen = 5;
+    }
     return transmit();
   }
 
