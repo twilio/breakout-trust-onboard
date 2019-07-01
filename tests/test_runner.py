@@ -163,7 +163,7 @@ class ModemsEnumerator:
 
 def main():
     if len(sys.argv) < 2:
-        print('Usage:' + sys.argv[0] + 'modems.csv [test1 [test2 [test3...]]]', file=sys.stderr)
+        print('Usage:' + sys.argv[0] + ' modems.csv [test1 [test2 [test3...]]]', file=sys.stderr)
 
     success = True
 
