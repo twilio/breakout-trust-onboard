@@ -170,7 +170,7 @@ int main(char **argc, int argv) {
     uint8_t pk[PEM_BUFFER_SIZE];
     int pk_size = 0;
 
-    tobInitialize(MODULE_DEVICE);
+    tobInitialize(MODULE_DEVICE, MODULE_BAUDRATE);
 
 #if USE_SIGNING
     ret = tobExtractSigningCertificate(cert, &cert_size, SIM_PIN);

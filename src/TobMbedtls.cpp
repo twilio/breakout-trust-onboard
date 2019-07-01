@@ -9,7 +9,7 @@
 #include "Pcsc.h"
 #endif
 
-bool tob_mbedtls_init(const char* iface_path, const char* pin) {
+bool tob_mbedtls_init(const char* iface_path, int baudrate, const char* pin) {
   if (iface_path == nullptr) {
     return false;
   }
@@ -24,7 +24,7 @@ bool tob_mbedtls_init(const char* iface_path, const char* pin) {
     return false;
 #endif
   } else {
-    iface = new GenericModem(iface_path);
+    iface = new GenericModem(iface_path, baudrate);
   }
 
   if (!iface->open()) {

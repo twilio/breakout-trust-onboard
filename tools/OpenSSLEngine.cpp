@@ -17,12 +17,15 @@ static int rsa_ex_data_idx = -1;
 #define CMD_PCSC (ENGINE_CMD_BASE + 1)
 #define CMD_MODEM_DEVICE (ENGINE_CMD_BASE + 2)
 #define CMD_PCSC_IDX (ENGINE_CMD_BASE + 3)
+#define CMD_MODEM_BAUDRATE (ENGINE_CMD_BASE + 4)
 
 static const ENGINE_CMD_DEFN engine_cmd_defns[] = {
     {CMD_PIN, "PIN", "Card's PIN code", ENGINE_CMD_FLAG_STRING},
     {CMD_PCSC, "PCSC", "Use PC/SC card reader intead of a serial modem", ENGINE_CMD_FLAG_NUMERIC},
     {CMD_MODEM_DEVICE, "MODEM_DEVICE", "If MODEM is specified, use this device as a serial interface",
      ENGINE_CMD_FLAG_STRING},
+    {CMD_MODEM_BAUDRATE, "MODEM_BAUDRATE", "If MODEM is specified, use this baudrate for a serial interface",
+     ENGINE_CMD_FLAG_NUMERIC},
     {CMD_PCSC_IDX, "PCSC_IDX",
      "If MODEM is _not_ specified, use this card reader (better always specify as 0 and connect only one reader at a "
      "time)",
@@ -34,6 +37,7 @@ struct tob_ctx_t {
   char* pin;
   int is_pcsc;
   char* modem_device;
+  int modem_baudrate;
   int pcsc_idx;
   SEInterface* interface;
   MIAS* mias;
@@ -98,10 +102,11 @@ static int tob_set_ctx(ENGINE* e, tob_ctx_t** ctx) {
     return 0;
   }
 
-  c->pin          = strdup("0000");
-  c->is_pcsc      = 0;
-  c->modem_device = strdup("/dev/ttyACM0");
-  c->pcsc_idx     = 0;
+  c->pin            = strdup("0000");
+  c->is_pcsc        = 0;
+  c->modem_device   = strdup("/dev/ttyACM0");
+  c->modem_baudrate = 115200;
+  c->pcsc_idx       = 0;
 
   if ((*ctx = (tob_ctx_t*)ENGINE_get_ex_data(e, ex_data_idx)) == NULL) {
     ret = ENGINE_set_ex_data(e, ex_data_idx, c);
@@ -153,7 +158,7 @@ static int tob_engine_init(ENGINE* engine) {
         return 0;
 #endif
       } else {
-        ctx->interface = new GenericModem(ctx->modem_device);
+        ctx->interface = new GenericModem(ctx->modem_device, ctx->modem_baudrate);
       }
     }
 
@@ -237,6 +242,10 @@ static int tob_engine_ctrl(ENGINE* e, int cmd, long i, void* p, void (*f)(void))
         free(ctx->modem_device);
       }
       ctx->modem_device = strdup((char*)p);
+      return 1;
+
+    case CMD_MODEM_BAUDRATE:
+      ctx->modem_baudrate = i;
       return 1;
 
     case CMD_PCSC_IDX:

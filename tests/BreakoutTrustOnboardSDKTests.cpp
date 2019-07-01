@@ -24,19 +24,20 @@
 #include <string>
 
 std::string device = std::string("/dev/ttyACM1");
+int baudrate       = 115200;
 std::string pin    = std::string("0000");
 
 TEST_CASE("Initialize module", "[tob]") {
   SECTION("invalid initialization with no device") {
-    REQUIRE(tobInitialize(NULL) == -1);
+    REQUIRE(tobInitialize(NULL, baudrate) == -1);
   }
 
   SECTION("invalid initialization with invalid device") {
-    REQUIRE(tobInitialize("/dev/abc") == -1);
+    REQUIRE(tobInitialize("/dev/abc", baudrate) == -1);
   }
 
   SECTION("valid initialization") {
-    REQUIRE(tobInitialize(device.c_str()) == 0);
+    REQUIRE(tobInitialize(device.c_str(), baudrate) == 0);
   }
 }
 
@@ -47,7 +48,7 @@ TEST_CASE("Read Type A Certificate", "[available] [cert]") {
   uint8_t pk[DER_BUFFER_SIZE];
   int pk_size = 0;
 
-  REQUIRE(tobInitialize(device.c_str()) == 0);
+  REQUIRE(tobInitialize(device.c_str(), baudrate) == 0);
 
   SECTION("read certificate") {
     REQUIRE(tobExtractAvailableCertificate(cert, &cert_size, pin.c_str()) == 0);
@@ -70,6 +71,7 @@ int main(int argc, const char* argv[]) {
   using namespace Catch::clara;
   auto cli = session.cli() |
              Opt(device, "device")["-m"]["--device"]("Path to the device or pcsc:N for a PC/SC interface") |
+             Opt(baudrate, "baudrate")["-g"]["--baudrate"]("Baud rate for the serial device") |
              Opt(pin, "pin")["-p"]["--pin"]("PIN code for the Trust Onboard SIM");
 
   // Now pass the new composite back to Catch so it uses that

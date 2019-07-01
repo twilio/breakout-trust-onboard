@@ -30,7 +30,7 @@ Starting the server:
 
 Extracting client certificate:
 
-    trust_onboard_tool pcsc:0 0000 /dev/null /dev/null signing-cert.pem
+    trust_onboard_tool -d pcsc:0 -p 0000 -s signing-cert.pem
 
 Connecting to the server (from a different terminal):
 

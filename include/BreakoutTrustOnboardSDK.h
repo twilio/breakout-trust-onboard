@@ -54,10 +54,11 @@ extern "C" {
  * Initialize Trust Onboard connection to cellular module with specified device.
  * Device must not be in use by another application in the system and must be
  * accessible as the current user.
- * @param device - full path to cellular module UART
+ * @param device - full path to cellular module UART or "pcsc:N" for PC/SC device
+ * @param baudrate - baud rate for a serial UART, ignored for PC/SC
  * @return 0 if successful, -1 if initialization fails
  */
-extern int tobInitialize(const char *device);
+extern int tobInitialize(const char *device, int baudrate);
 
 /**
  * Extract the Available public certificate in PEM form.  The certificate

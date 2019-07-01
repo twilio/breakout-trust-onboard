@@ -9,6 +9,10 @@ if (NOT MODULE_DEVICE)
   set(MODULE_DEVICE "/dev/ttyACM1")
 endif()
 
+if (NOT MODULE_BAUDRATE)
+  set(MODULE_BAUDRATE "115200")
+endif()
+
 if (NOT SIM_PIN)
   set(SIM_PIN "0000")
 endif()
@@ -18,6 +22,7 @@ if (NOT AZURE_ID_SCOPE_PATH)
 endif()
 
 add_definitions(-DMODULE_DEVICE="${MODULE_DEVICE}")
+add_definitions(-DMODULE_BAUDRATE=${MODULE_BAUDRATE})
 add_definitions(-DSIM_PIN="${SIM_PIN}")
 add_definitions(-DAZURE_ID_SCOPE_PATH="${AZURE_ID_SCOPE_PATH}")
 

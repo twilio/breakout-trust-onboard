@@ -18,7 +18,7 @@
 class GenericModem : public SEInterface {
  public:
   // Create an instance of Generic Modem.
-  GenericModem(const char* device);
+  GenericModem(const char* device, int baudrate = 115200);
   ~GenericModem(void);
 
   bool open(void) override {
@@ -38,7 +38,7 @@ class GenericModem : public SEInterface {
 
 #else /* __cplusplus */
 
-SEInterface* GenericModem_create(const char* device);
+SEInterface* GenericModem_create(const char* device, int baudrate);
 void GenericModem_destroy(SEInterface* iface);
 int GenericModem_open(SEInterface* iface);
 
