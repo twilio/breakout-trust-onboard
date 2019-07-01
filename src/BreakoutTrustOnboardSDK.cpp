@@ -42,6 +42,25 @@ typedef struct {
   mias_key_pair_t* kp;
 } mias_key_t;
 
+class SelectionGuard {
+ public:
+  SelectionGuard(Applet& applet, bool use_basic_channel) : applet_{applet} {
+    selected_ = applet_.select(use_basic_channel);
+  }
+
+  ~SelectionGuard() {
+    applet_.deselect();
+  }
+
+  bool selected() {
+    return selected_;
+  }
+
+ private:
+  Applet& applet_;
+  bool selected_;
+};
+
 static void convert_der_to_pem(char const* headerStr, uint8_t* inDer, int inDerLen, uint8_t* outPem, int* outPemLen) {
   int expectedBase64Len = Base64encode_len(inDerLen);  // includes 1 extra byte for \0 termination
   int base64BufferSize  = (11 + strlen((char*)headerStr) + 6) + expectedBase64Len + (9 + strlen((char*)headerStr) + 5);
@@ -375,4 +394,98 @@ int tobExtractAvailablePrivateKeyAsPem(uint8_t* pk, int* pk_size, const char* pi
     convert_der_to_pem("RSA PRIVATE KEY", cert, extractedLen, pk, pk_size);
   }
   return res;
+}
+
+int tobSigningSign(tob_algorithm_t algorithm, const uint8_t* hash, int hash_len, uint8_t* signature, int* signature_len,
+                   const char* pin) {
+  // TODO: do we need to deal with different paths here?
+  const char* path = CERT_SIGNING_MIAS_PATH;
+  if (memcmp(path, SE_MIAS_KEY_NAME_PREFIX, strlen(SE_MIAS_KEY_NAME_PREFIX)) != 0) {
+    return ERR_SE_BAD_KEY_NAME_ERROR;
+  }
+  uint8_t cid;
+
+  // Remove prefix from key path
+  path += strlen(SE_MIAS_KEY_NAME_PREFIX);
+
+  cid = 0;
+  while (*path) {
+    cid *= 10;
+    cid += *path - '0';
+    path++;
+  }
+
+  auto sg = SelectionGuard(*_mias, USE_BASIC_CHANNEL);
+  if (!sg.selected()) {
+    return ERR_SE_BAD_KEY_NAME_ERROR;
+  }
+
+  mias_key_pair_t* keypair;
+  if (!_mias->getKeyPairByContainerId(cid, &keypair)) {
+    return ERR_SE_BAD_KEY_NAME_ERROR;
+  }
+
+  if (!_mias->verifyPin((uint8_t*)pin, strlen(pin))) {
+    return ERR_SE_EF_VERIFY_PIN_ERROR;
+  }
+
+  if (!_mias->signInit(algorithm, keypair->kid)) {
+    return ERR_SE_BAD_KEY_NAME_ERROR;
+  }
+
+  uint16_t signature_len_16;
+  if (!_mias->signFinal(hash, hash_len, signature, &signature_len_16)) {
+    return ERR_SE_BAD_KEY_NAME_ERROR;
+  }
+
+  *signature_len = signature_len_16;
+
+  return 0;
+}
+
+int tobSigningDecrypt(const uint8_t* cipher, int cipher_len, uint8_t* plain, int* plain_len, const char* pin) {
+  // TODO: do we need to deal with different paths here?
+  const char* path = CERT_SIGNING_MIAS_PATH;
+
+  if (memcmp(path, SE_MIAS_KEY_NAME_PREFIX, strlen(SE_MIAS_KEY_NAME_PREFIX)) != 0) {
+    return ERR_SE_BAD_KEY_NAME_ERROR;
+  }
+  uint8_t cid;
+
+  // Remove prefix from key path
+  path += strlen(SE_MIAS_KEY_NAME_PREFIX);
+
+  cid = 0;
+  while (*path) {
+    cid *= 10;
+    cid += *path - '0';
+    path++;
+  }
+
+  auto sg = SelectionGuard(*_mias, USE_BASIC_CHANNEL);
+  if (!sg.selected()) {
+    return ERR_SE_BAD_KEY_NAME_ERROR;
+  }
+
+  mias_key_pair_t* keypair;
+  if (!_mias->getKeyPairByContainerId(cid, &keypair)) {
+    return ERR_SE_BAD_KEY_NAME_ERROR;
+  }
+
+  if (!_mias->verifyPin((uint8_t*)pin, strlen(pin))) {
+    return ERR_SE_EF_VERIFY_PIN_ERROR;
+  }
+
+  if (!_mias->decryptInit(ALGO_RSA_PKCS1_PADDING, keypair->kid)) {
+    return ERR_SE_BAD_KEY_NAME_ERROR;
+  }
+
+  uint16_t plain_len_16;
+  if (!_mias->decryptFinal(cipher, cipher_len, plain, &plain_len_16)) {
+    return ERR_SE_BAD_KEY_NAME_ERROR;
+  }
+
+  *plain_len = plain_len_16;
+
+  return 0;
 }
