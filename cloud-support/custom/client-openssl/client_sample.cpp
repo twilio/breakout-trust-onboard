@@ -55,17 +55,50 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
-  curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-  curl_easy_setopt(curl, CURLOPT_SSLCERT, client_cert);
+  if (curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM") != CURLE_OK) {
+    std::cerr << "Can't set device certificate type to PEM" << std::endl;
+    return 1;
+  }
 
-  curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, "ENG");
-  curl_easy_setopt(curl, CURLOPT_SSLKEY, "0");
+  if (curl_easy_setopt(curl, CURLOPT_SSLCERT, client_cert) != CURLE_OK) {
+    std::cerr << "Can't set device certificate" << std::endl;
+    return 1;
+  }
 
-  curl_easy_setopt(curl, CURLOPT_CAINFO, root_ca);
-  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+  if (curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, "ENG") != CURLE_OK) {
+    std::cerr << "Can't set device key type to ENG" << std::endl;
+    return 1;
+  }
 
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeFunction);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
+  if (curl_easy_setopt(curl, CURLOPT_SSLKEY, "0") != CURLE_OK) {
+    std::cerr << "Can't set device key" << std::endl;
+    return 1;
+  }
+
+  if (curl_easy_setopt(curl, CURLOPT_CAINFO, root_ca) != CURLE_OK) {
+    std::cerr << "Can't set root CA" << std::endl;
+    return 1;
+  }
+
+  if (curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L) != CURLE_OK) {
+    std::cerr << "Can't enable peer verification" << std::endl;
+    return 1;
+  }
+
+  if (curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L) != CURLE_OK) {
+    std::cerr << "Can't enable peer verification" << std::endl;
+    return 1;
+  }
+
+  if (curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeFunction) != CURLE_OK) {
+    std::cerr << "Can't set write function" << std::endl;
+    return 1;
+  }
+
+  if (curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result) != CURLE_OK) {
+    std::cerr << "Can't set write function data" << std::endl;
+    return 1;
+  }
 
   res = curl_easy_perform(curl);
   if (res != CURLE_OK) {

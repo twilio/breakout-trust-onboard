@@ -24,11 +24,11 @@ static const ENGINE_CMD_DEFN engine_cmd_defns[] = {
     {CMD_PCSC, "PCSC", "Use PC/SC card reader intead of a serial modem", ENGINE_CMD_FLAG_NUMERIC},
     {CMD_MODEM_DEVICE, "MODEM_DEVICE", "If MODEM is specified, use this device as a serial interface",
      ENGINE_CMD_FLAG_STRING},
-    {CMD_MODEM_BAUDRATE, "MODEM_BAUDRATE", "If MODEM is specified, use this baudrate for a serial interface",
-     ENGINE_CMD_FLAG_NUMERIC},
     {CMD_PCSC_IDX, "PCSC_IDX",
      "If MODEM is _not_ specified, use this card reader (better always specify as 0 and connect only one reader at a "
      "time)",
+     ENGINE_CMD_FLAG_NUMERIC},
+    {CMD_MODEM_BAUDRATE, "MODEM_BAUDRATE", "If MODEM is specified, use this baudrate for a serial interface",
      ENGINE_CMD_FLAG_NUMERIC},
     {0, NULL, NULL, 0}};
 
