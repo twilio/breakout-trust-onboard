@@ -2,7 +2,7 @@
 
 ## client-openssl
 
-Sample client using libcurl and OpenSSL with Trust Onboard engine to establish a mutually authenticated connection to a custom server.
+Sample client using [libcurl](https://github.com/curl/curl) and [OpenSSL](https://github.com/openssl/openssl) with Trust Onboard engine to establish a mutually authenticated connection to a custom server.
 
 For the client to be able to find the engine, it should be run with `OPENSSL_CONF` environment variable to point to either
   - `client/test_engine_pcsc.conf` file to interface to the SIM card via PC/SC interface or
@@ -10,7 +10,21 @@ For the client to be able to find the engine, it should be run with `OPENSSL_CON
 
 ## client-mbedtls
 
-Sample client using mbedtls. The client depends on the Trust Onboard library built with `MBEDTLS_SUPPORT` flag and dynamically-linked mbedtls library in default configuration.
+Sample client using [mbedtls](https://github.com/ARMmbed/mbedtls). The client depends on the Trust Onboard library built with `MBEDTLS_SUPPORT` flag and dynamically-linked mbedtls library in default configuration.
+
+## client-wolfssl
+
+Sample client using [wolfSSL](https://github.com/wolfssl/wolfssl). A few points need to be taken care of with respect to the wolfSSL library.
+
+  * Because of how wolfSSL is designed, signing algorithms not supported by Trust Onboard hardware should be disabled on the build stage.
+  * In addition Trust Onboard uses "private key callbacks" feature, it should be enabled.
+  * There was a bug in wolfSSL with the callbacks implementation, it was fixed in v3.14.3, so this is the earliest wolfSSL version that can be used.
+
+The following `configure` command line can be used to configure wolfSSL for Trust Onboard:
+
+```
+./configure --enable-pkcallback --disable-rsapss --disable-sha512
+```
 
 ## server
 
