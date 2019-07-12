@@ -16,7 +16,7 @@ Sample client using mbedtls. The client depends on the Trust Onboard library bui
 
 Sample client using wolfSSL. A few points need to be taken care of with respect to the wolfSSL library.
 
-  * Because of how wolfSSL is designed, siging algorithms not supported by Trust Onboard hardware should be disabled on the build stage.
+  * Because of how wolfSSL is designed, signing algorithms not supported by Trust Onboard hardware should be disabled on the build stage.
   * In addition Trust Onboard uses "private key callbacks" feature, it should be enabled.
   * There was a bug in wolfSSL with the callbacks implementation, it was fixed in v3.14.3, so this is the earliest wolfSSL version that can be used.
 
