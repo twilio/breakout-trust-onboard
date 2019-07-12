@@ -26,6 +26,7 @@ typedef struct TWILIO_TRUST_ONBOARD_HSM_INFO_TAG {
   const char* device_path;
   const char* sim_pin;
   int signing;
+  int baudrate;
   const char* certificate;
   const char* common_name;
   const char* key;
@@ -92,10 +93,12 @@ static int populate_cert(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* de
   int ret = 0;
   uint8_t cert[PEM_BUFFER_SIZE];
   int cert_size = 0;
+  uint8_t cert_der[DER_BUFFER_SIZE];
+  int cert_der_size = 0;
 
-  tobInitialize(device_path, 115200);
+  tobInitialize(device_path, hsm_info->baudrate);
   if (hsm_info->signing) {
-    ret = tobExtractSigningCertificate(cert, &cert_size, pin);
+    ret = tobExtractSigningCertificateAsPem(cert, &cert_size, cert_der, &cert_der_size, pin);
   } else {
     ret = tobExtractAvailableCertificate(cert, &cert_size, pin);
   }
@@ -123,9 +126,11 @@ static int populate_key(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* dev
   int ret = 0;
   uint8_t pk[PEM_BUFFER_SIZE];
   int pk_size = 0;
+  uint8_t pk_der[DER_BUFFER_SIZE];
+  int pk_der_size = 0;
 
-  tobInitialize(device_path, 115200);
-  ret = tobExtractAvailablePrivateKeyAsPem(pk, &pk_size, pin);
+  tobInitialize(device_path, hsm_info->baudrate);
+  ret = tobExtractAvailablePrivateKeyAsPem(pk, &pk_size, pk_der, &pk_der_size, pin);
   if (ret != 0) {
     (void)fprintf(stderr, "Failed reading private key\r\n");
     RESULT = 1;
@@ -198,7 +203,7 @@ static int populate_signing_key(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const c
   hsm_info->signing_key->type         = TLSIO_CRYPTODEV_PKEY_TYPE_RSA;  // TODO: ECC support
   hsm_info->signing_key->private_data = hsm_info;
 
-  tobInitialize(device_path, 115200);
+  tobInitialize(device_path, hsm_info->baudrate);
 
   return 0;
 }
@@ -364,6 +369,7 @@ static int custom_hsm_set_data(HSM_CLIENT_HANDLE handle, const void* data) {
     hsm_info->device_path                   = strdup(config->device_path);
     hsm_info->sim_pin                       = strdup(config->sim_pin);
     hsm_info->signing                       = config->signing;
+    hsm_info->baudrate                      = config->baudrate;
     result                                  = 0;
   }
   return result;
