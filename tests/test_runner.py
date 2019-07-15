@@ -7,6 +7,8 @@ import serial
 import glob
 import time
 import subprocess
+import os
+import signal
 
 class ModemsEnumerator:
     """Takes a CSV file and lists available and unavailable modems"""
@@ -177,13 +179,13 @@ def main():
             print('===== Command line:', ' '.join(command_line), '=====')
 
 
-            p = subprocess.Popen(command_line,  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            p = subprocess.Popen(command_line,  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=os.setsid)
 
             try:
-              outs, errs = p.communicate(timeout=120)
+              outs, errs = p.communicate(timeout=600)
             except subprocess.TimeoutExpired:
               print('===== Test timed out =====')
-              p.kill()
+              os.killpg(os.getpgid(p.pid), signal.SIGTERM)
               outs, _ = p.communicate()
 
             print('===== Output =====')
