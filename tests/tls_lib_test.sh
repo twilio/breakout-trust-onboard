@@ -3,10 +3,10 @@
 time_bomb() {
   sleep $2
 
-  is_there=$(ps -ax | grep $1)
+  is_there=$(ps -h --pid=$1)
   
   if [ -n "${is_there}" ]; then
-      kill $1
+      kill $1 && wait $1
   fi
 }
 
@@ -79,10 +79,10 @@ ${CLOUD_SUPPORT_DIR}/server/server_sample.py ${SERVER_PORT} ${SERVER_CERT} ${SER
 server_id=$!
 
 kill_server() {
-	[[ -z "$(ps -h --pid ${server_id})" ]] || kill ${server_id} && wait ${server_id}
-	[[ -z "$(ps -h --pid ${openssl_client_id})" ]] || kill ${openssl_client_id} && wait ${openssl_client_id}
-	[[ -z "$(ps -h --pid ${mbedtls_client_id})" ]] || kill ${mbedtls_client_id} && wait ${mbedtls_client_id}
-	[[ -z "$(ps -h --pid ${wolfssl_client_id})" ]] || kill ${wolfssl_client_id} && wait ${wolfssl_client_id}
+	kill ${server_id} && wait ${server_id}
+	kill ${openssl_client_id} && wait ${openssl_client_id}
+	kill ${mbedtls_client_id} && wait ${mbedtls_client_id}
+	kill ${wolfssl_client_id} && wait ${wolfssl_client_id}
 	rm -f $SERVER_OUTPUT
 	rm -f $CLIENT_STDOUT
 	rm -rf $CERTS_DIR
@@ -143,11 +143,12 @@ fi
 
 ${CLOUD_SUPPORT_DIR}/client-openssl/build/client_sample https://localhost:${SERVER_PORT} ${CLIENT_SIGNING_CERT} ${SERVER_CA} 2>&1 >${CLIENT_STDOUT} &
 openssl_client_id=$!
-time_bomb ${openssl_client_id} 20&
-
-echo "${CLOUD_SUPPORT_DIR}/client-openssl/build/client_sample https://localhost:${SERVER_PORT} ${CLIENT_SIGNING_CERT} ${SERVER_CA} >${CLIENT_STDOUT}"
+time_bomb ${openssl_client_id} 60&
+time_bomb_id=$!
 
 wait ${openssl_client_id}
+kill ${time_bomb_id}
+
 openssl_success=$(cat ${CLIENT_STDOUT} | grep ${SERVER_OUTPUT})
 
 if [ -n "${openssl_success}" ]; then
@@ -162,8 +163,12 @@ build_sample ${CLOUD_SUPPORT_DIR}/client-mbedtls ${TOB_LIB_DIR} ${TOB_INC_DIR}
 echo '' >${CLIENT_STDOUT}
 ${CLOUD_SUPPORT_DIR}/client-mbedtls/build/client_sample localhost ${SERVER_PORT} / ${CLIENT_SIGNING_CERT} ${SERVER_CA} ${TOB_DEVICE} ${TOB_BAUDRATE} ${TOB_PIN} 2>&1 >${CLIENT_STDOUT} &
 mbedtls_client_id=$!
-time_bomb ${mbedtls_client_id} 20&
+time_bomb ${mbedtls_client_id} 60&
+time_bomb_id=$!
+
 wait ${mbedtls_client_id}
+kill ${time_bomb_id}
+
 mbedtls_success=$(cat ${CLIENT_STDOUT} | grep ${SERVER_OUTPUT})
 
 if [ -n "${mbedtls_success}" ]; then
@@ -178,16 +183,18 @@ build_sample ${CLOUD_SUPPORT_DIR}/client-wolfssl ${TOB_LIB_DIR} ${TOB_INC_DIR}
 echo '' >${CLIENT_STDOUT}
 ${CLOUD_SUPPORT_DIR}/client-wolfssl/build/client_sample localhost ${SERVER_PORT} / ${CLIENT_SIGNING_CERT} ${SERVER_CA} ${TOB_DEVICE} ${TOB_BAUDRATE} ${TOB_PIN} 2>&1 >${CLIENT_STDOUT} &
 wolfssl_client_id=$!
-time_bomb ${wolfssl_client_id} 20&
+time_bomb ${wolfssl_client_id} 60&
+time_bomb_id=$!
+
 wait ${wolfssl_client_id}
+kill ${time_bomb_id}
+
 wolfssl_success=$(cat ${CLIENT_STDOUT} | grep "${SERVER_OUTPUT}")
 if [ -n "${wolfssl_success}" ]; then
 	echo "*** WolfSSL sample test SUCCEEDED"
 else
 	echo "*** WolfSSL sample test FAILED"
 fi
-
-[[ -z "$(jobs -p)" ]] || kill $(jobs -p)
 
 if [ -n "${openssl_success}" ] && [ -n "${mbedtls_success}" ] && [ -n "${wolfssl_success}" ]; then
 	echo "*** TLS library test suite SUCCEEDED"
