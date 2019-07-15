@@ -12,10 +12,15 @@ set(CMAKE_CXX_STANDARD 11)
 find_package(WolfSSL REQUIRED)
 include_directories(${WOLFSSL_INCLUDE_DIRS})
 
+if (TRUST_ONBOARD_INCLUDE_DIRS)
+  include_directories(${TRUST_ONBOARD_INCLUDE_DIRS})
+endif()
+
+find_library(TRUST_ONBOARD NAMES TwilioTrustOnboard)
 
 add_executable(client_sample client_sample.cpp)
 
 target_link_libraries(client_sample
   ${WOLFSSL_LIBRARIES}
-  TwilioTrustOnboard
+  ${TRUST_ONBOARD}
 )

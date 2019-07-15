@@ -14,7 +14,7 @@ build_sample() {
   cd $1
   mkdir -p build
   cd build
-  cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_LIBRARY_PATH=$2 ..
+  cmake -DCMAKE_LIBRARY_PATH=$2 -DTRUST_ONBOARD_INCLUDE_DIRS=$3 ..
   make
 }
 
@@ -50,13 +50,14 @@ if [ -z "${TOB_DEVICE}" ] || [ -z "${TOB_BAUDRATE}" ] || [ -z ${TOB_PIN} ]; then
 	exit 1
 fi
 
-SERVER_PIPE=$(mktemp)
+SERVER_STDOUT=$(mktemp)
 
-CLIENT_PIPE=$(mktemp)
+CLIENT_STDOUT=$(mktemp)
 
 SOURCE_DIR=$(realpath `dirname "${BASH_SOURCE[0]}"`/..)
 CLOUD_SUPPORT_DIR="${SOURCE_DIR}/cloud-support/custom"
-TOB_LIB_DIR=${SOURCE_DIR}/cmake/lib
+TOB_LIB_DIR=${SOURCE_DIR}/install_prefix/lib
+TOB_INC_DIR=${SOURCE_DIR}/install_prefix/include
 export LD_LIBRARY_PATH=${TOB_LIB_DIR}
 
 CERTS_DIR=$(mktemp -d)
@@ -74,7 +75,7 @@ SERVER_PORT=12345
 CLIENT_SIGNING_CERT=${CERTS_DIR}/client_cert_signing.pem
 
 echo "*** Starting HTTPS server"
-${CLOUD_SUPPORT_DIR}/server/server_sample.py ${SERVER_PORT} ${SERVER_CERT} ${SERVER_PKEY} ${SOURCE_DIR}/bundles/programmable-wireless.signing.pem 2>&1 >${SERVER_PIPE} &
+${CLOUD_SUPPORT_DIR}/server/server_sample.py ${SERVER_PORT} ${SERVER_CERT} ${SERVER_PKEY} ${SOURCE_DIR}/bundles/programmable-wireless.signing.pem 2>&1 >${SERVER_STDOUT} &
 server_id=$!
 
 kill_server() {
@@ -82,8 +83,8 @@ kill_server() {
 	[[ -z "$(ps -h --pid ${openssl_client_id})" ]] || kill ${openssl_client_id} && wait ${openssl_client_id}
 	[[ -z "$(ps -h --pid ${mbedtls_client_id})" ]] || kill ${mbedtls_client_id} && wait ${mbedtls_client_id}
 	[[ -z "$(ps -h --pid ${wolfssl_client_id})" ]] || kill ${wolfssl_client_id} && wait ${wolfssl_client_id}
-	rm -f $SERVER_PIPE
-	rm -f $CLIENT_PIPE
+	rm -f $SERVER_OUTPUT
+	rm -f $CLIENT_STDOUT
 	rm -rf $CERTS_DIR
 }
 
@@ -92,7 +93,7 @@ trap kill_server INT TERM EXIT
 sleep 2
 
 echo "*** Testing OpenSSL sample"
-build_sample ${CLOUD_SUPPORT_DIR}/client-openssl ${TOB_LIB_DIR}
+build_sample ${CLOUD_SUPPORT_DIR}/client-openssl ${TOB_LIB_DIR} ${TOB_INC_DIR}
 
 # Generate OpenSSL config
 
@@ -140,14 +141,14 @@ EOF
 
 fi
 
-${CLOUD_SUPPORT_DIR}/client-openssl/build/client_sample https://localhost:${SERVER_PORT} ${CLIENT_SIGNING_CERT} ${SERVER_CA} 2>&1 >${CLIENT_PIPE} &
+${CLOUD_SUPPORT_DIR}/client-openssl/build/client_sample https://localhost:${SERVER_PORT} ${CLIENT_SIGNING_CERT} ${SERVER_CA} 2>&1 >${CLIENT_STDOUT} &
 openssl_client_id=$!
 time_bomb ${openssl_client_id} 20&
 
-echo "${CLOUD_SUPPORT_DIR}/client-openssl/build/client_sample https://localhost:${SERVER_PORT} ${CLIENT_SIGNING_CERT} ${SERVER_CA} >${CLIENT_PIPE}"
+echo "${CLOUD_SUPPORT_DIR}/client-openssl/build/client_sample https://localhost:${SERVER_PORT} ${CLIENT_SIGNING_CERT} ${SERVER_CA} >${CLIENT_STDOUT}"
 
 wait ${openssl_client_id}
-openssl_success=$(cat ${CLIENT_PIPE} | grep ${SERVER_OUTPUT})
+openssl_success=$(cat ${CLIENT_STDOUT} | grep ${SERVER_OUTPUT})
 
 if [ -n "${openssl_success}" ]; then
 	echo "*** OpenSSL sample test SUCCEEDED"
@@ -156,14 +157,14 @@ else
 fi
 
 echo "*** Testing MbedTLS sample"
-build_sample ${CLOUD_SUPPORT_DIR}/client-mbedtls ${TOB_LIB_DIR}
+build_sample ${CLOUD_SUPPORT_DIR}/client-mbedtls ${TOB_LIB_DIR} ${TOB_INC_DIR}
 
-echo '' >${CLIENT_PIPE}
-${CLOUD_SUPPORT_DIR}/client-mbedtls/build/client_sample localhost ${SERVER_PORT} / ${CLIENT_SIGNING_CERT} ${SERVER_CA} ${TOB_DEVICE} ${TOB_BAUDRATE} ${TOB_PIN} 2>&1 >${CLIENT_PIPE} &
+echo '' >${CLIENT_STDOUT}
+${CLOUD_SUPPORT_DIR}/client-mbedtls/build/client_sample localhost ${SERVER_PORT} / ${CLIENT_SIGNING_CERT} ${SERVER_CA} ${TOB_DEVICE} ${TOB_BAUDRATE} ${TOB_PIN} 2>&1 >${CLIENT_STDOUT} &
 mbedtls_client_id=$!
 time_bomb ${mbedtls_client_id} 20&
 wait ${mbedtls_client_id}
-mbedtls_success=$(cat ${CLIENT_PIPE} | grep ${SERVER_OUTPUT})
+mbedtls_success=$(cat ${CLIENT_STDOUT} | grep ${SERVER_OUTPUT})
 
 if [ -n "${mbedtls_success}" ]; then
 	echo "*** MbedTLS sample test SUCCEEDED"
@@ -172,14 +173,14 @@ else
 fi
 
 echo "*** Testing WolfSSL sample"
-build_sample ${CLOUD_SUPPORT_DIR}/client-wolfssl ${TOB_LIB_DIR}
+build_sample ${CLOUD_SUPPORT_DIR}/client-wolfssl ${TOB_LIB_DIR} ${TOB_INC_DIR}
 
-echo '' >${CLIENT_PIPE}
-${CLOUD_SUPPORT_DIR}/client-wolfssl/build/client_sample localhost ${SERVER_PORT} / ${CLIENT_SIGNING_CERT} ${SERVER_CA} ${TOB_DEVICE} ${TOB_BAUDRATE} ${TOB_PIN} 2>&1 >${CLIENT_PIPE} &
+echo '' >${CLIENT_STDOUT}
+${CLOUD_SUPPORT_DIR}/client-wolfssl/build/client_sample localhost ${SERVER_PORT} / ${CLIENT_SIGNING_CERT} ${SERVER_CA} ${TOB_DEVICE} ${TOB_BAUDRATE} ${TOB_PIN} 2>&1 >${CLIENT_STDOUT} &
 wolfssl_client_id=$!
 time_bomb ${wolfssl_client_id} 20&
 wait ${wolfssl_client_id}
-wolfssl_success=$(cat ${CLIENT_PIPE} | grep "${SERVER_OUTPUT}")
+wolfssl_success=$(cat ${CLIENT_STDOUT} | grep "${SERVER_OUTPUT}")
 if [ -n "${wolfssl_success}" ]; then
 	echo "*** WolfSSL sample test SUCCEEDED"
 else

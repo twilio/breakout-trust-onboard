@@ -1,9 +1,11 @@
 #!/bin/bash
 
 mkdir -p cmake
+mkdir -p install_prefix
 cd cmake
-cmake -DPCSC_SUPPORT=ON -DSIGNING_SUPPORT=ON -DMBEDTLS_SUPPORT=ON -DBUILD_SHARED=ON -DBUILD_TESTS=ON ..
+cmake -DPCSC_SUPPORT=ON -DSIGNING_SUPPORT=ON -DMBEDTLS_SUPPORT=ON -DBUILD_SHARED=ON -DBUILD_TESTS=ON -DCMAKE_INSTALL_PREFIX=../install_prefix ..
 make
+make install
 
 # Allow overriding modems.csv locally to test this script
 #   modems.csv.local is not used in the CI process
