@@ -135,7 +135,7 @@ int main(int argc, const char** argv) {
   mbedtls_ssl_conf_rng(&conf, mbedtls_ctr_drbg_random, &ctr_drbg);
   mbedtls_ssl_conf_dbg(&conf, debug_out, stdout);
 
-  tob_mbedtls_init(device_path, pin);
+  tob_mbedtls_init(device_path, device_baudrate, pin);
 
   if (!tob_mbedtls_signing_key(&device_key, 0)) {
     std::cerr << "Failed to initialize signing key" << std::endl;
