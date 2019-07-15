@@ -215,11 +215,13 @@ TEST_CASE("Available key/certificate pair is valid", "[mias][availableKeys]") {
   uint16_t cert_len;
 
   uint16_t cert_len_probe;
-  REQUIRE(mias->p11GetObjectByLabel((uint8_t*)"CERT_TYPE_A", strlen("CERT_TYPE_A"), NULL, &cert_len_probe));
+  REQUIRE((mias->p11GetObjectByLabel((uint8_t*)"CERT_AVAILABLE", strlen("CERT_AVAILABLE"), NULL, &cert_len_probe) ||
+      mias->p11GetObjectByLabel((uint8_t*)"CERT_TYPE_A", strlen("CERT_TYPE_A"), NULL, &cert_len_probe)));
   REQUIRE(cert_len_probe != 0);
 
   cert = (uint8_t*)malloc(cert_len_probe * sizeof(uint8_t));
-  REQUIRE(mias->p11GetObjectByLabel((uint8_t*)"CERT_TYPE_A", strlen("CERT_TYPE_A"), cert, &cert_len));
+  REQUIRE((mias->p11GetObjectByLabel((uint8_t*)"CERT_AVAILABLE", strlen("CERT_AVAILABLE"), cert, &cert_len) ||
+      mias->p11GetObjectByLabel((uint8_t*)"CERT_TYPE_A", strlen("CERT_TYPE_A"), cert, &cert_len)));
   REQUIRE(cert_len == cert_len_probe);
 
   EVP_PKEY* available_pubkey = nullptr;
@@ -240,10 +242,12 @@ TEST_CASE("Available key/certificate pair is valid", "[mias][availableKeys]") {
   uint16_t pkey_len;
 
   uint16_t pkey_len_probe;
-  REQUIRE(mias->p11GetObjectByLabel((uint8_t*)"PRIV_TYPE_A", strlen("PRIV_TYPE_A"), NULL, &pkey_len_probe));
+  REQUIRE((mias->p11GetObjectByLabel((uint8_t*)"PRIV_AVAILABLE", strlen("PRIV_AVAILABLE"), NULL, &pkey_len_probe) ||
+      mias->p11GetObjectByLabel((uint8_t*)"PRIV_TYPE_A", strlen("PRIV_TYPE_A"), NULL, &pkey_len_probe)));
 
   pkey = (uint8_t*)malloc(pkey_len_probe * sizeof(uint8_t));
-  REQUIRE(mias->p11GetObjectByLabel((uint8_t*)"PRIV_TYPE_A", strlen("PRIV_TYPE_A"), pkey, &pkey_len));
+  REQUIRE((mias->p11GetObjectByLabel((uint8_t*)"PRIV_AVAILABLE", strlen("PRIV_AVAILABLE"), pkey, &pkey_len) ||
+      mias->p11GetObjectByLabel((uint8_t*)"PRIV_TYPE_A", strlen("PRIV_TYPE_A"), pkey, &pkey_len)));
   REQUIRE(pkey_len == pkey_len_probe);
   BIO* pkey_bio               = BIO_new_mem_buf(pkey, pkey_len);
   EVP_PKEY* available_privkey = d2i_PrivateKey_bio(pkey_bio, NULL);

@@ -32,8 +32,11 @@ static SEInterface* _modem = nullptr;
 #define SE_MIAS_KEY_NAME_PREFIX "SE://MIAS/"
 #define SE_MIAS_P11_KEY_NAME_PREFIX "SE://MIAS_P11/"
 
-#define CERT_MIAS_PATH SE_MIAS_P11_KEY_NAME_PREFIX "CERT_TYPE_A"
-#define PK_MIAS_PATH SE_MIAS_P11_KEY_NAME_PREFIX "PRIV_TYPE_A"
+#define CERT_MIAS_PATH SE_MIAS_P11_KEY_NAME_PREFIX "CERT_AVAILABLE"
+#define PK_MIAS_PATH SE_MIAS_P11_KEY_NAME_PREFIX "PRIV_AVAILABLE"
+
+#define CERT_MIAS_PATH_LEGACY SE_MIAS_P11_KEY_NAME_PREFIX "CERT_TYPE_A"
+#define PK_MIAS_PATH_LEGACY SE_MIAS_P11_KEY_NAME_PREFIX "PRIV_TYPE_A"
 
 #define CERT_SIGNING_MIAS_PATH SE_MIAS_KEY_NAME_PREFIX "0"
 
@@ -187,8 +190,12 @@ static int se_read_object(const char* path, uint8_t* obj, int* size, const char*
 static int se_p11_read_object(const char* label, uint8_t* obj, int* size, const char* pin) {
   int ret;
 
-  if (label == NULL || pin == NULL) {
+  if (label == NULL) {
     return ERR_SE_MIAS_READ_OBJECT_ERROR;
+  }
+
+  if (pin == NULL) {
+      ret = ERR_SE_EF_VERIFY_PIN_ERROR;
   }
 
 #ifdef __cplusplus
@@ -202,7 +209,7 @@ static int se_p11_read_object(const char* label, uint8_t* obj, int* size, const 
         ret = ERR_SE_MIAS_READ_OBJECT_ERROR;
       }
     } else {
-      ret = ERR_SE_MIAS_READ_OBJECT_ERROR;
+      ret = ERR_SE_EF_VERIFY_PIN_ERROR;
     }
   }
   _mias->deselect();
@@ -217,7 +224,7 @@ static int se_p11_read_object(const char* label, uint8_t* obj, int* size, const 
         ret = ERR_SE_MIAS_READ_OBJECT_ERROR;
       }
     } else {
-      ret = ERR_SE_MIAS_READ_OBJECT_ERROR;
+      ret = ERR_SE_EF_VERIFY_PIN_ERROR;
     }
   }
   Applet_deselect((Applet*)_mf);
@@ -367,7 +374,11 @@ int tob_pk_extract_se(uint8_t* pk, int* pk_size, const char* path, const char* p
 }
 
 int tobExtractAvailableCertificate(uint8_t* cert, int* cert_size, const char* pin) {
-  return tob_x509_crt_extract_se(cert, cert_size, CERT_MIAS_PATH, pin);
+  int ret = tob_x509_crt_extract_se(cert, cert_size, CERT_MIAS_PATH, pin);
+  if (ret == ERR_SE_MIAS_READ_OBJECT_ERROR) {
+    ret = tob_x509_crt_extract_se(cert, cert_size, CERT_MIAS_PATH_LEGACY, pin);
+  }
+  return ret;
 }
 
 int tobExtractSigningCertificate(uint8_t* cert, int* cert_size, const char* pin) {
@@ -382,7 +393,11 @@ int tobExtractSigningCertificate(uint8_t* cert, int* cert_size, const char* pin)
 }
 
 int tobExtractAvailablePrivateKey(uint8_t* pk, int* pk_size, const char* pin) {
-  return tob_pk_extract_se(pk, pk_size, PK_MIAS_PATH, pin);
+  int ret = tob_pk_extract_se(pk, pk_size, PK_MIAS_PATH, pin);
+  if (ret == ERR_SE_MIAS_READ_OBJECT_ERROR) {
+    ret = tob_pk_extract_se(pk, pk_size, PK_MIAS_PATH_LEGACY, pin);
+  }
+  return ret;
 }
 
 int tobExtractAvailablePrivateKeyAsPem(uint8_t* pk, int* pk_size, const char* pin) {
