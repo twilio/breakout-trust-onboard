@@ -195,7 +195,7 @@ static int se_p11_read_object(const char* label, uint8_t* obj, int* size, const 
   }
 
   if (pin == NULL) {
-      ret = ERR_SE_EF_VERIFY_PIN_ERROR;
+    ret = ERR_SE_EF_VERIFY_PIN_ERROR;
   }
 
 #ifdef __cplusplus

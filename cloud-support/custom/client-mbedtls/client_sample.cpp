@@ -56,14 +56,14 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
-  const char* url                 = argv[1];
-  const char* port                = argv[2];
-  const char* resource            = argv[3];
-  const char* client_cert         = argv[4];
-  const char* root_ca             = argv[5];
-  const char* device_path         = argv[6];
-  long device_baudrate            = strtol(argv[7], NULL, 10);
-  const char* pin                 = argv[8];
+  const char* url         = argv[1];
+  const char* port        = argv[2];
+  const char* resource    = argv[3];
+  const char* client_cert = argv[4];
+  const char* root_ca     = argv[5];
+  const char* device_path = argv[6];
+  long device_baudrate    = strtol(argv[7], NULL, 10);
+  const char* pin         = argv[8];
 
 
   std::string result;
