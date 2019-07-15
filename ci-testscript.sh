@@ -14,6 +14,6 @@ else
 	MODEMS_CSV_FILE=../tests/modems.csv
 fi
 
-../tests/test_runner.py ${MODEMS_CSV_FILE} bin/trust_onboard_sdk_tests bin/trust_onboard_ll_tests
+../tests/test_runner.py ${MODEMS_CSV_FILE} bin/trust_onboard_sdk_tests bin/trust_onboard_ll_tests ../tests/tls_lib_test.sh
 
 
