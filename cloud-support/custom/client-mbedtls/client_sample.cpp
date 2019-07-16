@@ -56,14 +56,14 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
-  const char* url                 = argv[1];
-  const char* port                = argv[2];
-  const char* resource            = argv[3];
-  const char* client_cert         = argv[4];
-  const char* root_ca             = argv[5];
-  const char* device_path         = argv[6];
-  long device_baudrate            = strtol(argv[7], NULL, 10);
-  const char* pin                 = argv[8];
+  const char* url         = argv[1];
+  const char* port        = argv[2];
+  const char* resource    = argv[3];
+  const char* client_cert = argv[4];
+  const char* root_ca     = argv[5];
+  const char* device_path = argv[6];
+  long device_baudrate    = strtol(argv[7], NULL, 10);
+  const char* pin         = argv[8];
 
 
   std::string result;
@@ -135,7 +135,7 @@ int main(int argc, const char** argv) {
   mbedtls_ssl_conf_rng(&conf, mbedtls_ctr_drbg_random, &ctr_drbg);
   mbedtls_ssl_conf_dbg(&conf, debug_out, stdout);
 
-  tob_mbedtls_init(device_path, pin);
+  tob_mbedtls_init(device_path, device_baudrate, pin);
 
   if (!tob_mbedtls_signing_key(&device_key, 0)) {
     std::cerr << "Failed to initialize signing key" << std::endl;

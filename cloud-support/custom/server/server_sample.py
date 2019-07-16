@@ -28,6 +28,8 @@ def main():
     else:
         context = ssl.SSLContext(ssl.PROTOCOL_TLS)
 
+    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+
     context.load_cert_chain(args.certificate, args.pkey)
     context.load_verify_locations(args.clientCA)
     context.verify_mode = ssl.CERT_REQUIRED

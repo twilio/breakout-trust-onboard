@@ -195,7 +195,7 @@ static int se_p11_read_object(const char* label, uint8_t* obj, int* size, const 
   }
 
   if (pin == NULL) {
-      ret = ERR_SE_EF_VERIFY_PIN_ERROR;
+    ret = ERR_SE_EF_VERIFY_PIN_ERROR;
   }
 
 #ifdef __cplusplus
@@ -404,7 +404,7 @@ int tobExtractAvailablePrivateKeyAsPem(uint8_t* pk, int* pk_size, const char* pi
   uint8_t cert[DER_BUFFER_SIZE];
   int extractedLen = 0;
   int res          = 0;
-  res              = tob_pk_extract_se(cert, &extractedLen, PK_MIAS_PATH, pin);
+  res              = tobExtractAvailablePrivateKey(cert, &extractedLen, pin);
   if (res == 0) {
     convert_der_to_pem("RSA PRIVATE KEY", cert, extractedLen, pk, pk_size);
   }
