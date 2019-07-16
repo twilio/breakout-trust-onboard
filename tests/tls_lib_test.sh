@@ -1,6 +1,6 @@
 #!/bin/bash
 
-time_bomb() {
+kill_timer() {
   sleep $2
 
   is_there=$(ps -h --pid=$1)
@@ -78,7 +78,7 @@ echo "*** Starting HTTPS server"
 ${CLOUD_SUPPORT_DIR}/server/server_sample.py ${SERVER_PORT} ${SERVER_CERT} ${SERVER_PKEY} ${SOURCE_DIR}/bundles/programmable-wireless.signing.pem 2>&1 >${SERVER_STDOUT} &
 server_id=$!
 
-kill_server() {
+cleanup() {
 	kill ${server_id} && wait ${server_id}
 	kill ${openssl_client_id} && wait ${openssl_client_id}
 	kill ${mbedtls_client_id} && wait ${mbedtls_client_id}
@@ -88,7 +88,7 @@ kill_server() {
 	rm -rf $CERTS_DIR
 }
 
-trap kill_server INT TERM EXIT
+trap cleanup INT TERM EXIT
 
 sleep 2
 
@@ -143,11 +143,11 @@ fi
 
 ${CLOUD_SUPPORT_DIR}/client-openssl/build/client_sample https://localhost:${SERVER_PORT} ${CLIENT_SIGNING_CERT} ${SERVER_CA} 2>&1 >${CLIENT_STDOUT} &
 openssl_client_id=$!
-time_bomb ${openssl_client_id} 60&
-time_bomb_id=$!
+kill_timer ${openssl_client_id} 60&
+kill_timer_id=$!
 
 wait ${openssl_client_id}
-kill ${time_bomb_id}
+kill ${kill_timer_id}
 
 openssl_success=$(cat ${CLIENT_STDOUT} | grep ${SERVER_OUTPUT})
 
@@ -163,11 +163,11 @@ build_sample ${CLOUD_SUPPORT_DIR}/client-mbedtls ${TOB_LIB_DIR} ${TOB_INC_DIR}
 echo '' >${CLIENT_STDOUT}
 ${CLOUD_SUPPORT_DIR}/client-mbedtls/build/client_sample localhost ${SERVER_PORT} / ${CLIENT_SIGNING_CERT} ${SERVER_CA} ${TOB_DEVICE} ${TOB_BAUDRATE} ${TOB_PIN} 2>&1 >${CLIENT_STDOUT} &
 mbedtls_client_id=$!
-time_bomb ${mbedtls_client_id} 60&
-time_bomb_id=$!
+kill_timer ${mbedtls_client_id} 60&
+kill_timer_id=$!
 
 wait ${mbedtls_client_id}
-kill ${time_bomb_id}
+kill ${kill_timer_id}
 
 mbedtls_success=$(cat ${CLIENT_STDOUT} | grep ${SERVER_OUTPUT})
 
@@ -183,11 +183,11 @@ build_sample ${CLOUD_SUPPORT_DIR}/client-wolfssl ${TOB_LIB_DIR} ${TOB_INC_DIR}
 echo '' >${CLIENT_STDOUT}
 ${CLOUD_SUPPORT_DIR}/client-wolfssl/build/client_sample localhost ${SERVER_PORT} / ${CLIENT_SIGNING_CERT} ${SERVER_CA} ${TOB_DEVICE} ${TOB_BAUDRATE} ${TOB_PIN} 2>&1 >${CLIENT_STDOUT} &
 wolfssl_client_id=$!
-time_bomb ${wolfssl_client_id} 60&
-time_bomb_id=$!
+kill_timer ${wolfssl_client_id} 60&
+kill_timer_id=$!
 
 wait ${wolfssl_client_id}
-kill ${time_bomb_id}
+kill ${kill_timer_id}
 
 wolfssl_success=$(cat ${CLIENT_STDOUT} | grep "${SERVER_OUTPUT}")
 if [ -n "${wolfssl_success}" ]; then
