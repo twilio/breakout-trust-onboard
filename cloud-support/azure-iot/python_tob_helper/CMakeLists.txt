@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.7)
 # cmake -DMODULE_DEVICE="/dev/cu.usbmodem14103" -DSIM_PIN="0000" ..
 # cmake -DMODULE_DEVICE="/dev/ttyACM1" -DSIM_PIN="0000" ..
 
-option (USE_SIGNING "Use signing key and certificate" ON)
+option (USE_SIGNING "Use signing key and certificate" OFF)
 
 if (NOT MODULE_DEVICE)
   set(MODULE_DEVICE "/dev/ttyACM1")

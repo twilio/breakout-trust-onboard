@@ -198,7 +198,7 @@ static int populate_signing_key(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const c
   hsm_info->signing_key->type         = TLSIO_CRYPTODEV_PKEY_TYPE_RSA;  // TODO: ECC support
   hsm_info->signing_key->private_data = hsm_info;
 
-  tobInitialize(device_path);
+  tobInitialize(device_path, 115200);
 
   return 0;
 }
