@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include <SEInterface.h>
+
 #define ERR_SE_MIAS_READ_OBJECT_ERROR -0x5400 /**< Mobile IAS read object failed. */
 #define ERR_SE_EF_VERIFY_PIN_ERROR -0x5480    /**< Verifying pin to access EF failed. */
 #define ERR_SE_EF_INVALID_NAME_ERROR -0x5500  /**< Trying to access an EF with an invalid name. */
@@ -22,14 +24,14 @@
 #define PEM_BUFFER_SIZE 10 * 1024
 #define DER_BUFFER_SIZE 2 * 1024
 
-#define TOB_MD_SHA1   0x10
+#define TOB_MD_SHA1 0x10
 #define TOB_MD_SHA224 0x30
 #define TOB_MD_SHA256 0x40
 #define TOB_MD_SHA384 0x50
 
 #define TOB_ALGO_RSA_ISO9796_2 0x01
-#define TOB_ALGO_RSA_PKCS1     0x02
-#define TOB_ALGO_RSA_RFC_2409  0x03
+#define TOB_ALGO_RSA_PKCS1 0x02
+#define TOB_ALGO_RSA_RFC_2409 0x03
 
 typedef enum {
   TOB_ALGO_SHA1_RSA_PKCS1       = TOB_ALGO_RSA_PKCS1 | TOB_MD_SHA1,
@@ -61,12 +63,20 @@ extern "C" {
 extern int tobInitialize(const char *device, int baudrate);
 
 /**
+ * Initialize Trust Onboard connection to cellular module with SEInterface instance.
+ * It is a lower-level initialization procedure, also suitable for bare-metal and RTOS
+ * builds.
+ * @param seiface - interface to the modem
+ * @return 0 if successful, -1 if initialization fails
+ */
+extern int tobInitializeWithInterface(SEInterface *seiface);
+
+/**
  * Extract the Available public certificate in PEM form.  The certificate
  * buffer will contain the device certificate itself and its preceding
  * intemediate certificates.
- * @param cert - buffer to receive the PEM certificate chain - should be allocated with at least size of
- * PEM_BUFFER_SIZE
- * @param cert_size - pointer to int that will receive the true number of bytes for the PEM certificate chain
+ * @param cert - buffer to receive the PEM certificate chain or null pointer to query the length
+ * @param cert_size - pointer to int that will receive the number of bytes for the PEM certificate chain
  * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
  * @return 0 if successful, otherwise one of the following error codes:
  *   ERR_SE_BAD_KEY_NAME_ERROR
@@ -82,8 +92,8 @@ extern int tobExtractAvailableCertificate(uint8_t *cert, int *cert_size, const c
  * NOTE: Care should be taken to secure the output of this function, the
  * private key should be kept secret.
  *
- * @param pk - buffer to receive the DER private key - should be allocated with at least size of DER_BUFFER_SIZE
- * @param pk_size - pointer to int that will receive the true number of bytes for the DER private key.
+ * @param pk - buffer to receive the DER private key or null pointer to query the length
+ * @param pk_size - pointer to int that will receive the number of bytes for the DER private key.
  * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
  * @return 0 if successful, otherwise one of the following error codes:
  *   ERR_SE_BAD_KEY_NAME_ERROR
@@ -95,12 +105,15 @@ extern int tobExtractAvailablePrivateKey(uint8_t *pk, int *pk_size, const char *
 
 /**
  * Extract the Available private key in PEM form.
+ * Requires buffers for both DER and PEM versions.
  *
  * NOTE: Care should be taken to secure the output of this function, the
  * private key should be kept secret.
  *
- * @param pk - buffer to receive the PEM private key - should be allocated with at least size of PEM_BUFFER_SIZE
- * @param pk_size - pointer to int that will receive the true number of bytes for the PEM private key.
+ * @param pem_buf - buffer to receive the PEM private key or null pointer to query the length
+ * @param pem_size - pointer to int that will receive the number of bytes for the PEM private key.
+ * @param der_buf - buffer to receive the DER private key or null pointer to query the length
+ * @param der_size - pointer to int that will receive the number of bytes for the DER private key.
  * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
  * @return 0 if successful, otherwise one of the following error codes:
  *   ERR_SE_BAD_KEY_NAME_ERROR
@@ -108,14 +121,13 @@ extern int tobExtractAvailablePrivateKey(uint8_t *pk, int *pk_size, const char *
  *   ERR_SE_EF_VERIFY_PIN_ERROR
  *   ERR_SE_MIAS_READ_OBJECT_ERROR
  */
-extern int tobExtractAvailablePrivateKeyAsPem(uint8_t *pk, int *pk_size, const char *pin);
+extern int tobExtractAvailablePrivateKeyAsPem(uint8_t *pem_buf, int *pem_size, uint8_t *der_buf, int *der_size,
+                                              const char *pin);
 
 /**
- * Extract the Signing public certificate in PEM form.  The certificate
- * buffer will contain the device certificate itself and its preceding
- * intemediate certificates.
- * @param cert - buffer to receive the PEM certificate chain - should be allocated with at least size of PEM_BUFFER_SIZE
- * @param cert_size - pointer to int that will receive the true number of bytes for the PEM certificate chain
+ * Extract the Signing public certificate in DER form.
+ * @param cert - buffer to receive the DER certificate or null pointer to query the length
+ * @param cert_size - pointer to int that will receive the number of bytes for the DER certificate
  * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
  * @return 0 if successful, otherwise one of the following error codes:
  *   ERR_SE_BAD_KEY_NAME_ERROR
@@ -124,6 +136,25 @@ extern int tobExtractAvailablePrivateKeyAsPem(uint8_t *pk, int *pk_size, const c
  *   ERR_SE_EF_VERIFY_PIN_ERROR
  */
 extern int tobExtractSigningCertificate(uint8_t *cert, int *cert_size, const char *pin);
+
+/**
+ * Extract the Signing public certificate in PEM form.
+ * Requires buffers for both DER and PEM versions.
+ *
+ * @param pem_buf - buffer to receive the PEM certificate or null pointer to query the length
+ * @param pem_size - pointer to int that will receive the number of bytes for the PEM certificate
+ * @param der_buf - buffer to receive the DER certificate or null pointer to query the length
+ * @param der_size - pointer to int that will receive the number of bytes for the PEM certificate
+ * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
+ * @return 0 if successful, otherwise one of the following error codes:
+ *   ERR_SE_BAD_KEY_NAME_ERROR
+ *   ERR_SE_EF_INVALID_NAME_ERROR
+ *   ERR_SE_EF_READ_OBJECT_ERROR
+ *   ERR_SE_EF_VERIFY_PIN_ERROR
+ */
+extern int tobExtractSigningCertificateAsPem(uint8_t *pem_buf, int *pem_size, uint8_t *der_buf, int *der_size,
+                                             const char *pin);
+
 
 /**
  * Sign a message digest with a signing key
@@ -137,7 +168,8 @@ extern int tobExtractSigningCertificate(uint8_t *cert, int *cert_size, const cha
  *   ERR_SE_BAD_KEY_NAME_ERROR
  *   ERR_SE_EF_VERIFY_PIN_ERROR
  */
-extern int tobSigningSign(tob_algorithm_t algorithm, const uint8_t *hash, int hash_len, uint8_t* signature, int* signature_len, const char* pin);
+extern int tobSigningSign(tob_algorithm_t algorithm, const uint8_t *hash, int hash_len, uint8_t *signature,
+                          int *signature_len, const char *pin);
 
 /**
  * Decrypt data with a signing key
@@ -150,8 +182,14 @@ extern int tobSigningSign(tob_algorithm_t algorithm, const uint8_t *hash, int ha
  *   ERR_SE_BAD_KEY_NAME_ERROR
  *   ERR_SE_EF_VERIFY_PIN_ERROR
  */
+extern int tobSigningDecrypt(const uint8_t *cipher, int cipher_len, uint8_t *plain, int *plain_len, const char *pin);
 
-extern int tobSigningDecrypt(const uint8_t *cipher, int cipher_len, uint8_t* plain, int* plain_len, const char* pin);
+/**
+ * Signing key module length in bytes
+ * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
+ * @return module length or a negative number on error
+ */
+extern int tobSigningLen(const char *pin);
 
 #ifdef __cplusplus
 }
