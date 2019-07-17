@@ -47,7 +47,7 @@ typedef struct {
 
 class SelectionGuard {
  public:
-  SelectionGuard(Applet& applet, bool use_basic_channel) : applet_{applet} {
+  SelectionGuard(Applet& applet, bool use_basic_channel) : applet_(applet) {
     selected_ = applet_.select(use_basic_channel);
   }
 
