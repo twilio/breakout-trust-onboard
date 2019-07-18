@@ -97,32 +97,9 @@ build_sample ${CLOUD_SUPPORT_DIR}/client-openssl ${TOB_LIB_DIR} ${TOB_INC_DIR}
 
 # Generate OpenSSL config
 
-pcsc_px=$(echo ${TOB_DEVICE} | cut -d':' -f1)
-pcsc_dev=$(echo ${TOB_DEVICE} | cut -d':' -f2)
 export OPENSSL_CONF=$(mktemp)
 
-if [ -n "${pcsc_dev}" ] && [ "${pcsc_px}" = "pcsc" ]; then
-	# PC/SC case
-	cat <<EOF >${OPENSSL_CONF}
-openssl_conf = openssl_init
-
-[openssl_init]
-engines = engine_section
-
-[engine_section]
-mias = mias_section
-
-[mias_section]
-engine_id = tob_mias
-dynamic_path = ${SOURCE_DIR}/cmake/lib/libtrust_onboard_engine.so
-PIN = ${TOB_PIN}
-PCSC_IDX = ${pcsc_dev}
-PCSC = 1
-EOF
-
-else 
-	# serial modem case
-	cat <<EOF >${OPENSSL_CONF}
+cat <<EOF >${OPENSSL_CONF}
 openssl_conf = openssl_init
 
 [openssl_init]
@@ -139,9 +116,7 @@ MODEM_DEVICE = ${TOB_DEVICE}
 MODEM_BAUDRATE = ${TOB_BAUDRATE}
 EOF
 
-fi
-
-${CLOUD_SUPPORT_DIR}/client-openssl/build/client_sample https://localhost:${SERVER_PORT} ${CLIENT_SIGNING_CERT} ${SERVER_CA} 2>&1 >${CLIENT_STDOUT} &
+${CLOUD_SUPPORT_DIR}/client-openssl/build/client_sample https://localhost:${SERVER_PORT} ${CLIENT_SIGNING_CERT} signing ${SERVER_CA} 2>&1 >${CLIENT_STDOUT} &
 openssl_client_id=$!
 kill_timer ${openssl_client_id} 60&
 kill_timer_id=$!
@@ -161,7 +136,7 @@ echo "*** Testing MbedTLS sample"
 build_sample ${CLOUD_SUPPORT_DIR}/client-mbedtls ${TOB_LIB_DIR} ${TOB_INC_DIR}
 
 echo '' >${CLIENT_STDOUT}
-${CLOUD_SUPPORT_DIR}/client-mbedtls/build/client_sample localhost ${SERVER_PORT} / ${CLIENT_SIGNING_CERT} ${SERVER_CA} ${TOB_DEVICE} ${TOB_BAUDRATE} ${TOB_PIN} 2>&1 >${CLIENT_STDOUT} &
+${CLOUD_SUPPORT_DIR}/client-mbedtls/build/client_sample localhost ${SERVER_PORT} / signing ${SERVER_CA} ${TOB_DEVICE} ${TOB_BAUDRATE} ${TOB_PIN} 2>&1 >${CLIENT_STDOUT} &
 mbedtls_client_id=$!
 kill_timer ${mbedtls_client_id} 60&
 kill_timer_id=$!
@@ -181,7 +156,7 @@ echo "*** Testing WolfSSL sample"
 build_sample ${CLOUD_SUPPORT_DIR}/client-wolfssl ${TOB_LIB_DIR} ${TOB_INC_DIR}
 
 echo '' >${CLIENT_STDOUT}
-${CLOUD_SUPPORT_DIR}/client-wolfssl/build/client_sample localhost ${SERVER_PORT} / ${CLIENT_SIGNING_CERT} ${SERVER_CA} ${TOB_DEVICE} ${TOB_BAUDRATE} ${TOB_PIN} 2>&1 >${CLIENT_STDOUT} &
+${CLOUD_SUPPORT_DIR}/client-wolfssl/build/client_sample localhost ${SERVER_PORT} / signing ${SERVER_CA} ${TOB_DEVICE} ${TOB_BAUDRATE} ${TOB_PIN} 2>&1 >${CLIENT_STDOUT} &
 wolfssl_client_id=$!
 kill_timer ${wolfssl_client_id} 60&
 kill_timer_id=$!

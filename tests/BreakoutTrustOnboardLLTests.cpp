@@ -332,7 +332,7 @@ int main(int argc, char* argv[]) {
     long idx = strtol(device.c_str() + 5, 0, 10);
     modem    = new PcscSEInterface((int)idx);
 #else
-    std::cerr << "No pcsc support, please rebuild with -DPCSC_SUPPORT=ON" << std::end;
+    std::cerr << "No pcsc support, please rebuild with -DPCSC_SUPPORT=ON" << std::endl;
     return 1;
 #endif
   } else {

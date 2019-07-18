@@ -16,18 +16,12 @@
 extern "C" {
 #endif
 
-// Initialize Trust Onboard
-// @param iface_name - serial interface to use. Either of form "/dev/myserialdevice" or "pcsc:X"
-// @param baudrate - baudrate for the serial interface. Ignored for PC/SC devices
-// @param pin - PIN code for MIAS applet
-// @return success status
-bool tob_mbedtls_init(const char* iface_name, int baudrate, const char* pin);
-
 // Set MbedTLS signing key to Trust Onboard signing key
-// @param pk - MbedTLS private key. Should be pre-initialized with mbedtls_pk_init
-// @param key_id - Container ID to use. Normally 0.
+// @param pk - MbedTLS private key. Trust Onboard library should be initialized.
+// @param pin - PIN code for MIAS applet
+// @param signing - Whether to use signing (true) or available (false) key
 // @return success status
-bool tob_mbedtls_signing_key(mbedtls_pk_context* pk, uint8_t key_id);
+bool tob_mbedtls_setup_key(mbedtls_pk_context* pk, const char* pin, bool signing);
 
 #ifdef __cplusplus
 }

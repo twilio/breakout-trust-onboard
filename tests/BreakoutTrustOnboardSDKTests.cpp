@@ -41,27 +41,107 @@ TEST_CASE("Initialize module", "[tob]") {
   }
 }
 
-TEST_CASE("Read Type A Certificate", "[available] [cert]") {
-  int ret = 0;
-  uint8_t cert[PEM_BUFFER_SIZE];
-  int cert_size = 0;
-  uint8_t pk[DER_BUFFER_SIZE];
-  int pk_size = 0;
+TEST_CASE("Read credentials in PEM and DER format", "[available] [signing] [cert] [pkey]") {
+  uint8_t* signing_cert_pem;
+  int signing_cert_size_pem = 0;
+  uint8_t* signing_cert_der;
+  int signing_cert_size_der = 0;
 
   REQUIRE(tobInitialize(device.c_str(), baudrate) == 0);
 
-  SECTION("read certificate") {
-    REQUIRE(tobExtractAvailableCertificate(cert, &cert_size, pin.c_str()) == 0);
-    REQUIRE(cert_size > 0);
-    REQUIRE(cert_size <= PEM_BUFFER_SIZE);
-    printf("cert_size: %d\n", cert_size);
+  SECTION("available certificate") {
+    uint8_t* available_cert;
+    int available_cert_size = 0;
+    int size_query = 0;
+    REQUIRE(tobExtractAvailableCertificate(NULL, &size_query, pin.c_str()) == 0);
+    REQUIRE(size_query > 0);
+    REQUIRE(size_query <= PEM_BUFFER_SIZE);
+    printf("cert_size: %d\n", size_query);
+
+    available_cert = new uint8_t[size_query];
+
+    REQUIRE(tobExtractAvailableCertificate(available_cert, &available_cert_size, pin.c_str()) == 0);
+    REQUIRE(available_cert_size == size_query);
+
+    delete[] available_cert;
   }
 
-  SECTION("read key") {
-    REQUIRE(tobExtractAvailablePrivateKey(pk, &pk_size, pin.c_str()) == 0);
-    REQUIRE(pk_size > 0);
-    REQUIRE(pk_size <= DER_BUFFER_SIZE);
-    printf("pk_size: %d\n", pk_size);
+  SECTION("available private key") {
+    uint8_t* available_pk;
+    int available_pk_size = 0;
+    uint8_t* available_pk_der;
+    int available_pk_der_size = 0;
+    uint8_t* available_pk_pem;
+    int available_pk_pem_size = 0;
+
+    int size_query = 0;
+    REQUIRE(tobExtractAvailablePrivateKey(NULL, &size_query, pin.c_str()) == 0);
+    REQUIRE(size_query > 0);
+    REQUIRE(size_query <= DER_BUFFER_SIZE);
+    printf("pk_size: %d\n", size_query);
+
+    available_pk = new uint8_t[size_query];
+
+    REQUIRE(tobExtractAvailablePrivateKey(available_pk, &available_pk_size, pin.c_str()) == 0);
+    REQUIRE(available_pk_size == size_query);
+
+    int der_size_query = 0;
+    size_query = 0;
+    REQUIRE(tobExtractAvailablePrivateKeyAsPem(NULL, &size_query, NULL, &der_size_query, pin.c_str()) == 0);
+    REQUIRE(der_size_query == available_pk_size);
+    REQUIRE(size_query <= PEM_BUFFER_SIZE);
+
+    available_pk_pem = new uint8_t[size_query];
+    available_pk_der = new uint8_t[der_size_query];
+
+    REQUIRE(tobExtractAvailablePrivateKeyAsPem(available_pk_pem, &available_pk_pem_size, available_pk_der, &available_pk_der_size, pin.c_str()) == 0);
+    REQUIRE(available_pk_pem_size == size_query);
+    REQUIRE(available_pk_der_size == der_size_query);
+
+    REQUIRE(memcmp(available_pk, available_pk_der, available_pk_der_size) == 0);
+
+    delete[] available_pk;
+    delete[] available_pk_der;
+    delete[] available_pk_pem;
+  }
+
+  SECTION("signing certificate") {
+    uint8_t* signing_cert;
+    int signing_cert_size = 0;
+    uint8_t* signing_cert_der;
+    int signing_cert_der_size = 0;
+    uint8_t* signing_cert_pem;
+    int signing_cert_pem_size = 0;
+
+    int size_query = 0;
+    REQUIRE(tobExtractSigningCertificate(NULL, &size_query, pin.c_str()) == 0);
+    REQUIRE(size_query > 0);
+    REQUIRE(size_query <= DER_BUFFER_SIZE);
+    printf("pk_size: %d\n", size_query);
+
+    signing_cert = new uint8_t[size_query];
+
+    REQUIRE(tobExtractSigningCertificate(signing_cert, &signing_cert_size, pin.c_str()) == 0);
+    REQUIRE(signing_cert_size == size_query);
+
+    int der_size_query = 0;
+    size_query = 0;
+    REQUIRE(tobExtractSigningCertificateAsPem(NULL, &size_query, NULL, &der_size_query, pin.c_str()) == 0);
+    REQUIRE(der_size_query == signing_cert_size);
+    REQUIRE(size_query <= PEM_BUFFER_SIZE);
+
+    signing_cert_pem = new uint8_t[size_query];
+    signing_cert_der = new uint8_t[der_size_query];
+
+    REQUIRE(tobExtractSigningCertificateAsPem(signing_cert_pem, &signing_cert_pem_size, signing_cert_der, &signing_cert_der_size, pin.c_str()) == 0);
+    REQUIRE(signing_cert_pem_size == size_query);
+    REQUIRE(signing_cert_der_size == der_size_query);
+
+    REQUIRE(memcmp(signing_cert, signing_cert_der, signing_cert_der_size) == 0);
+
+    delete[] signing_cert;
+    delete[] signing_cert_der;
+    delete[] signing_cert_pem;
   }
 }
 

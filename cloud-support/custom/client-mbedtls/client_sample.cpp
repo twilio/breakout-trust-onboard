@@ -10,6 +10,7 @@
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/net_sockets.h>
 #include <mbedtls/x509_crt.h>
+#include "BreakoutTrustOnboardSDK.h"
 #include "TobMbedtls.h"
 
 #include <string>
@@ -18,7 +19,7 @@
 #define GET_REQUEST "GET %s HTTP/1.0\r\n\r\n"
 
 static void print_usage() {
-  std::cerr << "tob_client targetdomain.tld <port> /remote/resource/path /path/to/client/cert.pem "
+  std::cerr << "tob_client targetdomain.tld <port> /remote/resource/path [\"signing\"|\"available\"] "
                "/path/to/server/rootCA.pem <device_path> <device_baudrate> <mias_pin>"
             << std::endl;
 }
@@ -59,12 +60,11 @@ int main(int argc, const char** argv) {
   const char* url         = argv[1];
   const char* port        = argv[2];
   const char* resource    = argv[3];
-  const char* client_cert = argv[4];
+  const char* client_key  = argv[4];
   const char* root_ca     = argv[5];
   const char* device_path = argv[6];
   long device_baudrate    = strtol(argv[7], NULL, 10);
   const char* pin         = argv[8];
-
 
   std::string result;
 
@@ -94,22 +94,8 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
-  unsigned char* device_cert_buf;
-  int device_cert_buf_len;
-
-  if (!map_file(client_cert, &device_cert_buf, &device_cert_buf_len)) {
-    std::cerr << "Error opening device certificate" << std::endl;
-    return 1;
-  }
-
-
   if (mbedtls_x509_crt_parse(&cacert, cacert_buf, cacert_buf_len + 1) != 0) {
     std::cerr << "Error parsing server CA certificate" << std::endl;
-    return 1;
-  }
-
-  if (mbedtls_x509_crt_parse(&device_cert, device_cert_buf, device_cert_buf_len + 1) != 0) {
-    std::cerr << "Error parsing device certificate" << std::endl;
     return 1;
   }
 
@@ -135,10 +121,38 @@ int main(int argc, const char** argv) {
   mbedtls_ssl_conf_rng(&conf, mbedtls_ctr_drbg_random, &ctr_drbg);
   mbedtls_ssl_conf_dbg(&conf, debug_out, stdout);
 
-  tob_mbedtls_init(device_path, device_baudrate, pin);
+  tobInitialize(device_path, device_baudrate);
 
-  if (!tob_mbedtls_signing_key(&device_key, 0)) {
-    std::cerr << "Failed to initialize signing key" << std::endl;
+  uint8_t device_cert_buf[PEM_BUFFER_SIZE];
+  int device_cert_buf_len;
+
+  if (strcmp(client_key, "signing") == 0) {
+    if (tobExtractSigningCertificate(device_cert_buf, &device_cert_buf_len, pin) != 0) {
+      std::cerr << "Error extracting signing certificate" << std::endl;
+      return 1;
+    }
+
+    if (!tob_mbedtls_setup_key(&device_key, pin, true)) {
+      std::cerr << "Failed to initialize signing key" << std::endl;
+      return 1;
+    }
+  } else if (strcmp(client_key, "available") == 0) {
+    if (!tob_mbedtls_setup_key(&device_key, pin, false)) {
+      std::cerr << "Failed to initialize available key" << std::endl;
+      return 1;
+    }
+
+    if (tobExtractAvailableCertificate(device_cert_buf, &device_cert_buf_len, pin) != 0) {
+      std::cerr << "Error extracting available certificate" << std::endl;
+      return 1;
+    }
+  } else {
+    std::cerr << "Invalid key name: " << client_key << std::endl;
+    return 1;
+  }
+
+  if (mbedtls_x509_crt_parse(&device_cert, device_cert_buf, device_cert_buf_len + 1) != 0) {
+    std::cerr << "Error parsing device certificate" << std::endl;
     return 1;
   }
 

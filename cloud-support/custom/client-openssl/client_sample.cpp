@@ -19,7 +19,8 @@ static size_t writeFunction(void* ptr, size_t size, size_t nmemb, std::string* d
 }
 
 static void print_usage() {
-  std::cerr << "tob_client https://targetdomain.tld:12345/service /path/to/client/cert.pem /path/to/server/rootCA.pem"
+  std::cerr << "tob_client https://targetdomain.tld:12345/service /path/to/client/cert.pem [\"signing\"|\"available\"] "
+               "/path/to/server/rootCA.pem"
             << std::endl;
 }
 
@@ -27,14 +28,15 @@ int main(int argc, const char** argv) {
   CURL* curl;
   CURLcode res;
 
-  if (argc != 4) {
+  if (argc != 5) {
     print_usage();
     return 1;
   }
 
   const char* url         = argv[1];
   const char* client_cert = argv[2];
-  const char* root_ca     = argv[3];
+  const char* client_key  = argv[3];
+  const char* root_ca     = argv[4];
 
   std::string result;
 
@@ -70,7 +72,7 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
-  if (curl_easy_setopt(curl, CURLOPT_SSLKEY, "0") != CURLE_OK) {
+  if (curl_easy_setopt(curl, CURLOPT_SSLKEY, client_key) != CURLE_OK) {
     std::cerr << "Can't set device key" << std::endl;
     return 1;
   }

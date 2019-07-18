@@ -16,7 +16,7 @@
 #define GET_REQUEST "GET %s HTTP/1.0\r\n\r\n"
 
 static void print_usage() {
-  std::cerr << "tob_client targetdomain.tld <port> /remote/resource/path /path/to/client/cert.pem "
+  std::cerr << "tob_client targetdomain.tld <port> /remote/resource/path [\"available\"|\"signing\"] "
                "/path/to/server/rootCA.pem <device_path> <device_baudrate> <mias_pin>"
             << std::endl;
 }
@@ -98,13 +98,18 @@ int main(int argc, const char** argv) {
   const char* url         = argv[1];
   const char* port        = argv[2];
   const char* resource    = argv[3];
-  const char* client_cert = argv[4];
+  const char* client_key  = argv[4];
   const char* root_ca     = argv[5];
   const char* device_path = argv[6];
   long device_baudrate    = strtol(argv[7], NULL, 10);
   const char* pin         = argv[8];
 
   std::string result;
+
+  uint8_t cert[PEM_BUFFER_SIZE];
+  int cert_size = 0;
+  uint8_t pkey[DER_BUFFER_SIZE];
+  int pkey_size = 0;
 
   strncpy(mias_pin, pin, 15);
   mias_pin[15] = 0;
@@ -129,18 +134,43 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
-  if (wolfSSL_CTX_use_certificate_file(ctx, client_cert, SSL_FILETYPE_PEM) != SSL_SUCCESS) {
-    std::cerr << "Error opening device certificate" << std::endl;
+  if (strcmp(client_key, "signing") == 0) {
+    if (tobExtractSigningCertificate(cert, &cert_size, pin) != 0) {
+      std::cerr << "Error extracting signing certificate" << std::endl;
+      return 1;
+    }
+
+    if (wolfSSL_CTX_use_certificate_buffer(ctx, cert, cert_size, SSL_FILETYPE_ASN1) != SSL_SUCCESS) {
+      std::cerr << "Error opening device certificate" << std::endl;
+      return 1;
+    }
+
+    wolfSSL_CTX_SetRsaSignCb(ctx, tobRsaSign);
+    wolfSSL_CTX_SetRsaSignCheckCb(ctx, tobRsaSignCheck);
+  } else if (strcmp(client_key, "available") == 0) {
+    if (tobExtractAvailableCertificate(cert, &cert_size, pin) != 0) {
+      std::cerr << "Error extracting available certificate" << std::endl;
+      return 1;
+    }
+
+    if (wolfSSL_CTX_use_certificate_buffer(ctx, cert, cert_size, SSL_FILETYPE_PEM) != SSL_SUCCESS) {
+      std::cerr << "Error opening device certificate" << std::endl;
+      return 1;
+    }
+
+    if (tobExtractAvailablePrivateKey(pkey, &pkey_size, pin) != 0) {
+      std::cerr << "Error extracting available private key" << std::endl;
+      return 1;
+    }
+
+    if (wolfSSL_CTX_use_PrivateKey_buffer(ctx, pkey, pkey_size, SSL_FILETYPE_ASN1) != SSL_SUCCESS) {
+      std::cerr << "Error opening device private key" << std::endl;
+      return 1;
+    }
+  } else {
+    std::cerr << "Unknown key name: " << client_key << std::endl;
     return 1;
   }
-
-  if (wolfSSL_CTX_use_certificate_file(ctx, client_cert, SSL_FILETYPE_PEM) != SSL_SUCCESS) {
-    std::cerr << "Error opening device certificate" << std::endl;
-    return 1;
-  }
-
-  wolfSSL_CTX_SetRsaSignCb(ctx, tobRsaSign);
-  wolfSSL_CTX_SetRsaSignCheckCb(ctx, tobRsaSignCheck);
 
   WOLFSSL* ssl = wolfSSL_new(ctx);
 

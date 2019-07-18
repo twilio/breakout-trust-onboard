@@ -22,8 +22,8 @@
 
 #include "base64.h"
 
-static MF* _mf;
-static MIAS* _mias;
+static MF _mf;
+static MIAS _mias;
 static SEInterface* _modem = nullptr;
 
 #define USE_BASIC_CHANNEL false
@@ -66,7 +66,6 @@ class SelectionGuard {
 
 static void convert_der_to_pem(char const* headerStr, uint8_t* inDer, int inDerLen, uint8_t* outPem, int* outPemLen) {
   int expectedBase64Len = Base64encode_len(inDerLen);  // includes 1 extra byte for \0 termination
-  int base64BufferSize  = (11 + strlen((char*)headerStr) + 6) + expectedBase64Len + (9 + strlen((char*)headerStr) + 5);
   int base64EncodeRet   = -1;
   uint8_t* outPemPtr    = outPem;
 
@@ -93,12 +92,18 @@ static void convert_der_to_pem(char const* headerStr, uint8_t* inDer, int inDerL
   memcpy(outPemPtr, "-----", 5);
   outPemPtr += 5;
 
-  *outPemPtr = '\0';
-
   *outPemLen = (outPemPtr - outPem);
 
   return;
 }
+
+static int der_to_pem_len(int derLen, const char* headerStr) {
+  int captionLen = strlen(headerStr);
+
+  return 11 + captionLen + 6 +       // header
+         Base64encode_len(derLen) +  // content
+         9 + captionLen + 5;         // footer
+};
 
 static void hex_string_2_bytes_array(uint8_t* hexstr, uint16_t hexstrLen, uint8_t* bytes, uint16_t* bytesLen) {
   uint8_t d;
@@ -133,9 +138,9 @@ static int se_read_ef(uint8_t* efname, uint16_t efnamelen, uint8_t* data, int* d
   *data_size = -1;
 
 #ifdef __cplusplus
-  if (_mf->select(USE_BASIC_CHANNEL)) {
-    if (_mf->verifyPin((uint8_t*)pin, strlen(pin))) {
-      if (_mf->readEF(efname, efnamelen, data, &size)) {
+  if (_mf.select(USE_BASIC_CHANNEL)) {
+    if (_mf.verifyPin((uint8_t*)pin, strlen(pin))) {
+      if (_mf.readEF(efname, efnamelen, data, &size)) {
         *data_size = size;
         ret        = 0;
       } else {
@@ -145,7 +150,7 @@ static int se_read_ef(uint8_t* efname, uint16_t efnamelen, uint8_t* data, int* d
       ret = ERR_SE_EF_VERIFY_PIN_ERROR;
     }
   }
-  _mf->deselect();
+  _mf.deselect();
 #else
   if (Applet_select((Applet*)_mf, USE_BASIC_CHANNEL)) {
     if (MF_verify_pin(_mf, (uint8_t*)pin, strlen(pin))) {
@@ -188,7 +193,7 @@ static int se_read_object(const char* path, uint8_t* obj, int* size, const char*
 }
 
 static int se_p11_read_object(const char* label, uint8_t* obj, int* size, const char* pin) {
-  int ret;
+  int ret = ERR_SE_MIAS_READ_OBJECT_ERROR;
 
   if (label == NULL) {
     return ERR_SE_MIAS_READ_OBJECT_ERROR;
@@ -199,10 +204,10 @@ static int se_p11_read_object(const char* label, uint8_t* obj, int* size, const 
   }
 
 #ifdef __cplusplus
-  if (_mias->select(USE_BASIC_CHANNEL)) {
-    if (_mias->verifyPin((uint8_t*)pin, strlen(pin))) {
+  if (_mias.select(USE_BASIC_CHANNEL)) {
+    if (_mias.verifyPin((uint8_t*)pin, strlen(pin))) {
       uint16_t obj_size;
-      if (_mias->p11GetObjectByLabel((uint8_t*)label, strlen(label), obj, &obj_size)) {
+      if (_mias.p11GetObjectByLabel((uint8_t*)label, strlen(label), obj, &obj_size)) {
         *size = obj_size;
         ret   = 0;
       } else {
@@ -212,7 +217,7 @@ static int se_p11_read_object(const char* label, uint8_t* obj, int* size, const 
       ret = ERR_SE_EF_VERIFY_PIN_ERROR;
     }
   }
-  _mias->deselect();
+  _mias.deselect();
 #else
   if (Applet_select((Applet*)_mias, USE_BASIC_CHANNEL)) {
     if (MIAS_verify_pin(_mias, (uint8_t*)pin, strlen(pin))) {
@@ -233,15 +238,13 @@ static int se_p11_read_object(const char* label, uint8_t* obj, int* size, const 
   return ret;
 }
 
-int tob_se_init_with_interface(SEInterface* seiface) {
+int tobInitializeWithInterface(SEInterface* seiface) {
 #ifdef __cplusplus
   Applet::closeAllChannels(seiface);
 
-  _mias = new MIAS();
-  _mias->init(seiface);
+  _mias.init(seiface);
 
-  _mf = new MF();
-  _mf->init(seiface);
+  _mf.init(seiface);
 #else
   Applet_closeAllChannels(seiface);
   _mias = MIAS_create();
@@ -253,6 +256,7 @@ int tob_se_init_with_interface(SEInterface* seiface) {
   return 0;
 }
 
+#ifndef NO_OS
 int tobInitialize(const char* device, int baudrate) {
   if (_modem != nullptr) {
     return 0;
@@ -281,8 +285,9 @@ int tobInitialize(const char* device, int baudrate) {
     _modem = nullptr;
     return -1;
   }
-  return tob_se_init_with_interface(_modem);
+  return tobInitializeWithInterface(_modem);
 }
+#endif  // NO_OS
 
 int tob_x509_crt_extract_se(uint8_t* cert, int* cert_size, const char* path, const char* pin) {
   int ret = ERR_SE_BAD_KEY_NAME_ERROR;
@@ -316,15 +321,15 @@ int tob_x509_crt_extract_se(uint8_t* cert, int* cert_size, const char* path, con
     }
 
 #ifdef __cplusplus
-    if (_mias->select(USE_BASIC_CHANNEL)) {
+    if (_mias.select(USE_BASIC_CHANNEL)) {
       uint16_t obj_size;
 
-      if (_mias->getCertificateByContainerId(cid, cert, &obj_size)) {
+      if (_mias.getCertificateByContainerId(cid, cert, &obj_size)) {
         *cert_size = obj_size;
         ret        = 0;
       }
     }
-    _mias->deselect();
+    _mias.deselect();
 #else
     if (Applet_select((Applet*)_mias, USE_BASIC_CHANNEL)) {
       uint16_t obj_size;
@@ -382,12 +387,18 @@ int tobExtractAvailableCertificate(uint8_t* cert, int* cert_size, const char* pi
 }
 
 int tobExtractSigningCertificate(uint8_t* cert, int* cert_size, const char* pin) {
-  uint8_t tempCert[PEM_BUFFER_SIZE];
-  int extractedLen = 0;
-  int res          = 0;
-  res              = tob_x509_crt_extract_se(tempCert, &extractedLen, CERT_SIGNING_MIAS_PATH, pin);
+  return tob_x509_crt_extract_se(cert, cert_size, CERT_SIGNING_MIAS_PATH, pin);
+}
+
+int tobExtractSigningCertificateAsPem(uint8_t* pem_buf, int* pem_size, uint8_t* der_buf, int* der_size,
+                                      const char* pin) {
+  int res = tobExtractSigningCertificate(der_buf, der_size, pin);
   if (res == 0) {
-    convert_der_to_pem("CERTIFICATE", (unsigned char*)tempCert, extractedLen, (unsigned char*)cert, cert_size);
+    if (der_buf != nullptr && pem_buf != nullptr) {
+      convert_der_to_pem("CERTIFICATE", der_buf, *der_size, pem_buf, pem_size);
+    } else {
+      *pem_size = der_to_pem_len(*der_size, "CERTIFICATE");
+    }
   }
   return res;
 }
@@ -400,13 +411,16 @@ int tobExtractAvailablePrivateKey(uint8_t* pk, int* pk_size, const char* pin) {
   return ret;
 }
 
-int tobExtractAvailablePrivateKeyAsPem(uint8_t* pk, int* pk_size, const char* pin) {
-  uint8_t cert[DER_BUFFER_SIZE];
-  int extractedLen = 0;
-  int res          = 0;
-  res              = tobExtractAvailablePrivateKey(cert, &extractedLen, pin);
+int tobExtractAvailablePrivateKeyAsPem(uint8_t* pem_buf, int* pem_size, uint8_t* der_buf, int* der_size,
+                                       const char* pin) {
+  int res = 0;
+  res     = tobExtractAvailablePrivateKey(der_buf, der_size, pin);
   if (res == 0) {
-    convert_der_to_pem("RSA PRIVATE KEY", cert, extractedLen, pk, pk_size);
+    if (der_buf != nullptr && pem_buf != nullptr) {
+      convert_der_to_pem("RSA PRIVATE KEY", der_buf, *der_size, pem_buf, pem_size);
+    } else {
+      *pem_size = der_to_pem_len(*der_size, "RSA PRIVATE KEY");
+    }
   }
   return res;
 }
@@ -430,26 +444,26 @@ int tobSigningSign(tob_algorithm_t algorithm, const uint8_t* hash, int hash_len,
     path++;
   }
 
-  auto sg = SelectionGuard(*_mias, USE_BASIC_CHANNEL);
+  auto sg = SelectionGuard(_mias, USE_BASIC_CHANNEL);
   if (!sg.selected()) {
     return ERR_SE_BAD_KEY_NAME_ERROR;
   }
 
   mias_key_pair_t* keypair;
-  if (!_mias->getKeyPairByContainerId(cid, &keypair)) {
+  if (!_mias.getKeyPairByContainerId(cid, &keypair)) {
     return ERR_SE_BAD_KEY_NAME_ERROR;
   }
 
-  if (!_mias->verifyPin((uint8_t*)pin, strlen(pin))) {
+  if (!_mias.verifyPin((uint8_t*)pin, strlen(pin))) {
     return ERR_SE_EF_VERIFY_PIN_ERROR;
   }
 
-  if (!_mias->signInit(algorithm, keypair->kid)) {
+  if (!_mias.signInit(algorithm, keypair->kid)) {
     return ERR_SE_BAD_KEY_NAME_ERROR;
   }
 
   uint16_t signature_len_16;
-  if (!_mias->signFinal(hash, hash_len, signature, &signature_len_16)) {
+  if (!_mias.signFinal(hash, hash_len, signature, &signature_len_16)) {
     return ERR_SE_BAD_KEY_NAME_ERROR;
   }
 
@@ -477,30 +491,62 @@ int tobSigningDecrypt(const uint8_t* cipher, int cipher_len, uint8_t* plain, int
     path++;
   }
 
-  auto sg = SelectionGuard(*_mias, USE_BASIC_CHANNEL);
+  auto sg = SelectionGuard(_mias, USE_BASIC_CHANNEL);
   if (!sg.selected()) {
     return ERR_SE_BAD_KEY_NAME_ERROR;
   }
 
   mias_key_pair_t* keypair;
-  if (!_mias->getKeyPairByContainerId(cid, &keypair)) {
+  if (!_mias.getKeyPairByContainerId(cid, &keypair)) {
     return ERR_SE_BAD_KEY_NAME_ERROR;
   }
 
-  if (!_mias->verifyPin((uint8_t*)pin, strlen(pin))) {
+  if (!_mias.verifyPin((uint8_t*)pin, strlen(pin))) {
     return ERR_SE_EF_VERIFY_PIN_ERROR;
   }
 
-  if (!_mias->decryptInit(ALGO_RSA_PKCS1_PADDING, keypair->kid)) {
+  if (!_mias.decryptInit(ALGO_RSA_PKCS1_PADDING, keypair->kid)) {
     return ERR_SE_BAD_KEY_NAME_ERROR;
   }
 
   uint16_t plain_len_16;
-  if (!_mias->decryptFinal(cipher, cipher_len, plain, &plain_len_16)) {
+  if (!_mias.decryptFinal(cipher, cipher_len, plain, &plain_len_16)) {
     return ERR_SE_BAD_KEY_NAME_ERROR;
   }
 
   *plain_len = plain_len_16;
 
   return 0;
+}
+
+int tobSigningLen(const char* pin) {
+  // TODO: do we need to deal with different paths here?
+  const char* path = CERT_SIGNING_MIAS_PATH;
+
+  if (memcmp(path, SE_MIAS_KEY_NAME_PREFIX, strlen(SE_MIAS_KEY_NAME_PREFIX)) != 0) {
+    return ERR_SE_BAD_KEY_NAME_ERROR;
+  }
+  uint8_t cid;
+
+  // Remove prefix from key path
+  path += strlen(SE_MIAS_KEY_NAME_PREFIX);
+
+  cid = 0;
+  while (*path) {
+    cid *= 10;
+    cid += *path - '0';
+    path++;
+  }
+
+  auto sg = SelectionGuard(_mias, USE_BASIC_CHANNEL);
+  if (!sg.selected()) {
+    return ERR_SE_BAD_KEY_NAME_ERROR;
+  }
+
+  mias_key_pair_t* keypair = nullptr;
+  if (!_mias.getKeyPairByContainerId(cid, &keypair) || keypair == nullptr) {
+    return ERR_SE_BAD_KEY_NAME_ERROR;
+  }
+
+  return keypair->size_in_bits / 8;
 }
