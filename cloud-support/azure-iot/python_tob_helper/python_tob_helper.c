@@ -138,6 +138,7 @@ int main(char **argc, int argv) {
   } else {
     config              = (TWILIO_TRUST_ONBOARD_HSM_CONFIG *)malloc(sizeof(TWILIO_TRUST_ONBOARD_HSM_CONFIG));
     config->device_path = strdup(MODULE_DEVICE);
+    config->baudrate    = MODULE_BAUDRATE;
     config->sim_pin     = strdup(SIM_PIN);
 #ifdef USE_SIGNING
     config->signing = 1;
@@ -167,13 +168,17 @@ int main(char **argc, int argv) {
     int ret = 0;
     uint8_t cert[PEM_BUFFER_SIZE];
     int cert_size = 0;
+    uint8_t cert_der[DER_BUFFER_SIZE];
+    int cert_der_size = 0;
     uint8_t pk[PEM_BUFFER_SIZE];
     int pk_size = 0;
+    uint8_t pk_der[DER_BUFFER_SIZE];
+    int pk_der_size = 0;
 
     tobInitialize(MODULE_DEVICE, MODULE_BAUDRATE);
 
 #if USE_SIGNING
-    ret = tobExtractSigningCertificate(cert, &cert_size, SIM_PIN);
+    ret = tobExtractSigningCertificateAsPem(cert, &cert_size, cert_der, &cert_der_size, SIM_PIN);
     if (ret != 0) {
       print_failure("Failed extracting certificate.");
       return -1;
@@ -187,7 +192,7 @@ int main(char **argc, int argv) {
       return -1;
     }
 
-    ret = tobExtractAvailablePrivateKeyAsPem(pk, &pk_size, SIM_PIN);
+    ret = tobExtractAvailablePrivateKeyAsPem(pk, &pk_size, pk_der, &pk_der_size, SIM_PIN);
     if (ret != 0) {
       print_failure("Failed extracting key.");
       return -1;
