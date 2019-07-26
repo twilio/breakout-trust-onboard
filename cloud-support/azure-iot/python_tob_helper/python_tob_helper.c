@@ -178,7 +178,7 @@ int main(char **argc, int argv) {
     tobInitialize(MODULE_DEVICE, MODULE_BAUDRATE);
 
 #if USE_SIGNING
-    ret = tobExtractSigningCertificateAsPem(cert, &cert_size, cert_der, &cert_der_size, SIM_PIN);
+    ret = tobExtractSigningCertificate(cert, &cert_size, cert_der, &cert_der_size, SIM_PIN);
     if (ret != 0) {
       print_failure("Failed extracting certificate.");
       return -1;
@@ -192,7 +192,7 @@ int main(char **argc, int argv) {
       return -1;
     }
 
-    ret = tobExtractAvailablePrivateKeyAsPem(pk, &pk_size, pk_der, &pk_der_size, SIM_PIN);
+    ret = tobExtractAvailablePrivateKey(pk, &pk_size, pk_der, &pk_der_size, SIM_PIN);
     if (ret != 0) {
       print_failure("Failed extracting key.");
       return -1;

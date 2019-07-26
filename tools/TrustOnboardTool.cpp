@@ -40,12 +40,12 @@ Examples:\n");
 }
 
 int main(int argc, char** argv) {
-  int ret = 0;
-  int cert_size = 0;
-  int pk_size = 0;
+  int ret         = 0;
+  int cert_size   = 0;
+  int pk_size     = 0;
   int pk_size_der = 0;
 
-  int signing_cert_size = 0;
+  int signing_cert_size     = 0;
   int signing_cert_size_der = 0;
 
   uint8_t* cert;
@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
       return 1;
     }
 
-    cert = (uint8_t*) malloc(cert_size*sizeof(uint8_t));
+    cert = (uint8_t*)malloc(cert_size * sizeof(uint8_t));
 
     if (cert == NULL) {
       fprintf(stderr, "Failed to allocate memory for the available certificate\n");
@@ -150,21 +150,21 @@ int main(int argc, char** argv) {
   }
 
   if (pk_path != nullptr) {
-    ret = tobExtractAvailablePrivateKeyAsPem(NULL, &pk_size, NULL, &pk_size_der, pin);
+    ret = tobExtractAvailablePrivateKey(NULL, &pk_size, NULL, &pk_size_der, pin);
     if (ret != 0) {
       fprintf(stderr, "Error reading private key size: %d\n", ret);
       return -1;
     }
 
-    pk = (uint8_t*) malloc(pk_size*sizeof(uint8_t));
-    pk_der = (uint8_t*) malloc(pk_size_der*sizeof(uint8_t));
+    pk     = (uint8_t*)malloc(pk_size * sizeof(uint8_t));
+    pk_der = (uint8_t*)malloc(pk_size_der * sizeof(uint8_t));
 
     if (pk == NULL || pk_der == NULL) {
       fprintf(stderr, "Failed to allocate memory for the available private key\n");
       return 1;
     }
 
-    ret = tobExtractAvailablePrivateKeyAsPem(pk, &pk_size, pk_der, &pk_size_der, pin);
+    ret = tobExtractAvailablePrivateKey(pk, &pk_size, pk_der, &pk_size_der, pin);
     if (ret != 0) {
       fprintf(stderr, "Error reading private key: %d\n", ret);
       return 1;
@@ -181,21 +181,21 @@ int main(int argc, char** argv) {
   }
 
   if (signing_cert_path != nullptr) {
-    ret = tobExtractSigningCertificateAsPem(NULL, &signing_cert_size, NULL, &signing_cert_size_der, pin);
+    ret = tobExtractSigningCertificate(NULL, &signing_cert_size, NULL, &signing_cert_size_der, pin);
     if (ret != 0) {
       fprintf(stderr, "Error reading signing certificate length: %d\n", ret);
       return -1;
     }
 
-    signing_cert = (uint8_t*) malloc(signing_cert_size*sizeof(uint8_t));
-    signing_cert_der = (uint8_t*) malloc(signing_cert_size_der*sizeof(uint8_t));
+    signing_cert     = (uint8_t*)malloc(signing_cert_size * sizeof(uint8_t));
+    signing_cert_der = (uint8_t*)malloc(signing_cert_size_der * sizeof(uint8_t));
 
     if (signing_cert == NULL || signing_cert_der == NULL) {
       fprintf(stderr, "Failed to allocate memory for signing certificate\n");
       return 1;
     }
 
-    ret = tobExtractSigningCertificateAsPem(signing_cert, &signing_cert_size, signing_cert_der, &signing_cert_size_der, pin);
+    ret = tobExtractSigningCertificate(signing_cert, &signing_cert_size, signing_cert_der, &signing_cert_size_der, pin);
     if (ret != 0) {
       fprintf(stderr, "Error reading signing certificate: %d\n", ret);
       return -1;

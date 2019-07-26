@@ -98,7 +98,7 @@ static int populate_cert(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* de
 
   tobInitialize(device_path, hsm_info->baudrate);
   if (hsm_info->signing) {
-    ret = tobExtractSigningCertificateAsPem(cert, &cert_size, cert_der, &cert_der_size, pin);
+    ret = tobExtractSigningCertificate(cert, &cert_size, cert_der, &cert_der_size, pin);
   } else {
     ret = tobExtractAvailableCertificate(cert, &cert_size, pin);
   }
@@ -130,7 +130,7 @@ static int populate_key(TWILIO_TRUST_ONBOARD_HSM_INFO* hsm_info, const char* dev
   int pk_der_size = 0;
 
   tobInitialize(device_path, hsm_info->baudrate);
-  ret = tobExtractAvailablePrivateKeyAsPem(pk, &pk_size, pk_der, &pk_der_size, pin);
+  ret = tobExtractAvailablePrivateKey(pk, &pk_size, pk_der, &pk_der_size, pin);
   if (ret != 0) {
     (void)fprintf(stderr, "Failed reading private key\r\n");
     RESULT = 1;

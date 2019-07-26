@@ -386,24 +386,23 @@ int tobExtractAvailableCertificate(uint8_t* cert, int* cert_size, const char* pi
   return ret;
 }
 
-int tobExtractSigningCertificate(uint8_t* cert, int* cert_size, const char* pin) {
+static int tob_extract_signing_certificate_der(uint8_t* cert, int* cert_size, const char* pin) {
   return tob_x509_crt_extract_se(cert, cert_size, CERT_SIGNING_MIAS_PATH, pin);
 }
 
-int tobExtractSigningCertificateAsPem(uint8_t* pem_buf, int* pem_size, uint8_t* der_buf, int* der_size,
-                                      const char* pin) {
-  int res = tobExtractSigningCertificate(der_buf, der_size, pin);
+int tobExtractSigningCertificate(uint8_t* pem_buf, int* pem_size, uint8_t* der_buf, int* der_size, const char* pin) {
+  int res = tob_extract_signing_certificate_der(der_buf, der_size, pin);
   if (res == 0) {
-    if (der_buf != nullptr && pem_buf != nullptr) {
+    if (der_buf != nullptr && pem_buf != nullptr && pem_size != nullptr) {
       convert_der_to_pem("CERTIFICATE", der_buf, *der_size, pem_buf, pem_size);
-    } else {
+    } else if (pem_size != nullptr) {
       *pem_size = der_to_pem_len(*der_size, "CERTIFICATE");
     }
   }
   return res;
 }
 
-int tobExtractAvailablePrivateKey(uint8_t* pk, int* pk_size, const char* pin) {
+static int tob_extract_available_private_key_der(uint8_t* pk, int* pk_size, const char* pin) {
   int ret = tob_pk_extract_se(pk, pk_size, PK_MIAS_PATH, pin);
   if (ret == ERR_SE_MIAS_READ_OBJECT_ERROR) {
     ret = tob_pk_extract_se(pk, pk_size, PK_MIAS_PATH_LEGACY, pin);
@@ -411,14 +410,13 @@ int tobExtractAvailablePrivateKey(uint8_t* pk, int* pk_size, const char* pin) {
   return ret;
 }
 
-int tobExtractAvailablePrivateKeyAsPem(uint8_t* pem_buf, int* pem_size, uint8_t* der_buf, int* der_size,
-                                       const char* pin) {
+int tobExtractAvailablePrivateKey(uint8_t* pem_buf, int* pem_size, uint8_t* der_buf, int* der_size, const char* pin) {
   int res = 0;
-  res     = tobExtractAvailablePrivateKey(der_buf, der_size, pin);
+  res     = tob_extract_available_private_key_der(der_buf, der_size, pin);
   if (res == 0) {
-    if (der_buf != nullptr && pem_buf != nullptr) {
+    if (der_buf != nullptr && pem_buf != nullptr && pem_size != nullptr) {
       convert_der_to_pem("RSA PRIVATE KEY", der_buf, *der_size, pem_buf, pem_size);
-    } else {
+    } else if (pem_size != nullptr) {
       *pem_size = der_to_pem_len(*der_size, "RSA PRIVATE KEY");
     }
   }
