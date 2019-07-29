@@ -65,7 +65,7 @@ class SelectionGuard {
 };
 
 static void convert_der_to_pem(char const* headerStr, uint8_t* inDer, int inDerLen, uint8_t* outPem, int* outPemLen) {
-  int expectedBase64Len = Base64encode_len(inDerLen);  // includes 1 extra byte for \0 termination
+  int expectedBase64Len = owl_base64encode_len(inDerLen);  // includes 1 extra byte for \0 termination
   int base64EncodeRet   = -1;
   uint8_t* outPemPtr    = outPem;
 
@@ -79,8 +79,8 @@ static void convert_der_to_pem(char const* headerStr, uint8_t* inDer, int inDerL
          6);
   outPemPtr += 6;
 
-  base64EncodeRet = Base64encode((char*)outPemPtr, (const char*)inDer, inDerLen);
-  outPemPtr += base64EncodeRet - 1;  // leave off terminating null from Base64encode
+  base64EncodeRet = owl_base64encode((char*)outPemPtr, inDer, inDerLen);
+  outPemPtr += base64EncodeRet - 1;  // leave off terminating null from owl_base64encode
 
   memcpy(outPemPtr,
          "\n"
@@ -100,9 +100,9 @@ static void convert_der_to_pem(char const* headerStr, uint8_t* inDer, int inDerL
 static int der_to_pem_len(int derLen, const char* headerStr) {
   int captionLen = strlen(headerStr);
 
-  return 11 + captionLen + 6 +       // header
-         Base64encode_len(derLen) +  // content
-         9 + captionLen + 5;         // footer
+  return 11 + captionLen + 6 +           // header
+         owl_base64encode_len(derLen) +  // content
+         9 + captionLen + 5;             // footer
 };
 
 static void hex_string_2_bytes_array(uint8_t* hexstr, uint16_t hexstrLen, uint8_t* bytes, uint16_t* bytesLen) {
