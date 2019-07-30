@@ -95,7 +95,7 @@ bool tob_mbedtls_setup_key(mbedtls_pk_context* pk, const char* pin, bool signing
     static unsigned char key_buf[DER_BUFFER_SIZE];
     int key_size;
 
-    if (tobExtractAvailablePrivateKey(key_buf, &key_size, pin) != 0) {
+    if (tobExtractAvailablePrivateKey(nullptr, nullptr, key_buf, &key_size, pin) != 0) {
       return false;
     }
 

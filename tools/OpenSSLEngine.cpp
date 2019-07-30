@@ -328,7 +328,7 @@ static EVP_PKEY* tob_engine_load_pubkey(ENGINE* engine, bool signing) {
     int cert_len;
 
     ssl_lock_universal_lock(ctx->sim_lock);
-    if (tobExtractSigningCertificate(NULL, &cert_len, ctx->pin) != 0) {
+    if (tobExtractSigningCertificate(NULL, NULL, NULL, &cert_len, ctx->pin) != 0) {
       fprintf(stderr, "Couldn't get signing certificate length\n");
       ssl_lock_universal_unlock(ctx->sim_lock);
       return NULL;
@@ -341,7 +341,7 @@ static EVP_PKEY* tob_engine_load_pubkey(ENGINE* engine, bool signing) {
       return NULL;
     }
 
-    if (tobExtractSigningCertificate(cert, &cert_len, ctx->pin) != 0) {
+    if (tobExtractSigningCertificate(NULL, NULL, cert, &cert_len, ctx->pin) != 0) {
       fprintf(stderr, "Couldn't get signing certificate\n");
       ssl_lock_universal_unlock(ctx->sim_lock);
       return NULL;
@@ -499,7 +499,7 @@ static EVP_PKEY* tob_engine_load_available_privkey(ENGINE* engine) {
 
   int key_len;
   ssl_lock_universal_lock(ctx->sim_lock);
-  if (tobExtractAvailablePrivateKey(NULL, &key_len, ctx->pin) != 0) {
+  if (tobExtractAvailablePrivateKey(NULL, NULL, NULL, &key_len, ctx->pin) != 0) {
     fprintf(stderr, "Couldn't get available key length\n");
     ssl_lock_universal_unlock(ctx->sim_lock);
     return NULL;
@@ -512,7 +512,7 @@ static EVP_PKEY* tob_engine_load_available_privkey(ENGINE* engine) {
     return NULL;
   }
 
-  if (tobExtractAvailablePrivateKey(key, &key_len, ctx->pin) != 0) {
+  if (tobExtractAvailablePrivateKey(NULL, NULL, key, &key_len, ctx->pin) != 0) {
     fprintf(stderr, "Couldn't get available key\n");
     ssl_lock_universal_unlock(ctx->sim_lock);
     return NULL;

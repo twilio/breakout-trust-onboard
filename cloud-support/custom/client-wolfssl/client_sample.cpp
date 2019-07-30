@@ -135,7 +135,7 @@ int main(int argc, const char** argv) {
   }
 
   if (strcmp(client_key, "signing") == 0) {
-    if (tobExtractSigningCertificate(cert, &cert_size, pin) != 0) {
+    if (tobExtractSigningCertificate(nullptr, nullptr, cert, &cert_size, pin) != 0) {
       std::cerr << "Error extracting signing certificate" << std::endl;
       return 1;
     }
@@ -158,7 +158,7 @@ int main(int argc, const char** argv) {
       return 1;
     }
 
-    if (tobExtractAvailablePrivateKey(pkey, &pkey_size, pin) != 0) {
+    if (tobExtractAvailablePrivateKey(nullptr, nullptr, pkey, &pkey_size, pin) != 0) {
       std::cerr << "Error extracting available private key" << std::endl;
       return 1;
     }

@@ -127,7 +127,7 @@ int main(int argc, const char** argv) {
   int device_cert_buf_len;
 
   if (strcmp(client_key, "signing") == 0) {
-    if (tobExtractSigningCertificate(device_cert_buf, &device_cert_buf_len, pin) != 0) {
+    if (tobExtractSigningCertificate(nullptr, nullptr, device_cert_buf, &device_cert_buf_len, pin) != 0) {
       std::cerr << "Error extracting signing certificate" << std::endl;
       return 1;
     }
