@@ -7,6 +7,11 @@
  * SPDX-License-Identifier:  Apache-2.0
  */
 
+/**
+ @file
+ Trust Onboard SDK implementation
+*/
+
 #include <stdio.h>
 #include <string.h>
 

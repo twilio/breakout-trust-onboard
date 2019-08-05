@@ -1,11 +1,12 @@
-# Contents
+# Trust Onboard SDK {#mainpage}
+## Contents
 1. [Overview](#overview)
 1. [Example reference implementation](#Example-reference-implementation)
 1. [Trust Onboard Available Certificate Extraction](#Trust-Onboard-Available-Certificate-Extraction)
 
 [Validating Requests on the Azure IoT cloud](cloud-support/azure-iot/README.md)
 
-# Overview
+## Overview
 
 The Breakout Trust Onboard SDK offers tools and examples on how to utilize the `available` X.509 certificate available on Twilio Wireless Trust Onboard (ToB) enabled SIM cards.
 
@@ -26,11 +27,11 @@ A typical Twilio Trust Onboard flow for utilizing the `available` certificate is
 - The library provides the PEM encoded certificate chain and (in the case of the `available` certificate) the DER encoded private key.
 - Your applications make use of the public certificate and private key for authentication with your chosen backend services.
 
-# Example Reference Implementation
+## Example Reference Implementation
 
 We have found multiple cellular modules to be compatible with the AT commands and access to the SIM needed to work with Twilio ToB SIMs, but the following is a combination which we have researched and built a tutorial around: [Twilio Wireless Broadband IoT Developer Kit](https://github.com/twilio/Wireless_Broadband_IoT_Dev_Kit)
 
-# Trust Onboard Available Certificate Extraction
+## Trust Onboard Available Certificate Extraction
 
 In the project you build above, you should now have an executable `bin/trust_onboard_tool`.  We can use this tool to extract the Trust Onboard `available` X.509 certificate and private key.  Since the output of this CLI is two files, we recommend writing the files out to a sub-directory.  **Important:** If you are provided a different default PIN or have changed it, be sure to replace the PIN `0000`, or you may block your SIM card.  The password `mypassword` below is the passphrase that will be used to secure the P12 certificate and key bundle the `convert_certs.sh` script generates.  This assumes you are using our pre-built image or ran `make install` for the Breakout_Trust_Onboard_SDK.
 
@@ -39,7 +40,7 @@ In the project you build above, you should now have an executable `bin/trust_onb
 
 The certificate and private key can now be used in your applications.  We also offer direct access to the Trust Onboard SDK to access the certificate and private key in your code without an intermediate file.  See the [BreakoutTrustOnboardSDK.h](include/BreakoutTrustOnboardSDK.h) header for more details.
 
-# OpenSSL engine
+## OpenSSL engine
 
 When built with `SIGNING_SUPPORT` a [dynamic engine](https://github.com/openssl/openssl/blob/master/README.ENGINE) for OpenSSL is produced that uses a signing key in the MIAS applet to establish a TLS connection. The engine supports the following control commands
 
@@ -48,7 +49,7 @@ When built with `SIGNING_SUPPORT` a [dynamic engine](https://github.com/openssl/
     * `MODEM_DEVICE` - if PCSC is 0, a path to the serial device, otherwise ignored.
     * `PCSC_IDX` - if PCSC is 1, an index in the list returned by libpcsclite's `SCardListReaders`, otherwise ignored
 
-# MbedTLS key
+## MbedTLS key
 
 When built with `MBEDTLS_SUPPORT` a dynamic library is produced providing an API to let MbedTLS key use the signing key. See the [header file](include/TobMbedtls.h) for the details.
 

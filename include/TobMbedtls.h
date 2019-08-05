@@ -7,6 +7,11 @@
  * SPDX-License-Identifier:  Apache-2.0
  */
 
+/**
+ @file
+ MbedTLS shims definitions
+*/
+
 #ifndef __TOB_MBEDTLS_H__
 #define __TOB_MBEDTLS_H__
 
