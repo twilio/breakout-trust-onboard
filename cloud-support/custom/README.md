@@ -40,7 +40,7 @@ Starting the server:
     cd ~/test_server_ca
     ~/Breakout_Trust_Onboard_SDK/cloud_support/custom/server/gencreds.sh CA.pem cert.pem pkey.pem localhost
 
-    ~/Breakout_Trust_Onboard_SDK/cloud_support/custom/server/server_sample.py 12345 ./cert.pem ./pkey.pem ~/Breakout_Trust_Onboard_SDK/bundles/programmable-wireless.signing.pem
+    ~/Breakout_Trust_Onboard_SDK/cloud_support/custom/server/server_sample.py 12345 ./cert.pem ./pkey.pem ~/Breakout_Trust_Onboard_SDK/bundles/G2/Twilio_Trust_Onboard_G2_Signing.pem
 
 Extracting client certificate:
 
