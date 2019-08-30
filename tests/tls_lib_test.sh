@@ -171,7 +171,15 @@ else
 	echo "*** WolfSSL sample test FAILED"
 fi
 
-if [ -n "${openssl_success}" ] && [ -n "${mbedtls_success}" ] && [ -n "${wolfssl_success}" ]; then
+echo "*** Testing Paho MQTT sample"
+if [ ! -d ${CLOUD_SUPPORT_DIR}/paho-openssl/libs/paho.mqtt.embedded-c ]; then
+  mkdir -p ${CLOUD_SUPPORT_DIR}/paho-openssl/libs/
+  git clone https://github.com/eclipse/paho.mqtt.embedded-c/ ${CLOUD_SUPPORT_DIR}/paho-openssl/libs/paho.mqtt.embedded-c
+fi
+build_sample ${CLOUD_SUPPORT_DIR}/paho-openssl ${TOB_LIB_DIR} ${TOB_INC_DIR} && paho_openssl_success=1
+
+# Evaluate result of tests
+if [ -n "${openssl_success}" ] && [ -n "${mbedtls_success}" ] && [ -n "${wolfssl_success}" ] && [ -n "${paho_openssl_success}" ]; then
 	echo "*** TLS library test suite SUCCEEDED"
 	exit 0
 else
