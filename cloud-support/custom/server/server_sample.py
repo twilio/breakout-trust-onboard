@@ -20,7 +20,7 @@ def main():
     parser.add_argument("port", help="port to listen")
     parser.add_argument("certificate", help="server certificate in PEM format")
     parser.add_argument("pkey", help="server private key in PEM format")
-    parser.add_argument("clientCA", help="client CA certificate chain")
+    parser.add_argument("caPath", help="client CA certificate path")
     args = parser.parse_args()
 
     if sys.version_info >= (3,6):
@@ -31,7 +31,7 @@ def main():
     context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
 
     context.load_cert_chain(args.certificate, args.pkey)
-    context.load_verify_locations(args.clientCA)
+    context.load_verify_locations(capath=args.caPath)
     context.verify_mode = ssl.CERT_REQUIRED
 
     httpd = HTTPServer(('', int(args.port)), MiasExampleHandler)

@@ -75,7 +75,8 @@ SERVER_PORT=12345
 CLIENT_SIGNING_CERT=${CERTS_DIR}/client_cert_signing.pem
 
 echo "*** Starting HTTPS server"
-${CLOUD_SUPPORT_DIR}/server/server_sample.py ${SERVER_PORT} ${SERVER_CERT} ${SERVER_PKEY} ${SOURCE_DIR}/bundles/programmable-wireless.signing.pem 2>&1 >${SERVER_STDOUT} &
+openssl rehash bundles/
+${CLOUD_SUPPORT_DIR}/server/server_sample.py ${SERVER_PORT} ${SERVER_CERT} ${SERVER_PKEY} ${SOURCE_DIR}/bundles/ 2>&1 >${SERVER_STDOUT} &
 server_id=$!
 
 cleanup() {
