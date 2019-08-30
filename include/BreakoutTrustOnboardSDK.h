@@ -7,6 +7,11 @@
  * SPDX-License-Identifier:  Apache-2.0
  */
 
+/**
+ @file
+ Trust Onboard SDK definitions
+*/
+
 #ifndef __BREAKOUT_TOB_H__
 #define __BREAKOUT_TOB_H__
 
@@ -93,9 +98,12 @@ extern int tobExtractAvailableCertificate(uint8_t *cert, int *cert_size, const c
  * private key should be kept secret.
  *
  * @param pem_buf - buffer to receive the PEM private key or null pointer to query the length
- * @param pem_size - pointer to int that will receive the number of bytes for the PEM private key or null pointer if just extracting DER key.
- * @param der_buf - buffer to receive the DER private key or null pointer to query the length. If pem_buf is not NULL, der_buf should also be provided
- * @param der_size - pointer to int that will receive the number of bytes for the DER private key. Should always be provided
+ * @param pem_size - pointer to int that will receive the number of bytes for the PEM private key or null pointer if
+ * just extracting DER key.
+ * @param der_buf - buffer to receive the DER private key or null pointer to query the length. If pem_buf is not NULL,
+ * der_buf should also be provided
+ * @param der_size - pointer to int that will receive the number of bytes for the DER private key. Should always be
+ * provided
  * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
  * @return 0 if successful, otherwise one of the following error codes:
  *   ERR_SE_BAD_KEY_NAME_ERROR
@@ -104,15 +112,18 @@ extern int tobExtractAvailableCertificate(uint8_t *cert, int *cert_size, const c
  *   ERR_SE_MIAS_READ_OBJECT_ERROR
  */
 extern int tobExtractAvailablePrivateKey(uint8_t *pem_buf, int *pem_size, uint8_t *der_buf, int *der_size,
-                                              const char *pin);
+                                         const char *pin);
 
 /**
  * Extract the Signing public certificate in DER and (optionally) PEM form.
  *
  * @param pem_buf - buffer to receive the PEM certificate or null pointer to query the length
- * @param pem_size - pointer to int that will receive the number of bytes for the PEM certificate of null pointer if just extracting DER certificate
- * @param der_buf - buffer to receive the DER certificate or null pointer to query the length. If pem_buf is not NULL, der_buf should also be provided
- * @param der_size - pointer to int that will receive the number of bytes for the PEM certificate. Should always be provided
+ * @param pem_size - pointer to int that will receive the number of bytes for the PEM certificate of null pointer if
+ * just extracting DER certificate
+ * @param der_buf - buffer to receive the DER certificate or null pointer to query the length. If pem_buf is not NULL,
+ * der_buf should also be provided
+ * @param der_size - pointer to int that will receive the number of bytes for the PEM certificate. Should always be
+ * provided
  * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
  * @return 0 if successful, otherwise one of the following error codes:
  *   ERR_SE_BAD_KEY_NAME_ERROR
@@ -121,7 +132,7 @@ extern int tobExtractAvailablePrivateKey(uint8_t *pem_buf, int *pem_size, uint8_
  *   ERR_SE_EF_VERIFY_PIN_ERROR
  */
 extern int tobExtractSigningCertificate(uint8_t *pem_buf, int *pem_size, uint8_t *der_buf, int *der_size,
-                                             const char *pin);
+                                        const char *pin);
 
 
 /**

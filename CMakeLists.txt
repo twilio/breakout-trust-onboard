@@ -7,6 +7,7 @@ option(OPENSSL_SUPPORT "Support for signing key with OpenSSL support" OFF)
 option(MBEDTLS_SUPPORT "Private crypto device shims for MbedTLS 2.11+" OFF)
 option(BUILD_SHARED "Build as a shared library" OFF)
 option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_DOCS "Build doxygen documentation" OFF)
 option(NO_OS "Build for bare metal / RTOS" OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/)
@@ -167,6 +168,10 @@ if(OPENSSL_SUPPORT)
 endif(OPENSSL_SUPPORT)
 
 add_custom_target(format COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/service-scripts/format.sh ${LIB_SOURCES} ${LIB_HEADERS} ${TOOLS_SOURCES} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+if (BUILD_DOCS)
+	add_custom_target(docs ALL COMMAND doxygen ${CMAKE_CURRENT_SOURCE_DIR}/service-scripts/doxygen.conf)
+endif (BUILD_DOCS)
 
 install(TARGETS TwilioTrustOnboard DESTINATION lib)
 install(TARGETS ${TOB_ENGINE} DESTINATION lib)
