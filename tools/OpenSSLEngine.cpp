@@ -12,12 +12,14 @@ static int rsa_ex_data_idx = -1;
 #define CMD_PIN ENGINE_CMD_BASE
 #define CMD_MODEM_DEVICE (ENGINE_CMD_BASE + 1)
 #define CMD_MODEM_BAUDRATE (ENGINE_CMD_BASE + 2)
+#define CMD_LOAD_CERT_CTRL (ENGINE_CMD_BASE + 3)
 
 static const ENGINE_CMD_DEFN engine_cmd_defns[] = {
     {CMD_PIN, "PIN", "Card's PIN code", ENGINE_CMD_FLAG_STRING},
     {CMD_MODEM_DEVICE, "MODEM_DEVICE",
      "Device, used to connect to Trust Onboard SIM. Either '/dev/<serial_device>' or 'pcsc:N'", ENGINE_CMD_FLAG_STRING},
     {CMD_MODEM_BAUDRATE, "MODEM_BAUDRATE", "Baudrate for a serial interface", ENGINE_CMD_FLAG_NUMERIC},
+    {CMD_LOAD_CERT_CTRL, "LOAD_CERT_CTRL", "Load public certificate from engine", ENGINE_CMD_FLAG_STRING},
     {0, NULL, NULL, 0}};
 
 struct tob_ctx_t {
@@ -173,6 +175,8 @@ static int tob_engine_finish(ENGINE* engine) {
   return 1;
 }
 
+static X509* tob_extract_certificate(ENGINE* engine, bool signing);
+
 static int tob_engine_ctrl(ENGINE* e, int cmd, long i, void* p, void (*f)(void)) {
   tob_ctx_t* ctx = tob_get_ctx(e);
 
@@ -199,6 +203,25 @@ static int tob_engine_ctrl(ENGINE* e, int cmd, long i, void* p, void (*f)(void))
     case CMD_MODEM_BAUDRATE:
       ctx->modem_baudrate = i;
       return 1;
+
+    case CMD_LOAD_CERT_CTRL: 
+      {
+        struct load_cert_params {
+          const char *cert_id;
+          X509 *cert;
+        } *params = (struct load_cert_params*)p;
+
+        if (strcmp(params->cert_id, "signing") == 0) {
+          params->cert = tob_extract_certificate(e, true);
+        } else if (strcmp(params->cert_id, "available") == 0) {
+          params->cert = tob_extract_certificate(e, false);
+        } else {
+          fprintf(stderr, "Invalid cert name: %s\n", params->cert_id);
+          params->cert = NULL;
+        }
+
+        return (params->cert != NULL);
+      }
   }
   fprintf(stderr, "Unknown command: %d\n", cmd);
   return 0;
@@ -314,15 +337,13 @@ static RSA_METHOD* tob_engine_signing_rsa(void) {
   return tob_engine_meth;
 }
 
-static EVP_PKEY* tob_engine_load_pubkey(ENGINE* engine, bool signing) {
+static X509* tob_extract_certificate(ENGINE* engine, bool signing) {
   tob_ctx_t* ctx = tob_get_ctx(engine);
   if (ctx == NULL) {
     return NULL;
   }
 
   X509* cert_x509 = NULL;
-  EVP_PKEY* res   = NULL;
-
 
   if (signing) {
     int cert_len;
@@ -394,13 +415,17 @@ static EVP_PKEY* tob_engine_load_pubkey(ENGINE* engine, bool signing) {
     free(cert);
   }
 
+  return cert_x509;
+}
 
-  if (!cert_x509) {
+static EVP_PKEY* tob_engine_load_pubkey(ENGINE* engine, bool signing) {
+  X509* cert_x509 = tob_extract_certificate(engine, signing);
+  if (cert_x509 == NULL) {
     fprintf(stderr, "Couldn't parse certificate\n");
     return NULL;
   }
 
-  res = X509_get_pubkey(cert_x509);
+  EVP_PKEY* res = X509_get_pubkey(cert_x509);
 
   X509_free(cert_x509);
 

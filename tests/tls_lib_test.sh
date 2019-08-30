@@ -116,7 +116,7 @@ MODEM_DEVICE = ${TOB_DEVICE}
 MODEM_BAUDRATE = ${TOB_BAUDRATE}
 EOF
 
-${CLOUD_SUPPORT_DIR}/client-openssl/build/client_sample https://localhost:${SERVER_PORT} ${CLIENT_SIGNING_CERT} signing ${SERVER_CA} 2>&1 >${CLIENT_STDOUT} &
+${CLOUD_SUPPORT_DIR}/client-openssl/build/client_sample https://localhost:${SERVER_PORT} signing ${SERVER_CA} 2>&1 >${CLIENT_STDOUT} &
 openssl_client_id=$!
 kill_timer ${openssl_client_id} 60&
 kill_timer_id=$!
