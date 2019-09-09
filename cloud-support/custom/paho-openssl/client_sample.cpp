@@ -13,6 +13,8 @@
 #include <string>
 #include <iostream>
 
+#include <openssl/engine.h>
+
 #include <MQTTClient.h>
 #include "linuxToB/MQTTLinuxToB.h"
 
@@ -42,8 +44,9 @@ void messageArrived(MQTT::MessageData& md)
 }
 
 int main(int argc, const char** argv) {
-  const char* openssl_conf = getenv("OPENSSL_CONF");
-  if (argc != 7 || openssl_conf == NULL) {
+  // tob_engine_probe is only used to test it's present 
+  ENGINE* tob_engine_probe = ENGINE_by_id("tob_mias");
+  if (argc != 7 || tob_engine_probe == NULL) {
     print_usage();
     return 1;
   }
