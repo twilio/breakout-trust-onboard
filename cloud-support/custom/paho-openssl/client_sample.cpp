@@ -18,11 +18,10 @@
 #include <MQTTClient.h>
 #include "linuxToB/MQTTLinuxToB.h"
 
-volatile int toStop = 0;
+volatile int toStop       = 0;
 volatile int arrivedcount = 0;
 
-void cfinish(int sig)
-{
+void cfinish(int sig) {
   signal(SIGINT, NULL);
   toStop = 1;
 }
@@ -30,33 +29,33 @@ void cfinish(int sig)
 static void print_usage() {
   fprintf(stderr, "client_sample <mqtt host> <mqtt port> <signing|available> <serverca.pem> <clientId> <topic>\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Ensure the OPENSSL_CONF environment variable is also set for Trust Onboard OpenSSL engine configuration.\n");
+  fprintf(stderr,
+          "Ensure the OPENSSL_CONF environment variable is also set for Trust Onboard OpenSSL engine configuration.\n");
 }
 
-void messageArrived(MQTT::MessageData& md)
-{
-  MQTT::Message &message = md.message;
+void messageArrived(MQTT::MessageData& md) {
+  MQTT::Message& message = md.message;
 
-  printf("Message %d arrived: qos %d, retained %d, dup %d, packetid %d\n",
-      ++arrivedcount, message.qos, message.retained, message.dup, message.id);
+  printf("Message %d arrived: qos %d, retained %d, dup %d, packetid %d\n", ++arrivedcount, message.qos,
+         message.retained, message.dup, message.id);
   printf("Payload %.*s\n", (int)message.payloadlen, (char*)message.payload);
   fflush(stdout);
 }
 
 int main(int argc, const char** argv) {
-  // tob_engine_probe is only used to test it's present 
+  // tob_engine_probe is only used to test it's present
   ENGINE* tob_engine_probe = ENGINE_by_id("tob_mias");
   if (argc != 7 || tob_engine_probe == NULL) {
     print_usage();
     return 1;
   }
 
-  const char* host        = argv[1];
-  const int   port        = atoi(argv[2]);
-  const char* cert        = argv[3];
-  const char* cafile      = argv[4];
-  const char* clientId    = argv[5];
-  const char* topic       = argv[6];
+  const char* host     = argv[1];
+  const int port       = atoi(argv[2]);
+  const char* cert     = argv[3];
+  const char* cafile   = argv[4];
+  const char* clientId = argv[5];
+  const char* topic    = argv[6];
 
   curl_global_init(CURL_GLOBAL_DEFAULT);
 
@@ -67,16 +66,16 @@ int main(int argc, const char** argv) {
   signal(SIGINT, cfinish);
   signal(SIGTERM, cfinish);
 
-  ToBIPStack ipstack = ToBIPStack();
+  ToBIPStack ipstack                               = ToBIPStack();
   MQTT::Client<ToBIPStack, Countdown, 1000> client = MQTT::Client<ToBIPStack, Countdown, 1000>(ipstack);
 
   MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
-  data.willFlag = 0;
-  data.MQTTVersion = 3;
-  data.clientID.cstring = (char *)clientId;
+  data.willFlag               = 0;
+  data.MQTTVersion            = 3;
+  data.clientID.cstring       = (char*)clientId;
 
   data.keepAliveInterval = 10;
-  data.cleansession = 1;
+  data.cleansession      = 1;
   printf("Connecting to %s %d\n", host, port);
 
   rc = ipstack.connect(host, port, cert, cafile);
@@ -99,8 +98,7 @@ int main(int argc, const char** argv) {
   }
 
   printf("(CTRL-C to end)\n");
-  while (!toStop)
-  {
+  while (!toStop) {
     client.yield(1000);
     usleep(500);
   }
