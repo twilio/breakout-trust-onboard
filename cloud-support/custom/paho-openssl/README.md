@@ -42,11 +42,10 @@ There are two Trust Onboard OpenSSL engine configuration files included in this 
 - test_engine_acm.conf - used for a serial connection to a cellular module with a Trust Onboard SIM
 - test_engine_pcsc.conf - used for a direct smart card reader connection with a Trust Onboard SIM
 
+The Eclipse project's [paho.mqtt.embedded-c library](https://github.com/eclipse/paho.mqtt.embedded-c/) is included as a git submodule of this project (be sure to `git submodule init` and `git submodule update`).  It will be compiled with the sample:
 
 ```
 cd cloud-support/custom/paho-openssl
-mkdir -p libs
-git clone https://github.com/eclipse/paho.mqtt.embedded-c/ libs/paho.mqtt.embedded-c
 mkdir cmake
 cd cmake
 cmake ..
