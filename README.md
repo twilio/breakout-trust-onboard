@@ -45,9 +45,10 @@ The certificate and private key can now be used in your applications.  We also o
 When built with `SIGNING_SUPPORT` a [dynamic engine](https://github.com/openssl/openssl/blob/master/README.ENGINE) for OpenSSL is produced that uses a signing key in the MIAS applet to establish a TLS connection. The engine supports the following control commands
 
     * `PIN` - MIAS PIN code (normally "0000")
-    * `PCSC` - binary (0/1) command setting whether the engine uses a SIM connected over PC/SC interface (1) or to a modem accessed via a serial device (0)
+    * `PCSC` - binary (0/1) command setting whether the engine uses a SIM connected over PC/SC interface (1) or to a modem accessed via a serial device (0).
     * `MODEM_DEVICE` - if PCSC is 0, a path to the serial device, otherwise ignored.
-    * `PCSC_IDX` - if PCSC is 1, an index in the list returned by libpcsclite's `SCardListReaders`, otherwise ignored
+    * `PCSC_IDX` - if PCSC is 1, an index in the list returned by libpcsclite's `SCardListReaders`, otherwise ignored.
+    * `LOAD_CERT_CTRL` - load public certificate from engine for either the available or signing certificate.
 
 ## MbedTLS key
 

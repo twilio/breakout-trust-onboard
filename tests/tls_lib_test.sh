@@ -54,6 +54,10 @@ SERVER_STDOUT=$(mktemp)
 
 CLIENT_STDOUT=$(mktemp)
 
+MQTT_BROKER_STDOUT=$(mktemp)
+
+MOSQUITTO_CONF=$(mktemp)
+
 SOURCE_DIR=$(realpath `dirname "${BASH_SOURCE[0]}"`/..)
 CLOUD_SUPPORT_DIR="${SOURCE_DIR}/cloud-support/custom"
 TOB_LIB_DIR=${SOURCE_DIR}/install_prefix/lib
@@ -71,20 +75,39 @@ SERVER_CERT=${CERTS_DIR}/server_cert.pem
 SERVER_PKEY=${CERTS_DIR}/server_pkey.pem
 SERVER_CA=${CERTS_DIR}/CA.pem
 SERVER_PORT=12345
+MQTT_BROKER_PORT=54321
 
 CLIENT_SIGNING_CERT=${CERTS_DIR}/client_cert_signing.pem
 
 echo "*** Starting HTTPS server"
-${CLOUD_SUPPORT_DIR}/server/server_sample.py ${SERVER_PORT} ${SERVER_CERT} ${SERVER_PKEY} ${SOURCE_DIR}/bundles/programmable-wireless.signing.pem 2>&1 >${SERVER_STDOUT} &
+openssl rehash bundles/
+${CLOUD_SUPPORT_DIR}/server/server_sample.py ${SERVER_PORT} ${SERVER_CERT} ${SERVER_PKEY} ${SOURCE_DIR}/bundles/ 2>&1 >${SERVER_STDOUT} &
 server_id=$!
+
+echo "*** Starting MQTT broker"
+
+cat <<EOF > ${MOSQUITTO_CONF}
+require_certificate true
+tls_version tlsv1.2
+capath ${SOURCE_DIR}/bundles/
+keyfile ${SERVER_PKEY}
+certfile ${SERVER_CERT}
+EOF
+
+mosquitto -p ${MQTT_BROKER_PORT} -c ${MOSQUITTO_CONF} 2>&1 >${MQTT_BROKER_STDOUT} &
+mqtt_broker_id=$!
 
 cleanup() {
 	kill ${server_id} && wait ${server_id}
+	kill ${mqtt_broker_id} && wait ${mqtt_broker_id}
 	kill ${openssl_client_id} && wait ${openssl_client_id}
 	kill ${mbedtls_client_id} && wait ${mbedtls_client_id}
 	kill ${wolfssl_client_id} && wait ${wolfssl_client_id}
-	rm -f $SERVER_OUTPUT
+	kill ${paho_openssl_client_id} && wait ${paho_openssl_client_id}
+	rm -f $SERVER_STDOUT
 	rm -f $CLIENT_STDOUT
+	rm -f $MOSQUITTO_CONF
+	rm -f $MQTT_BROKER_STDOUT
 	rm -rf $CERTS_DIR
 }
 
@@ -116,7 +139,7 @@ MODEM_DEVICE = ${TOB_DEVICE}
 MODEM_BAUDRATE = ${TOB_BAUDRATE}
 EOF
 
-${CLOUD_SUPPORT_DIR}/client-openssl/build/client_sample https://localhost:${SERVER_PORT} ${CLIENT_SIGNING_CERT} signing ${SERVER_CA} 2>&1 >${CLIENT_STDOUT} &
+${CLOUD_SUPPORT_DIR}/client-openssl/build/client_sample https://localhost:${SERVER_PORT} signing ${SERVER_CA} 2>&1 >${CLIENT_STDOUT} &
 openssl_client_id=$!
 kill_timer ${openssl_client_id} 60&
 kill_timer_id=$!
@@ -171,7 +194,27 @@ else
 	echo "*** WolfSSL sample test FAILED"
 fi
 
-if [ -n "${openssl_success}" ] && [ -n "${mbedtls_success}" ] && [ -n "${wolfssl_success}" ]; then
+echo "*** Testing Paho MQTT sample"
+build_sample ${CLOUD_SUPPORT_DIR}/paho-openssl ${TOB_LIB_DIR} ${TOB_INC_DIR}
+echo '' >${CLIENT_STDOUT}
+${CLOUD_SUPPORT_DIR}/paho-openssl/build/client_sample localhost ${MQTT_BROKER_PORT} signing ${SERVER_CA} paho-test-client hello 2>&1 >${CLIENT_STDOUT} &
+paho_openssl_client_id=$!
+kill_timer ${paho_openssl_client_id} 10&
+kill_timer_id=$!
+
+wait ${paho_openssl_client_id}
+kill ${kill_timer_id}
+
+paho_openssl_success=$(cat ${CLIENT_STDOUT} | grep "Subscribing to hello");
+
+if [ -n "${paho_openssl_success}" ]; then
+	echo "*** Paho OpenSSL sample test SUCCEEDED"
+else
+	echo "*** Paho OpenSSL sample test FAILED"
+fi
+
+# Evaluate result of tests
+if [ -n "${openssl_success}" ] && [ -n "${mbedtls_success}" ] && [ -n "${wolfssl_success}" ] && [ -n "${paho_openssl_success}" ]; then
 	echo "*** TLS library test suite SUCCEEDED"
 	exit 0
 else
