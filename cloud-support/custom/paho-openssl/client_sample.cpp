@@ -28,9 +28,6 @@ void cfinish(int sig) {
 
 static void print_usage() {
   fprintf(stderr, "client_sample <mqtt host> <mqtt port> <signing|available> <serverca.pem> <clientId> <topic>\n");
-  fprintf(stderr, "\n");
-  fprintf(stderr,
-          "Ensure the OPENSSL_CONF environment variable is also set for Trust Onboard OpenSSL engine configuration.\n");
 }
 
 void messageArrived(MQTT::MessageData& md) {
@@ -43,9 +40,7 @@ void messageArrived(MQTT::MessageData& md) {
 }
 
 int main(int argc, const char** argv) {
-  // tob_engine_probe is only used to test it's present
-  ENGINE* tob_engine_probe = ENGINE_by_id("tob_mias");
-  if (argc != 7 || tob_engine_probe == NULL) {
+  if (argc != 7) {
     print_usage();
     return 1;
   }
