@@ -80,7 +80,7 @@ MQTT_BROKER_PORT=54321
 CLIENT_SIGNING_CERT=${CERTS_DIR}/client_cert_signing.pem
 
 echo "*** Starting HTTPS server"
-openssl rehash bundles/
+openssl rehash ${SOURCE_DIR}/bundles/
 ${CLOUD_SUPPORT_DIR}/server/server_sample.py ${SERVER_PORT} ${SERVER_CERT} ${SERVER_PKEY} ${SOURCE_DIR}/bundles/ 2>&1 >${SERVER_STDOUT} &
 server_id=$!
 

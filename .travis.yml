@@ -12,4 +12,4 @@ before_install:
   - sudo apt-get update
   - sudo apt-get install pv
 script:
-  - 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then travis_wait 30 ./tests/scripts/ci-script-travis.sh | pv -q -L 3k; fi'
+  - 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then travis_wait 30 ./tests/scripts/ci-script-travis.sh; fi'
