@@ -47,7 +47,7 @@ int main(int argc, const char** argv) {
 
   curl_easy_setopt(curl, CURLOPT_URL, url);
   if (curl_easy_setopt(curl, CURLOPT_SSLENGINE, "tob_mias") != CURLE_OK) {
-    std::cerr << "Can't set crypto engine" << std::endl;
+    std::cerr << "Can't set crypto engine 'tob_mias' - is it in the OpenSSL configuration?" << std::endl;
     return 1;
   }
 
