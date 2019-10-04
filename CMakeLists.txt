@@ -49,21 +49,21 @@ include_directories(external_libs/tob_sim/platform/pcsc/inc)
 include_directories(include)
 
 set(LIB_SOURCES
-        external_libs/tob_sim/common/src/Applet.cpp
-        external_libs/tob_sim/common/src/MF.cpp
-        external_libs/tob_sim/common/src/MIAS.cpp
-        external_libs/tob_sim/common/src/SEInterface.cpp
-        external_libs/tob_sim/common/src/base64.c
-        src/BreakoutTrustOnboardSDK.cpp
+	external_libs/tob_sim/common/src/Applet.cpp
+	external_libs/tob_sim/common/src/MF.cpp
+	external_libs/tob_sim/common/src/MIAS.cpp
+	external_libs/tob_sim/common/src/SEInterface.cpp
+	external_libs/tob_sim/common/src/base64.c
+	src/BreakoutTrustOnboardSDK.cpp
 	)
 
 set(LIB_HEADERS
-        external_libs/tob_sim/common/inc/ISO7816.h
-        external_libs/tob_sim/common/inc/Applet.h
-        external_libs/tob_sim/common/inc/MF.h
-        external_libs/tob_sim/common/inc/MIAS.h
-        external_libs/tob_sim/common/inc/SEInterface.h
-        external_libs/tob_sim/common/inc/base64.h
+	external_libs/tob_sim/common/inc/ISO7816.h
+	external_libs/tob_sim/common/inc/Applet.h
+	external_libs/tob_sim/common/inc/MF.h
+	external_libs/tob_sim/common/inc/MIAS.h
+	external_libs/tob_sim/common/inc/SEInterface.h
+	external_libs/tob_sim/common/inc/base64.h
 	)
 
 if(NOT NO_OS)
@@ -83,7 +83,7 @@ endif(NOT NO_OS)
 if(PCSC_SUPPORT)
 	find_package(PCSC REQUIRED)
 
-        set(LIB_SOURCES ${LIB_SOURCES}
+	set(LIB_SOURCES ${LIB_SOURCES}
 		external_libs/tob_sim/platform/pcsc/src/Pcsc.cpp)
 	set(LIB_HEADERS ${LIB_HEADERS}
 		external_libs/tob_sim/platform/pcsc/inc/Pcsc.h)
@@ -101,12 +101,12 @@ set_property(TARGET TwilioTrustOnboard PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 if(NOT NO_OS)
 	add_executable(
-        	${TOOL_BINARY}
-	        tools/TrustOnboardTool.cpp)
+		${TOOL_BINARY}
+		tools/TrustOnboardTool.cpp)
 
 	target_link_libraries(
-        	${TOOL_BINARY}
-        	TwilioTrustOnboard)
+		${TOOL_BINARY}
+		TwilioTrustOnboard)
 endif(NOT NO_OS)
 
 if(OPENSSL_SUPPORT)
@@ -125,14 +125,17 @@ if(MBEDTLS_SUPPORT)
 		tob_mbed SHARED
 		src/TobMbedtls.cpp)
 	target_include_directories(tob_mbed PUBLIC ${MBEDTLS_INCLUDE_DIRS})
-	target_link_libraries(tob_mbed ${MBEDTLS_LIBRARIES} TwilioTrustOnboard)
+	target_link_libraries(
+		tob_mbed
+		${MBEDTLS_LIBRARIES}
+		TwilioTrustOnboard)
 endif(MBEDTLS_SUPPORT)
 
 if(PCSC_SUPPORT)
 	target_link_libraries(
 		${TOOL_BINARY}
-                ${PCSC_LIBRARIES}
-        )
+		${PCSC_LIBRARIES}
+	)
 
 	if(BUILD_SHARED)
 		target_link_libraries(
@@ -145,19 +148,19 @@ if(PCSC_SUPPORT)
 		target_link_libraries(
 			${TOB_ENGINE}
 			${PCSC_LIBRARIES}
-	        )
+		)
 	endif(OPENSSL_SUPPORT)
 
 	if(MBEDTLS_SUPPORT)
 		target_link_libraries(
 			tob_mbed
 			${PCSC_LIBRARIES}
-	        )
+		)
 	endif(MBEDTLS_SUPPORT)
 endif(PCSC_SUPPORT)
 
 set(TOOLS_SOURCES
-        tools/TrustOnboardTool.cpp
+	tools/TrustOnboardTool.cpp
 	)
 
 if(OPENSSL_SUPPORT)
@@ -185,8 +188,8 @@ if(NOT NO_OS)
 endif(NOT NO_OS)
 
 install(FILES include/BreakoutTrustOnboardSDK.h
-	      external_libs/tob_sim/common/inc/SEInterface.h
-	      external_libs/tob_sim/common/inc/ISO7816.h
+	external_libs/tob_sim/common/inc/SEInterface.h
+	external_libs/tob_sim/common/inc/ISO7816.h
 	DESTINATION include)
 
 set(CPACK_COMPONENTS_ALL_IN_ONE_PACKAGE 1)
