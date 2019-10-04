@@ -23,12 +23,14 @@ add_executable(
 target_link_libraries(
 	trust_onboard_sdk_tests
 	TwilioTrustOnboard
+	${COVERAGE_LIBRARIES}
 )
 
 target_link_libraries(
 	trust_onboard_ll_tests
 	TwilioTrustOnboard
 	${OPENSSL_LIBRARIES}
+	${COVERAGE_LIBRARIES}
 )
 
 
@@ -36,11 +38,13 @@ if(PCSC_SUPPORT)
 	target_link_libraries(
 		trust_onboard_sdk_tests
 		${PCSC_LIBRARIES}
+		${COVERAGE_LIBRARIES}
 	)
 
 	target_link_libraries(
 		trust_onboard_ll_tests
 		${PCSC_LIBRARIES}
+		${COVERAGE_LIBRARIES}
 	)
 endif(PCSC_SUPPORT)
 

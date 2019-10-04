@@ -7,6 +7,7 @@ option(OPENSSL_SUPPORT "Support for signing key with OpenSSL support" OFF)
 option(MBEDTLS_SUPPORT "Private crypto device shims for MbedTLS 2.11+" OFF)
 option(BUILD_SHARED "Build as a shared library" OFF)
 option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_TESTS_COVERAGE "Build test coverage metrics" OFF)
 option(BUILD_DOCS "Build doxygen documentation" OFF)
 option(NO_OS "Build for bare metal / RTOS" OFF)
 
@@ -26,6 +27,13 @@ endif(OPENSSL_SUPPORT)
 #add_definitions(-DMODEM_DEBUG)
 #add_definitions(-DAPDU_DEBUG)
 #add_definitions(-DSERIAL_DEBUG)
+
+if(BUILD_TESTS_COVERAGE)
+	add_definitions(-fprofile-arcs)
+	add_definitions(-ftest-coverage)
+
+	set(COVERAGE_LIBRARIES "gcov")
+endif(BUILD_TESTS_COVERAGE)
 
 if(NO_OS)
 	add_definitions(-DNO_OS)
@@ -106,6 +114,7 @@ if(NOT NO_OS)
 
 	target_link_libraries(
 		${TOOL_BINARY}
+		${COVERAGE_LIBRARIES}
 		TwilioTrustOnboard)
 endif(NOT NO_OS)
 
@@ -116,6 +125,7 @@ if(OPENSSL_SUPPORT)
 
 	target_link_libraries(
 		${TOB_ENGINE}
+		${COVERAGE_LIBRARIES}
 		TwilioTrustOnboard)
 endif(OPENSSL_SUPPORT)
 
@@ -128,6 +138,7 @@ if(MBEDTLS_SUPPORT)
 	target_link_libraries(
 		tob_mbed
 		${MBEDTLS_LIBRARIES}
+		${COVERAGE_LIBRARIES}
 		TwilioTrustOnboard)
 endif(MBEDTLS_SUPPORT)
 
@@ -135,12 +146,14 @@ if(PCSC_SUPPORT)
 	target_link_libraries(
 		${TOOL_BINARY}
 		${PCSC_LIBRARIES}
+		${COVERAGE_LIBRARIES}
 	)
 
 	if(BUILD_SHARED)
 		target_link_libraries(
 			TwilioTrustOnboard
 			${PCSC_LIBRARIES}
+			${COVERAGE_LIBRARIES}
 		)
 	endif(BUILD_SHARED)
 
@@ -148,6 +161,7 @@ if(PCSC_SUPPORT)
 		target_link_libraries(
 			${TOB_ENGINE}
 			${PCSC_LIBRARIES}
+			${COVERAGE_LIBRARIES}
 		)
 	endif(OPENSSL_SUPPORT)
 
@@ -155,6 +169,7 @@ if(PCSC_SUPPORT)
 		target_link_libraries(
 			tob_mbed
 			${PCSC_LIBRARIES}
+			${COVERAGE_LIBRARIES}
 		)
 	endif(MBEDTLS_SUPPORT)
 endif(PCSC_SUPPORT)
