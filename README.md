@@ -1,4 +1,4 @@
-# Trust Onboard SDK {#mainpage}
+# Trust Onboard SDK
 ## Contents
 1. [Overview](#overview)
 1. [Example reference implementation](#Example-reference-implementation)
