@@ -1,15 +1,26 @@
 language: cpp
 dist: bionic
 compiler:
-  - clang
+- clang
 os:
-  - linux
+- linux
 env:
   global:
-   - secure: "dV4afOeNl9/wBLRaIzqBD0NoNDP66qcsyAl7KH8fo4eH2HGdxV6sDX2EKcW44l7fJH6pS3qKX1ZDREnIyjWs9Ktms/F1oSe9unF1CH84DeIWkDHwpIEccEQ66i5DfTlZbmeo2Bp2qnRnMuS/9uSHvnmHOG29rh0rjnPGXcRX4KMYXShwmlv5y6tdvCfa9BoUaQnaQx9VUP/uXiqczS73BBzX5PAn0VV7B3X31i3AB90SWY0PmQDOM7zWkH9w8fd9kNo+sINAScfgEDV2yAwvrdFx/D4VRVecEi4W/O00xZGcDy2Sib81lz2m0pMmMBLp/ewT9N8erDfWH1pls9eN5gtCoSTn5pVxgTGZW2tr821YKaIiySFbgjL4nwGa6Rjsu7n94LTHZ/haReSnk5wKxvI2dwXSsS+rVA+0cqzWGZ1l4z+780f38nM58Yg3vSs8OKQpUnFjV0ZaN5sGnDCiccpp6lvidDbd3rNZff7putuK+qw//xQShEYqFnRUcuz4ZFx8U8CcOVvY3eNlZrqv44I/9UeHDQwEvD/XRz/QfYsdJWDPvWu8KAmD4QIqNSurDJLVRoQp40BH/vrpB8zOzEcynsriclqj5pJyEUdk0KYeCP1Pw8S6sWjfkmPzmyDjZCY9e/m2mF+p+WaQc3VkpayIBmBpLBIMh7uIm4VHP+A="
-
+  - secure: dV4afOeNl9/wBLRaIzqBD0NoNDP66qcsyAl7KH8fo4eH2HGdxV6sDX2EKcW44l7fJH6pS3qKX1ZDREnIyjWs9Ktms/F1oSe9unF1CH84DeIWkDHwpIEccEQ66i5DfTlZbmeo2Bp2qnRnMuS/9uSHvnmHOG29rh0rjnPGXcRX4KMYXShwmlv5y6tdvCfa9BoUaQnaQx9VUP/uXiqczS73BBzX5PAn0VV7B3X31i3AB90SWY0PmQDOM7zWkH9w8fd9kNo+sINAScfgEDV2yAwvrdFx/D4VRVecEi4W/O00xZGcDy2Sib81lz2m0pMmMBLp/ewT9N8erDfWH1pls9eN5gtCoSTn5pVxgTGZW2tr821YKaIiySFbgjL4nwGa6Rjsu7n94LTHZ/haReSnk5wKxvI2dwXSsS+rVA+0cqzWGZ1l4z+780f38nM58Yg3vSs8OKQpUnFjV0ZaN5sGnDCiccpp6lvidDbd3rNZff7putuK+qw//xQShEYqFnRUcuz4ZFx8U8CcOVvY3eNlZrqv44I/9UeHDQwEvD/XRz/QfYsdJWDPvWu8KAmD4QIqNSurDJLVRoQp40BH/vrpB8zOzEcynsriclqj5pJyEUdk0KYeCP1Pw8S6sWjfkmPzmyDjZCY9e/m2mF+p+WaQc3VkpayIBmBpLBIMh7uIm4VHP+A=
 before_install:
-  - sudo apt-get update
-  - sudo apt-get install pv
+- sudo apt-get update
+- sudo apt-get install pv
 script:
-  - 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then travis_wait 30 ./tests/scripts/ci-script-travis.sh; fi'
+- if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then travis_wait 30 ./tests/scripts/ci-script-travis.sh;
+  fi
+- if [ -n "$TRAVIS_TAG" ]; then travis_wait 50 sudo ./tests/scripts/build-deb.sh; fi
+
+deploy:
+  provider: bintray
+  file: deploy.json
+  skip_cleanup: true
+  on:
+    tags: true
+  user: agerasimov@twilio
+  key:
+    secure: EAsX9fEqTsHxqYDLbWPZS3uPrt5twukSQnJEsYBAxkyE1f7dq7Np9+HLEJ+GDdSN8fzgAA/UBREi0lRYcex4njqH0Ci/P/F8271noRZT0JzWskTX/AgXlrKQxd1z2iINtLDmR0ZSQtrXLgyEocZ6+sI7VcZswu8SW9vFh9MwZZRhpKVElYTt5H46OFDU1bsxpKRTWNoUdy6tZtn0sLnc/gSPCauW9hRZQstyTcYQ9/SfD+SzIUtKlfQK9As16OHa5/NUGEFzldtzsmyme5mMJd/nIfhQfBz9Gb2t9FSW3Bn+YlADJ68DVV+X0sqTFMwlS2Yb0AQi4J1WBy+/5Dj8sZQdskLKfEzX94D6J0s2v2iTtZUfySpPUOKsqW/qHx1RJ3kZLkOUjmgGPz7F206Ht5+23Su6+tllhzyPGEwynfK54Wn7DowAj2oOkPJtOyJ0/VT8yc/AMM2VucgYqoRp3r2L8jKPrRDxnf3ZSPLbvKGTTX3XuzvEA8J22Q1Mk/oD1EU1K/SokthnGrJ8IEql6nXkO9OYGuR/5fXkYAdzxpTX1LI68AJGeGoVq0ewsXIIP+sJXCUxQoPSXC95G46dx295AtIVwgc6LEMWMRJW92SPslLkJtqDxzo3Xfmj2JgFq1DOdp2DYeb+TB+s1H5ize6qbJmQL5+g+akbWo6qZYE=
