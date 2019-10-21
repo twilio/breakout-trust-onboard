@@ -13,14 +13,23 @@ before_install:
 script:
 - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then travis_wait 30 ./tests/scripts/ci-script-travis.sh;
   fi
-- if [ -n "$TRAVIS_TAG" ]; then travis_wait 50 sudo ./tests/scripts/build-deb.sh; fi
+- if [ -n "$TRAVIS_TAG" ]; then travis_wait 50 sudo ./tests/scripts/build-deb.sh buster; fi
+- if [ -n "$TRAVIS_TAG" ]; then travis_wait 50 sudo ./tests/scripts/build-deb.sh stretch; fi
 
 deploy:
-  provider: bintray
-  file: deploy.json
-  skip_cleanup: true
-  on:
-    tags: true
-  user: agerasimov@twilio
-  key:
-    secure: EAsX9fEqTsHxqYDLbWPZS3uPrt5twukSQnJEsYBAxkyE1f7dq7Np9+HLEJ+GDdSN8fzgAA/UBREi0lRYcex4njqH0Ci/P/F8271noRZT0JzWskTX/AgXlrKQxd1z2iINtLDmR0ZSQtrXLgyEocZ6+sI7VcZswu8SW9vFh9MwZZRhpKVElYTt5H46OFDU1bsxpKRTWNoUdy6tZtn0sLnc/gSPCauW9hRZQstyTcYQ9/SfD+SzIUtKlfQK9As16OHa5/NUGEFzldtzsmyme5mMJd/nIfhQfBz9Gb2t9FSW3Bn+YlADJ68DVV+X0sqTFMwlS2Yb0AQi4J1WBy+/5Dj8sZQdskLKfEzX94D6J0s2v2iTtZUfySpPUOKsqW/qHx1RJ3kZLkOUjmgGPz7F206Ht5+23Su6+tllhzyPGEwynfK54Wn7DowAj2oOkPJtOyJ0/VT8yc/AMM2VucgYqoRp3r2L8jKPrRDxnf3ZSPLbvKGTTX3XuzvEA8J22Q1Mk/oD1EU1K/SokthnGrJ8IEql6nXkO9OYGuR/5fXkYAdzxpTX1LI68AJGeGoVq0ewsXIIP+sJXCUxQoPSXC95G46dx295AtIVwgc6LEMWMRJW92SPslLkJtqDxzo3Xfmj2JgFq1DOdp2DYeb+TB+s1H5ize6qbJmQL5+g+akbWo6qZYE=
+ - provider: bintray
+   file: deploy-buster.json
+   skip_cleanup: true
+   on:
+     tags: true
+   user: agerasimov@twilio
+   key:
+     secure: EAsX9fEqTsHxqYDLbWPZS3uPrt5twukSQnJEsYBAxkyE1f7dq7Np9+HLEJ+GDdSN8fzgAA/UBREi0lRYcex4njqH0Ci/P/F8271noRZT0JzWskTX/AgXlrKQxd1z2iINtLDmR0ZSQtrXLgyEocZ6+sI7VcZswu8SW9vFh9MwZZRhpKVElYTt5H46OFDU1bsxpKRTWNoUdy6tZtn0sLnc/gSPCauW9hRZQstyTcYQ9/SfD+SzIUtKlfQK9As16OHa5/NUGEFzldtzsmyme5mMJd/nIfhQfBz9Gb2t9FSW3Bn+YlADJ68DVV+X0sqTFMwlS2Yb0AQi4J1WBy+/5Dj8sZQdskLKfEzX94D6J0s2v2iTtZUfySpPUOKsqW/qHx1RJ3kZLkOUjmgGPz7F206Ht5+23Su6+tllhzyPGEwynfK54Wn7DowAj2oOkPJtOyJ0/VT8yc/AMM2VucgYqoRp3r2L8jKPrRDxnf3ZSPLbvKGTTX3XuzvEA8J22Q1Mk/oD1EU1K/SokthnGrJ8IEql6nXkO9OYGuR/5fXkYAdzxpTX1LI68AJGeGoVq0ewsXIIP+sJXCUxQoPSXC95G46dx295AtIVwgc6LEMWMRJW92SPslLkJtqDxzo3Xfmj2JgFq1DOdp2DYeb+TB+s1H5ize6qbJmQL5+g+akbWo6qZYE=
+ - provider: bintray
+   file: deploy-stretch.json
+   skip_cleanup: true
+   on:
+     tags: true
+   user: agerasimov@twilio
+   key:
+     secure: EAsX9fEqTsHxqYDLbWPZS3uPrt5twukSQnJEsYBAxkyE1f7dq7Np9+HLEJ+GDdSN8fzgAA/UBREi0lRYcex4njqH0Ci/P/F8271noRZT0JzWskTX/AgXlrKQxd1z2iINtLDmR0ZSQtrXLgyEocZ6+sI7VcZswu8SW9vFh9MwZZRhpKVElYTt5H46OFDU1bsxpKRTWNoUdy6tZtn0sLnc/gSPCauW9hRZQstyTcYQ9/SfD+SzIUtKlfQK9As16OHa5/NUGEFzldtzsmyme5mMJd/nIfhQfBz9Gb2t9FSW3Bn+YlADJ68DVV+X0sqTFMwlS2Yb0AQi4J1WBy+/5Dj8sZQdskLKfEzX94D6J0s2v2iTtZUfySpPUOKsqW/qHx1RJ3kZLkOUjmgGPz7F206Ht5+23Su6+tllhzyPGEwynfK54Wn7DowAj2oOkPJtOyJ0/VT8yc/AMM2VucgYqoRp3r2L8jKPrRDxnf3ZSPLbvKGTTX3XuzvEA8J22Q1Mk/oD1EU1K/SokthnGrJ8IEql6nXkO9OYGuR/5fXkYAdzxpTX1LI68AJGeGoVq0ewsXIIP+sJXCUxQoPSXC95G46dx295AtIVwgc6LEMWMRJW92SPslLkJtqDxzo3Xfmj2JgFq1DOdp2DYeb+TB+s1H5ize6qbJmQL5+g+akbWo6qZYE=

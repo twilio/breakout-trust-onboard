@@ -14,29 +14,33 @@ else
 	exit 1
 fi
 
-mkdir -p debs_to_deploy
-git clone https://github.com/oytis/raspbian-deb-builder
+dist=${1}
+
+mkdir -p debs_to_deploy_${dist}
+
+if [ ! -d raspbian-deb-builder ]; then
+	git clone https://github.com/oytis/raspbian-deb-builder
+fi
 
 pushd ./raspbian-deb-builder
 
-DEBS=$(./cross-build.sh buster breakout-tob-sdk:${TRAVIS_TAG}:${VERSION})
-echo "DEBS IS ${DEBS}"
+DEBS=$(./cross-build.sh ${dist} breakout-tob-sdk:${TRAVIS_TAG}:${VERSION})
 
 popd
 
-for d in ${DEBS}; do
-	mv ${d} debs_to_deploy
+for d in "${DEBS}"; do
+	mv ${d} debs_to_deploy_${dist}
 done
 
-NUM_DEBS=$(ls -1q debs_to_deploy/* | wc -l)
 
+NUM_DEBS=$(ls -1q debs_to_deploy_${dist}/* | wc -l)
 if [ ${NUM_DEBS} -ne 1 ]; then
-	echo "Exactly one debian file expected"
-	ls -1q debs_to_deploy/*
+	echo "Exactly one debian file for ${dist} expected"
+	ls -1q debs_to_deploy_${dist}/*
 	exit 1
 fi
 
-cat >deploy.json <<EOF
+cat >deploy-${dist}.json <<EOF
 {
   "package": {
     "name":"trust-onboard-sdk",
@@ -53,9 +57,9 @@ cat >deploy.json <<EOF
   },
 
   "files":
-    [{"includePattern": "debs_to_deploy/(.*\.deb)", "uploadPattern": "pool/main/m/trust-onboard-sdk/\$1",
+    [{"includePattern": "debs_to_deploy_${dist}/(.*\.deb)", "uploadPattern": "pool/main/m/trust-onboard-sdk/\$1",
       "matrixParams": {
-        "deb_distribution": "buster",
+        "deb_distribution": "${dist}",
         "deb_component": "main",
         "deb_architecture": "armhf"}
     }],
