@@ -1,5 +1,6 @@
 #include <string.h>
 #include <openssl/engine.h>
+#include <openssl/pem.h>
 
 #include "BreakoutTrustOnboardSDK.h"
 
