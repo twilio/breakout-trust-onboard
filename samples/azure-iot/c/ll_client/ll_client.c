@@ -19,7 +19,7 @@
 
 #include "azure_prov_client/iothub_security_factory.h"
 
-#include "custom_hsm_twilio.h"
+#include "TobAzureHsm.h"
 #include "BreakoutTrustOnboardSDK.h"
 
 /* This sample uses the _LL APIs of iothub_client for example purposes.

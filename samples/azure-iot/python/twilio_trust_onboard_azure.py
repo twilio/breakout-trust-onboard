@@ -54,7 +54,7 @@ with canvas(device) as draw:
 # Get Certificate and Key Data from ToB Tool #
 ##############################################
 if RUN_CLOUD:
-    command = ['python_tob_helper']
+    command = ['azure_dps_registerer']
 
     # Todo: Comment to next todo when JSON works
     return_yaml = subprocess.check_output(command)

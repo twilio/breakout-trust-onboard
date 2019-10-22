@@ -5,18 +5,17 @@
 
 cmake_minimum_required(VERSION 3.5)
 
-set(ll_client_c_files
-    ll_client.c
-    ../../../azure-iot-sdk-c/custom_hsm_twilio.cpp
-)
+set (CMAKE_C_STANDARD 99)
+set (CMAKE_CXX_STANDARD 11)
 
-include_directories(.)
-include_directories(../../../azure-iot-sdk-c)
-include_directories(/usr/local/include/azureiot)
+if (NOT AZURE_ID_SCOPE_PATH)
+  set(AZURE_ID_SCOPE_PATH "/home/pi/azure_id_scope.txt")
+endif()
+add_definitions(-DAZURE_ID_SCOPE_PATH="${AZURE_ID_SCOPE_PATH}")
 
-add_executable(ll_client ${ll_client_c_files})
+add_executable(rpi_temp_monitor rpi_temp_monitor.c)
 
-target_link_libraries(ll_client
+target_link_libraries(rpi_temp_monitor
     TwilioTrustOnboard
     prov_http_transport
     iothub_client

@@ -18,9 +18,9 @@
 
 #include <azure_prov_client/hsm_client_data.h>
 
-#include <BreakoutTrustOnboardSDK.h>
+#include "BreakoutTrustOnboardSDK.h"
 
-#include "custom_hsm_twilio.h"
+#include "TobAzureHsm.h"
 
 typedef struct TWILIO_TRUST_ONBOARD_HSM_INFO_TAG {
   const char* device_path;

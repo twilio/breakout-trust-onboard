@@ -10,14 +10,20 @@
 #include <azure_prov_client/prov_security_factory.h>
 #include <azure_prov_client/prov_transport_http_client.h>
 
-#include "custom_hsm_twilio.h"
+#include "TobAzureHsm.h"
 
-#include <BreakoutTrustOnboardSDK.h>
+#include "BreakoutTrustOnboardSDK.h"
 
 static const char *global_prov_uri = "global.azure-devices-provisioning.net";
 
 #define MESSAGES_TO_SEND 2
 #define TIME_BETWEEN_MESSAGES 2
+
+// Ported from a CMakeLists.txt, will be made command line parameters soon
+#define MODULE_DEVICE "/dev/ttyACM1"
+#define MODULE_BAUDRATE 115200
+#define SIM_PIN "0000"
+#define AZURE_ID_SCOPE_PATH "/home/pi/azure_id_scope.txt"
 
 typedef struct CLIENT_SAMPLE_INFO_TAG {
   unsigned int sleep_time;

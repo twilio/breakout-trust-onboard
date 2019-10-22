@@ -24,7 +24,7 @@
 #include <azure_c_shared_utility/shared_util_options.h>
 #include <azure_prov_client/iothub_security_factory.h>
 
-#include "custom_hsm_twilio.h"
+#include "TobAzureHsm.h"
 #include "BreakoutTrustOnboardSDK.h"
 
 #include <linux/i2c-dev.h>

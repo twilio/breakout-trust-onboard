@@ -8,6 +8,7 @@ option(MBEDTLS_SUPPORT "Private crypto device shims for MbedTLS 2.11+" OFF)
 option(BUILD_SHARED "Build as a shared library" OFF)
 option(BUILD_TESTS "Build tests" OFF)
 option(BUILD_DOCS "Build doxygen documentation" OFF)
+option(BUILD_AZURE "Build with Azure IoT Hub support" OFF)
 option(NO_OS "Build for bare metal / RTOS" OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/)
@@ -20,6 +21,9 @@ set(TOOL_BINARY trust_onboard_tool)
 if(OPENSSL_SUPPORT)
 	set(TOB_ENGINE trust_onboard_engine)
 endif(OPENSSL_SUPPORT)
+if(BUILD_AZURE)
+	set(TOB_DPS_REGISTERER azure_dps_registerer)
+endif(BUILD_AZURE)
 
 #set(CMAKE_BUILD_TYPE Debug)
 #add_definitions(-DAT_DEBUG)
@@ -91,6 +95,11 @@ if(PCSC_SUPPORT)
 	add_definitions(-DPCSC_SUPPORT)
 endif(PCSC_SUPPORT)
 
+if(BUILD_AZURE)
+	set(LIB_SOURCES ${LIB_SOURCES} src/TobAzureHsm.cpp)
+	set(LIB_HEADERS ${LIB_HEADERS} include/TobAzureHsm.h)
+endif(BUILD_AZURE)
+
 if(BUILD_SHARED)
 	add_library(TwilioTrustOnboard SHARED ${LIB_SOURCES} ${LIB_HEADERS})
 else(BUILD_SHARED)
@@ -127,6 +136,35 @@ if(MBEDTLS_SUPPORT)
 	target_include_directories(tob_mbed PUBLIC ${MBEDTLS_INCLUDE_DIRS})
 	target_link_libraries(tob_mbed ${MBEDTLS_LIBRARIES} TwilioTrustOnboard)
 endif(MBEDTLS_SUPPORT)
+
+if(BUILD_AZURE)
+	find_package(OpenSSL REQUIRED)
+	find_package(Threads REQUIRED)
+
+	add_executable(${TOB_DPS_REGISTERER}
+		tools/AzureDpsRegisterer.c)
+	target_link_libraries(
+		${TOB_DPS_REGISTERER}
+		TwilioTrustOnboard
+		${CMAKE_THREAD_LIBS_INIT}
+		prov_http_transport # This and below are static Azure IoT SDK libraries
+		iothub_client
+		prov_device_ll_client
+		prov_auth_client
+		hsm_security_client
+		uhttp
+		iothub_client_http_transport
+		aziotsharedutil
+		parson # End of Azure libraries
+		m # Libm is required by Azure libraries, so goes last
+		)
+
+	target_include_directories(TwilioTrustOnboard PUBLIC
+		${OPENSSL_INCLUDE_DIR})
+	target_link_libraries(
+		TwilioTrustOnboard
+		${OPENSSL_LIBRARIES})
+endif(BUILD_AZURE)
 
 if(PCSC_SUPPORT)
 	target_link_libraries(
@@ -174,7 +212,13 @@ if (BUILD_DOCS)
 endif (BUILD_DOCS)
 
 install(TARGETS TwilioTrustOnboard DESTINATION lib)
-install(TARGETS ${TOB_ENGINE} DESTINATION lib)
+if(OPENSSL_SUPPORT)
+	install(TARGETS ${TOB_ENGINE} DESTINATION lib)
+endif(OPENSSL_SUPPORT)
+if(BUILD_AZURE)
+	install(TARGETS ${TOB_DPS_REGISTERER} DESTINATION bin)
+	install(FILES include/TobAzureHsm.h DESTINATION include)
+endif(BUILD_AZURE)
 if(MBEDTLS_SUPPORT)
 	install(TARGETS tob_mbed DESTINATION lib)
 	install(FILES include/TobMbedtls.h DESTINATION include)
