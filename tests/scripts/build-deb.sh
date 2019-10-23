@@ -19,7 +19,7 @@ dist=${1}
 mkdir -p debs_to_deploy_${dist}
 
 if [ ! -d raspbian-deb-builder ]; then
-	git clone https://github.com/oytis/raspbian-deb-builder
+	git clone https://github.com/twilio/raspbian-deb-builder
 fi
 
 pushd ./raspbian-deb-builder
