@@ -55,20 +55,9 @@ After running `npm install`, you can simply `node simple_sample_device_x509.js` 
 
 # Azure IoT SDK C
 
-Integrating the Twilio Trust Onboard SDK directly to the Azure IoT C SDK is supported by using a custom HSM provider.
+Integrating the Twilio Trust Onboard SDK directly to the Azure IoT C SDK is supported by using a custom HSM provider, which is a part of the Trust Onboard dynamic library. You should link your application to the library, and include the respective header to use it.
 
-You compile the included cpp file with your application in lieu of any other HSM's included in the Azure IoT C SDK.  This integration currently makes use of a not-yet-released extension to allow you to pass in parameters.  The library installed in our pre-built image has this update already in place.
-
-## Install custom HSM plugin
-
-You will need to copy the following files from the `cloud-support/azure-iot/azure-iot-sdk-c` folder:
-
-    custom_hsm_twilio.h
-    custom_hsm_twilio.cpp
-
-## Include the header for the plugin:
-
-    #include "custom_hsm_twilio.h"
+    #include "TobAzureHsm.h"
 
 ## Initialize the plugin for Provisioning operations
 
@@ -76,7 +65,9 @@ After creating your device provisioning handle, but before calling `Prov_Device_
 
     TWILIO_TRUST_ONBOARD_HSM_CONFIG* config = (TWILIO_TRUST_ONBOARD_HSM_CONFIG *)malloc(sizeof(TWILIO_TRUST_ONBOARD_HSM_CONFIG));
     config->device_path = strdup("/dev/ttyACM1"); // or appropriate path
+    config->baudrate = 115200; // or whatever your serial modem uses
     config->sim_pin = strdup("0000"); // or appropriate pin
+    config->signing = 1; // or 0 for 'available' key
     Prov_Device_LL_SetOption(handle, PROV_HSM_CONFIG_DATA, (void*)config);
 
 ## Initialize the plugin for Device connection operations
@@ -85,6 +76,8 @@ After creating the client handle, but before performing operations, add the conf
 
     TWILIO_TRUST_ONBOARD_HSM_CONFIG* config = (TWILIO_TRUST_ONBOARD_HSM_CONFIG *)malloc(sizeof(TWILIO_TRUST_ONBOARD_HSM_CONFIG));
     config->device_path = strdup("/dev/ttyACM1"); // or appropriate path
+    config->baudrate = 115200; // or whatever your serial modem uses
     config->sim_pin = strdup("0000"); // or appropriate pin
+    config->signing = 1; // or 0 for 'available' key
     IoTHubDeviceClient_LL_SetOption(device_ll_handle, OPTION_HSM_CONFIG_DATA, (void*)config);
 

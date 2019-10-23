@@ -4,7 +4,7 @@
 1. [Example reference implementation](#Example-reference-implementation)
 1. [Trust Onboard Available Certificate Extraction](#Trust-Onboard-Available-Certificate-Extraction)
 
-[Validating Requests on the Azure IoT cloud](cloud-support/azure-iot/README.md)
+[Validating Requests on the Azure IoT cloud](samples/azure-iot/README.md)
 
 ## Overview
 

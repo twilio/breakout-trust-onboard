@@ -38,15 +38,11 @@ Starting the server:
 
     mkdir ~/test_server_ca
     cd ~/test_server_ca
-    ~/Breakout_Trust_Onboard_SDK/cloud_support/custom/server/gencreds.sh CA.pem cert.pem pkey.pem localhost
+    /usr/share/trust_onboard/samples/standalone/server/gencreds.sh CA.pem cert.pem pkey.pem localhost
 
-    ~/Breakout_Trust_Onboard_SDK/cloud_support/custom/server/server_sample.py 12345 ./cert.pem ./pkey.pem ~/Breakout_Trust_Onboard_SDK/bundles/programmable-wireless.signing.pem
-
-Extracting client certificate:
-
-    trust_onboard_tool -d pcsc:0 -p 0000 -s signing-cert.pem
+    /usr/share/trust_onboard/samples/standalone/server/server_sample.py 12345 ./cert.pem ./pkey.pem /usr/share/trust_onboard/ssl/ca
 
 Connecting to the server (from a different terminal):
 
-    OPENSSL_CONF=~/Breakout_Trust_Onboard_SDK/cloud_support/custom/client/test_engine_pcsc.conf client_sample https://localhost:12345 ./signing-cert.pem ~/test_server_ca/CA.pem
+    OPENSSL_CONF=/usr/share/trust_onboard/ssl/acm.cnf client_sample https://localhost:12345 signing ~/test_server_ca/CA.pem
 
