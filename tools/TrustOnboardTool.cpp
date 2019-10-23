@@ -11,6 +11,9 @@
 #include <unistd.h>
 #include <getopt.h>
 
+// nlohmann's single-header implementation
+#include <json.hpp>
+
 #include "BreakoutTrustOnboardSDK.h"
 
 #define MAX_BAUDRATE 4000000
@@ -29,6 +32,7 @@ Optional arguments:\n\
   -a,--available-cert=<cert>    - path to store the available certificate\n\
   -k,--available-key=<key>      - path to store the available private key\n\
   -s,--signing-cert=<cert>      - path to store the signing certifiate\n\
+  -j,--json                     - print everything as a json object\n\
 \n\
 Examples:\n");
   fprintf(stderr, "\n%s -d /dev/ttyACM1 -p 0000 -a certificate.pem -k key.pem\n", program_name);
@@ -60,6 +64,7 @@ int main(int argc, char** argv) {
   char* cert_path         = nullptr;
   char* pk_path           = nullptr;
   char* signing_cert_path = nullptr;
+  bool print_json         = false;
 
   static struct option options[] = {{"device", required_argument, NULL, 'd'},
                                     {"baudrate", required_argument, NULL, 'b'},
@@ -67,10 +72,11 @@ int main(int argc, char** argv) {
                                     {"available-cert", required_argument, NULL, 'a'},
                                     {"available-key", required_argument, NULL, 'k'},
                                     {"signing-cert", required_argument, NULL, 's'},
+                                    {"json", no_argument, NULL, 'j'},
                                     {NULL, 0, NULL, 0}};
 
   int opt;
-  while ((opt = getopt_long(argc, argv, "d:b:p:a:k:s:", options, NULL)) != -1) {
+  while ((opt = getopt_long(argc, argv, "d:b:p:a:k:s:j", options, NULL)) != -1) {
     switch (opt) {
       case 'd':
         device = optarg;
@@ -97,6 +103,9 @@ int main(int argc, char** argv) {
       case 's':
         signing_cert_path = optarg;
         break;
+      case 'j':
+        print_json = true;
+        break;
       default:
         fprintf(stderr, "Invalid option: %c\n", opt);
         print_usage(argv[0]);
@@ -119,7 +128,6 @@ int main(int argc, char** argv) {
 
   tobInitialize(device, baudrate);
 
-  if (cert_path != nullptr) {
     ret = tobExtractAvailableCertificate(NULL, &cert_size, pin);
     if (ret != 0) {
       fprintf(stderr, "Error reading available certificate length: %d\n", ret);
@@ -139,6 +147,7 @@ int main(int argc, char** argv) {
       return 1;
     }
 
+  if (cert_path != nullptr) {
     fprintf(stderr, "Writing certificate chain with size: %d...\n", cert_size);
     FILE* cert_fp = fopen(cert_path, "w");
     if (!cert_fp) {
@@ -149,7 +158,6 @@ int main(int argc, char** argv) {
     fclose(cert_fp);
   }
 
-  if (pk_path != nullptr) {
     ret = tobExtractAvailablePrivateKey(NULL, &pk_size, NULL, &pk_size_der, pin);
     if (ret != 0) {
       fprintf(stderr, "Error reading private key size: %d\n", ret);
@@ -170,6 +178,7 @@ int main(int argc, char** argv) {
       return 1;
     }
 
+  if (pk_path != nullptr) {
     fprintf(stderr, "Writing key with size: %d...\n", pk_size);
     FILE* pk_fp = fopen(pk_path, "w");
     if (!pk_fp) {
@@ -180,7 +189,6 @@ int main(int argc, char** argv) {
     fclose(pk_fp);
   }
 
-  if (signing_cert_path != nullptr) {
     ret = tobExtractSigningCertificate(NULL, &signing_cert_size, NULL, &signing_cert_size_der, pin);
     if (ret != 0) {
       fprintf(stderr, "Error reading signing certificate length: %d\n", ret);
@@ -201,6 +209,7 @@ int main(int argc, char** argv) {
       return -1;
     }
 
+  if (signing_cert_path != nullptr) {
     fprintf(stderr, "Writing signing certificate chain with size: %d...\n", signing_cert_size);
     FILE* signing_cert_fp = fopen(signing_cert_path, "w");
     if (!signing_cert_fp) {
@@ -209,6 +218,15 @@ int main(int argc, char** argv) {
     }
     fwrite(signing_cert, sizeof(uint8_t), signing_cert_size, signing_cert_fp);
     fclose(signing_cert_fp);
+  }
+
+  if (print_json) {
+    nlohmann::json j;
+    j["available_certificate"] = std::string((const char*) cert);
+    j["available_pkey"] = std::string((const char*) pk);
+    j["signing_certificate"] = std::string((const char*) signing_cert);
+
+    std::cout << j.dump() << std::endl;
   }
 
   fprintf(stderr, "All done.\n");
