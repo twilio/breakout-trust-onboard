@@ -24,12 +24,6 @@ if(BUILD_AZURE)
 	set(TOB_DPS_REGISTERER azure_dps_registerer)
 endif(BUILD_AZURE)
 
-#set(CMAKE_BUILD_TYPE Debug)
-#add_definitions(-DAT_DEBUG)
-#add_definitions(-DMODEM_DEBUG)
-#add_definitions(-DAPDU_DEBUG)
-#add_definitions(-DSERIAL_DEBUG)
-
 if(NO_OS)
 	add_definitions(-DNO_OS)
 
@@ -40,6 +34,10 @@ if(NO_OS)
 	if(OPENSSL_SUPPORT)
 		message(FATAL_ERROR "OpenSSL support requires an OS environment")
 	endif(OPENSSL_SUPPORT)
+
+	if(BUILD_AZURE)
+		message(FATAL_ERROR "Azure IoT support requires an OS environment")
+	endif(BUILD_AZURE)
 
 	if(BUILD_TESTS)
 		message(FATAL_ERROR "Testing requires an OS environment")
@@ -170,14 +168,9 @@ endif(PCSC_SUPPORT)
 
 set(TOOLS_SOURCES
         tools/TrustOnboardTool.cpp
+        tools/OpenSSLEngine.cpp
+        tools/AzureDpsRegisterer.c
 	)
-
-if(OPENSSL_SUPPORT)
-	set(TOOLS_SOURCES
-		${TOOLS_SOURCES}
-		tools/OpenSSLEngine.cpp
-		)
-endif(OPENSSL_SUPPORT)
 
 add_custom_target(format COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/service-scripts/format.sh ${LIB_SOURCES} ${LIB_HEADERS} ${TOOLS_SOURCES} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -206,6 +199,12 @@ install(FILES include/BreakoutTrustOnboardSDK.h
 	      external_libs/tob_sim/common/inc/SEInterface.h
 	      external_libs/tob_sim/common/inc/ISO7816.h
 	DESTINATION include)
+
+file(GLOB_RECURSE CA_CERTS "${PROJECT_SOURCE_DIR}/bundles/*.pem")
+install(FILES ${CA_CERTS} DESTINATION share/trust_onboard/ssl/ca)
+install(FILES tls-conf/acm.cnf tls-conf/pcsc.cnf DESTINATION share/trust_onboard/ssl/)
+install(DIRECTORY samples/azure-iot DESTINATION share/trust_onboard/samples USE_SOURCE_PERMISSIONS)
+install(DIRECTORY samples/standalone DESTINATION share/trust_onboard/samples USE_SOURCE_PERMISSIONS)
 
 set(CPACK_COMPONENTS_ALL_IN_ONE_PACKAGE 1)
 
