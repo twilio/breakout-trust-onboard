@@ -5,7 +5,6 @@ set(CMAKE_CXX_STANDARD 14)
 option(PCSC_SUPPORT "Support for pcsc-lite" OFF)
 option(OPENSSL_SUPPORT "Support for signing key with OpenSSL support" OFF)
 option(MBEDTLS_SUPPORT "Private crypto device shims for MbedTLS 2.11+" OFF)
-option(BUILD_SHARED "Build as a shared library" OFF)
 option(BUILD_TESTS "Build tests" OFF)
 option(BUILD_DOCS "Build doxygen documentation" OFF)
 option(BUILD_AZURE "Build with Azure IoT Hub support" OFF)
@@ -100,11 +99,7 @@ if(BUILD_AZURE)
 	set(LIB_HEADERS ${LIB_HEADERS} include/TobAzureHsm.h)
 endif(BUILD_AZURE)
 
-if(BUILD_SHARED)
-	add_library(TwilioTrustOnboard SHARED ${LIB_SOURCES} ${LIB_HEADERS})
-else(BUILD_SHARED)
-	add_library(TwilioTrustOnboard STATIC ${LIB_SOURCES} ${LIB_HEADERS})
-endif(BUILD_SHARED)
+add_library(TwilioTrustOnboard SHARED ${LIB_SOURCES} ${LIB_HEADERS})
 
 set_property(TARGET TwilioTrustOnboard PROPERTY POSITION_INDEPENDENT_CODE ON)
 
@@ -168,30 +163,9 @@ endif(BUILD_AZURE)
 
 if(PCSC_SUPPORT)
 	target_link_libraries(
-		${TOOL_BINARY}
-                ${PCSC_LIBRARIES}
-        )
-
-	if(BUILD_SHARED)
-		target_link_libraries(
-			TwilioTrustOnboard
-			${PCSC_LIBRARIES}
-		)
-	endif(BUILD_SHARED)
-
-	if(OPENSSL_SUPPORT)
-		target_link_libraries(
-			${TOB_ENGINE}
-			${PCSC_LIBRARIES}
-	        )
-	endif(OPENSSL_SUPPORT)
-
-	if(MBEDTLS_SUPPORT)
-		target_link_libraries(
-			tob_mbed
-			${PCSC_LIBRARIES}
-	        )
-	endif(MBEDTLS_SUPPORT)
+		TwilioTrustOnboard
+		${PCSC_LIBRARIES}
+	)
 endif(PCSC_SUPPORT)
 
 set(TOOLS_SOURCES
