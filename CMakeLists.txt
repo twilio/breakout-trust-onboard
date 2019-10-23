@@ -200,7 +200,7 @@ install(FILES include/BreakoutTrustOnboardSDK.h
 	      external_libs/tob_sim/common/inc/ISO7816.h
 	DESTINATION include)
 
-file(GLOB_RECURSE CA_CERTS "${PROJECT_SOURCE_DIR}/bundles/*.pem")
+file(GLOB_RECURSE CA_CERTS "${PROJECT_SOURCE_DIR}/bundles/*.pem" "${PROJECT_SOURCE_DIR}/bundles/*.0")
 install(FILES ${CA_CERTS} DESTINATION share/trust_onboard/ssl/ca)
 install(FILES tls-conf/acm.cnf tls-conf/pcsc.cnf DESTINATION share/trust_onboard/ssl/)
 install(DIRECTORY samples/azure-iot DESTINATION share/trust_onboard/samples USE_SOURCE_PERMISSIONS)
