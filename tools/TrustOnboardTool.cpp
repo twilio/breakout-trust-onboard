@@ -128,24 +128,24 @@ int main(int argc, char** argv) {
 
   tobInitialize(device, baudrate);
 
-    ret = tobExtractAvailableCertificate(NULL, &cert_size, pin);
-    if (ret != 0) {
-      fprintf(stderr, "Error reading available certificate length: %d\n", ret);
-      return 1;
-    }
+  ret = tobExtractAvailableCertificate(NULL, &cert_size, pin);
+  if (ret != 0) {
+    fprintf(stderr, "Error reading available certificate length: %d\n", ret);
+    return 1;
+  }
 
-    cert = (uint8_t*)malloc(cert_size * sizeof(uint8_t));
+  cert = (uint8_t*)malloc(cert_size * sizeof(uint8_t));
 
-    if (cert == NULL) {
-      fprintf(stderr, "Failed to allocate memory for the available certificate\n");
-      return 1;
-    }
+  if (cert == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the available certificate\n");
+    return 1;
+  }
 
-    ret = tobExtractAvailableCertificate(cert, &cert_size, pin);
-    if (ret != 0) {
-      fprintf(stderr, "Error reading available certificate: %d\n", ret);
-      return 1;
-    }
+  ret = tobExtractAvailableCertificate(cert, &cert_size, pin);
+  if (ret != 0) {
+    fprintf(stderr, "Error reading available certificate: %d\n", ret);
+    return 1;
+  }
 
   if (cert_path != nullptr) {
     fprintf(stderr, "Writing certificate chain with size: %d...\n", cert_size);
@@ -158,25 +158,25 @@ int main(int argc, char** argv) {
     fclose(cert_fp);
   }
 
-    ret = tobExtractAvailablePrivateKey(NULL, &pk_size, NULL, &pk_size_der, pin);
-    if (ret != 0) {
-      fprintf(stderr, "Error reading private key size: %d\n", ret);
-      return -1;
-    }
+  ret = tobExtractAvailablePrivateKey(NULL, &pk_size, NULL, &pk_size_der, pin);
+  if (ret != 0) {
+    fprintf(stderr, "Error reading private key size: %d\n", ret);
+    return -1;
+  }
 
-    pk     = (uint8_t*)malloc(pk_size * sizeof(uint8_t));
-    pk_der = (uint8_t*)malloc(pk_size_der * sizeof(uint8_t));
+  pk     = (uint8_t*)malloc(pk_size * sizeof(uint8_t));
+  pk_der = (uint8_t*)malloc(pk_size_der * sizeof(uint8_t));
 
-    if (pk == NULL || pk_der == NULL) {
-      fprintf(stderr, "Failed to allocate memory for the available private key\n");
-      return 1;
-    }
+  if (pk == NULL || pk_der == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the available private key\n");
+    return 1;
+  }
 
-    ret = tobExtractAvailablePrivateKey(pk, &pk_size, pk_der, &pk_size_der, pin);
-    if (ret != 0) {
-      fprintf(stderr, "Error reading private key: %d\n", ret);
-      return 1;
-    }
+  ret = tobExtractAvailablePrivateKey(pk, &pk_size, pk_der, &pk_size_der, pin);
+  if (ret != 0) {
+    fprintf(stderr, "Error reading private key: %d\n", ret);
+    return 1;
+  }
 
   if (pk_path != nullptr) {
     fprintf(stderr, "Writing key with size: %d...\n", pk_size);
@@ -189,25 +189,25 @@ int main(int argc, char** argv) {
     fclose(pk_fp);
   }
 
-    ret = tobExtractSigningCertificate(NULL, &signing_cert_size, NULL, &signing_cert_size_der, pin);
-    if (ret != 0) {
-      fprintf(stderr, "Error reading signing certificate length: %d\n", ret);
-      return -1;
-    }
+  ret = tobExtractSigningCertificate(NULL, &signing_cert_size, NULL, &signing_cert_size_der, pin);
+  if (ret != 0) {
+    fprintf(stderr, "Error reading signing certificate length: %d\n", ret);
+    return -1;
+  }
 
-    signing_cert     = (uint8_t*)malloc(signing_cert_size * sizeof(uint8_t));
-    signing_cert_der = (uint8_t*)malloc(signing_cert_size_der * sizeof(uint8_t));
+  signing_cert     = (uint8_t*)malloc(signing_cert_size * sizeof(uint8_t));
+  signing_cert_der = (uint8_t*)malloc(signing_cert_size_der * sizeof(uint8_t));
 
-    if (signing_cert == NULL || signing_cert_der == NULL) {
-      fprintf(stderr, "Failed to allocate memory for signing certificate\n");
-      return 1;
-    }
+  if (signing_cert == NULL || signing_cert_der == NULL) {
+    fprintf(stderr, "Failed to allocate memory for signing certificate\n");
+    return 1;
+  }
 
-    ret = tobExtractSigningCertificate(signing_cert, &signing_cert_size, signing_cert_der, &signing_cert_size_der, pin);
-    if (ret != 0) {
-      fprintf(stderr, "Error reading signing certificate: %d\n", ret);
-      return -1;
-    }
+  ret = tobExtractSigningCertificate(signing_cert, &signing_cert_size, signing_cert_der, &signing_cert_size_der, pin);
+  if (ret != 0) {
+    fprintf(stderr, "Error reading signing certificate: %d\n", ret);
+    return -1;
+  }
 
   if (signing_cert_path != nullptr) {
     fprintf(stderr, "Writing signing certificate chain with size: %d...\n", signing_cert_size);
@@ -222,9 +222,9 @@ int main(int argc, char** argv) {
 
   if (print_json) {
     nlohmann::json j;
-    j["available_certificate"] = std::string((const char*) cert);
-    j["available_pkey"] = std::string((const char*) pk);
-    j["signing_certificate"] = std::string((const char*) signing_cert);
+    j["available_certificate"] = std::string((const char*)cert);
+    j["available_pkey"]        = std::string((const char*)pk);
+    j["signing_certificate"]   = std::string((const char*)signing_cert);
 
     std::cout << j.dump() << std::endl;
   }

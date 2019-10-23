@@ -205,24 +205,23 @@ static int tob_engine_ctrl(ENGINE* e, int cmd, long i, void* p, void (*f)(void))
       ctx->modem_baudrate = i;
       return 1;
 
-    case CMD_LOAD_CERT_CTRL: 
-      {
-        struct load_cert_params {
-          const char *cert_id;
-          X509 *cert;
-        } *params = (struct load_cert_params*)p;
+    case CMD_LOAD_CERT_CTRL: {
+      struct load_cert_params {
+        const char* cert_id;
+        X509* cert;
+      }* params = (struct load_cert_params*)p;
 
-        if (strcmp(params->cert_id, "signing") == 0) {
-          params->cert = tob_extract_certificate(e, true);
-        } else if (strcmp(params->cert_id, "available") == 0) {
-          params->cert = tob_extract_certificate(e, false);
-        } else {
-          fprintf(stderr, "Invalid cert name: %s\n", params->cert_id);
-          params->cert = NULL;
-        }
-
-        return (params->cert != NULL);
+      if (strcmp(params->cert_id, "signing") == 0) {
+        params->cert = tob_extract_certificate(e, true);
+      } else if (strcmp(params->cert_id, "available") == 0) {
+        params->cert = tob_extract_certificate(e, false);
+      } else {
+        fprintf(stderr, "Invalid cert name: %s\n", params->cert_id);
+        params->cert = NULL;
       }
+
+      return (params->cert != NULL);
+    }
   }
   fprintf(stderr, "Unknown command: %d\n", cmd);
   return 0;
