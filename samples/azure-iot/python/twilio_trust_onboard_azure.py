@@ -1,8 +1,7 @@
 """Twilio Telemetry/Sensor Demo For Quickstart and Quest."""
 import time
 import sys
-import yaml
-from yaml import Loader
+import os
 import subprocess
 import json
 from grove.i2c import Bus
@@ -37,6 +36,11 @@ PROTOCOL = IoTHubTransportProvider.HTTP
 serial = i2c(port=1, address=0x3C)
 device = sh1106(serial, width=128, height=128, rotate=1)
 
+# Trust Onboard Options
+TOB_DEVICE = '/dev/ttyACM3'
+TOB_BAUDRATE = '115200'
+TOB_PIN = '0000'
+
 # Run Cloud
 RUN_CLOUD = True
 
@@ -50,37 +54,72 @@ with canvas(device) as draw:
     draw.text((42, 70), "present", fill="white")
     draw.text((12, 80), "T E L E M E T R Y", fill="white")
 
+def get_id_scope():
+    scope = os.environ.get('AZURE_ID_SCOPE') or None
+
+    if not scope:
+        try:
+            with open(os.path.expanduser('~/azure_id_scope.txt'), 'r') as f:
+                scope = f.read().replace('\n', '')
+        except:
+            pass
+
+    return scope
+
 ##############################################
 # Get Certificate and Key Data from ToB Tool #
 ##############################################
 if RUN_CLOUD:
-    command = ['azure_dps_registerer']
+    id_scope = get_id_scope()
 
-    # Todo: Comment to next todo when JSON works
-    return_yaml = subprocess.check_output(command)
+    if not id_scope:
+        print ('Could not get DPS ID scope. Either set AZURE_ID_SCOPE environment variable or put your ID scope into ~/azure_id_scope.txt')
+        sys.exit(1)
+
+    registerer_command = ['azure_dps_registerer', '-d', TOB_DEVICE, '-p', TOB_PIN, '-b', TOB_BAUDRATE, '-k', 'available', '-a', id_scope]
+
+    return_json = subprocess.check_output(registerer_command)
     try:
-        connect_string = yaml.load(return_yaml, Loader=yaml.FullLoader)
-    except yaml.scanner.ScannerError as e:
-        if 'Msg: IoTHub not found' in return_yaml:
-            print ('Your Device Provisioning Service does not have a ' +
-                   'linked IoT Hub! Please set one up in the Azure portal.')
-            sys.exit(4)
-        else:
-            print ("Received an error from Azure. Please review: {}"
-                   .format(return_yaml))
-            sys.exit(3)
+        register_data = json.loads(return_json.decode('utf-8'))
+    except json.JSONDecodeError as e:
+        print("Error parsing azure_dps_registerer output: ", str(e))
 
-    if 'certificate' not in connect_string:
-        print ('Unable to register your device. Please ensure your id ' +
-               'scope in ~/azure_id_scope.txt is correct.')
+    if not 'status' in register_data or register_data['status'] != 'SUCCESS':
+        print ('Registering to Azure DPS failed: ', register_data.get('message') or 'reason unknown')
+        sys.exit(3)
+
+    if not 'iothub_uri' in register_data:
+        print ('IoT Hub URI not present in registerer output, can''t proceed')
+        sys.exit(3)
+
+    if not 'device_id' in register_data:
+        print ('Device ID not present in registerer output, can''t proceed')
+        sys.exit(3)
+
+    tool_command = ['trust_onboard_tool', '-d', TOB_DEVICE, '-p', TOB_PIN, '-b', TOB_BAUDRATE, '-j']
+
+    return_json = subprocess.check_output(tool_command)
+    try:
+        tob_data = json.loads(return_json.decode('utf-8'))
+    except json.JSONDecodeError as e:
+        print("Error parsing trust_onboard_tool output: ", str(e))
+
+    if 'available_certificate' not in tob_data:
+        print ('Could not get available certificate')
         sys.exit(5)
-    X509_CERTIFICATE = connect_string['certificate']
-    X509_PRIVATEKEY = connect_string['key']
 
-    CONNECTION_STRING = "HostName=" + connect_string['iothub_uri'] + \
-        ";DeviceId=" + connect_string['device_id'] + ";x509=true"
+    if 'available_pkey' not in tob_data:
+        print ('Could not get available private key')
+        sys.exit(5)
+
+    X509_CERTIFICATE = tob_data['available_certificate']
+    X509_PRIVATEKEY =  tob_data['available_pkey']
+
+    CONNECTION_STRING = "HostName=" + register_data['iothub_uri'] + \
+        ";DeviceId=" + register_data['device_id'] + ";x509=true"
 else:
-    connect_string = ""
+    register_data = ""
+    tob_data = ""
     X509_CERTIFICATE = ""
     X509_PRIVATEKEY = ""
 
@@ -254,7 +293,7 @@ def twilio_telemetry_loop():
 
             # Craft a message to the cloud
             msg_txt_formatted = json.dumps({
-                'deviceId': connect_string['device_id'],
+                'deviceId': register_data['device_id'],
                 'temperatureFahrenheit': fahrenheit_temperature,
                 'temperatureCelsius': celsius_temperature,
                 'displayedTemperatureUnits': UNITS,
