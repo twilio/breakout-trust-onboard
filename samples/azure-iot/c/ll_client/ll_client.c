@@ -9,10 +9,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "iothub.h"
-#include "iothub_device_client_ll.h"
-#include "iothub_client_options.h"
-#include "iothub_message.h"
+#include "azureiot/iothub.h"
+#include "azureiot/iothub_device_client_ll.h"
+#include "azureiot/iothub_client_options.h"
+#include "azureiot/iothub_message.h"
 #include "azure_c_shared_utility/threadapi.h"
 #include "azure_c_shared_utility/shared_util_options.h"
 #include "azure_c_shared_utility/tlsio_cryptodev.h"
@@ -35,19 +35,19 @@ and removing calls to _DoWork will yield the same results. */
 //#define SAMPLE_HTTP
 
 #ifdef SAMPLE_MQTT
-    #include "iothubtransportmqtt.h"
+    #include "azureiot/iothubtransportmqtt.h"
 #endif // SAMPLE_MQTT
 #ifdef SAMPLE_MQTT_OVER_WEBSOCKETS
-    #include "iothubtransportmqtt_websockets.h"
+    #include "azureiot/iothubtransportmqtt_websockets.h"
 #endif // SAMPLE_MQTT_OVER_WEBSOCKETS
 #ifdef SAMPLE_AMQP
-    #include "iothubtransportamqp.h"
+    #include "azureiot/iothubtransportamqp.h"
 #endif // SAMPLE_AMQP
 #ifdef SAMPLE_AMQP_OVER_WEBSOCKETS
-    #include "iothubtransportamqp_websockets.h"
+    #include "azureiot/iothubtransportamqp_websockets.h"
 #endif // SAMPLE_AMQP_OVER_WEBSOCKETS
 #ifdef SAMPLE_HTTP
-    #include "iothubtransporthttp.h"
+    #include "azureiot/iothubtransporthttp.h"
 #endif // SAMPLE_HTTP
 
 /* Paste in the your x509 iothub connection string  */
@@ -176,3 +176,11 @@ int main(void)
 
     return 0;
 }
+
+// Force symbol import at this point, so that the linker doesn't pull in
+//   Riot and utpm implementations from Azure IoT SDK
+extern const HSM_CLIENT_X509_INTERFACE* hsm_client_x509_interface(void);
+extern const HSM_CLIENT_TPM_INTERFACE* hsm_client_tpm_interface(void);
+
+const HSM_CLIENT_X509_INTERFACE* (*x509_ptr)(void) = hsm_client_x509_interface;
+const HSM_CLIENT_TPM_INTERFACE* (*tpm_ptr)(void) = hsm_client_tpm_interface;

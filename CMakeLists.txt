@@ -141,11 +141,10 @@ if(BUILD_AZURE)
 	find_package(Threads REQUIRED)
 
 	add_executable(${TOB_DPS_REGISTERER}
-		tools/AzureDpsRegisterer.c)
+		tools/AzureDpsRegisterer.cpp)
 	target_link_libraries(
 		${TOB_DPS_REGISTERER}
 		TwilioTrustOnboard
-		${CMAKE_THREAD_LIBS_INIT}
 		prov_http_transport # This and below are static Azure IoT SDK libraries
 		iothub_client
 		prov_device_ll_client
@@ -155,9 +154,12 @@ if(BUILD_AZURE)
 		iothub_client_http_transport
 		aziotsharedutil
 		parson # End of Azure libraries
-		m # Libm is required by Azure libraries, so goes last
+		m # Libm is required by Azure libraries, so goes after Azure libraries
+		${CMAKE_THREAD_LIBS_INIT} # So is pthread
 		)
+	target_include_directories(${TOB_DPS_REGISTERER} PRIVATE ${JSON_INCLUDE_DIR})
 
+	# OpenSSL is required for Azure custom HSM
 	target_include_directories(TwilioTrustOnboard PUBLIC
 		${OPENSSL_INCLUDE_DIR})
 	target_link_libraries(
@@ -175,7 +177,7 @@ endif(PCSC_SUPPORT)
 set(TOOLS_SOURCES
         tools/TrustOnboardTool.cpp
         tools/OpenSSLEngine.cpp
-        tools/AzureDpsRegisterer.c
+        tools/AzureDpsRegisterer.cpp
 	)
 
 add_custom_target(format COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/service-scripts/format.sh ${LIB_SOURCES} ${LIB_HEADERS} ${TOOLS_SOURCES} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
