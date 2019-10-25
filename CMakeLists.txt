@@ -102,9 +102,8 @@ add_library(TwilioTrustOnboard SHARED ${LIB_SOURCES} ${LIB_HEADERS})
 set_property(TARGET TwilioTrustOnboard PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 if(NOT NO_OS)
-	# nlohmann-json package installs cmake modules into a non-standard location
-	set(nlohmann_json_DIR "/usr/lib/cmake")
-	find_package(nlohmann_json REQUIRED)
+	find_package(NlohmannJson REQUIRED)
+	message("JSON DIR IS ${JSON_INCLUDE_DIR}")
 	add_executable(
         	${TOOL_BINARY}
 	        tools/TrustOnboardTool.cpp)

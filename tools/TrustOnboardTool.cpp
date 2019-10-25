@@ -12,7 +12,7 @@
 #include <getopt.h>
 
 // nlohmann's single-header implementation
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 #include "BreakoutTrustOnboardSDK.h"
 

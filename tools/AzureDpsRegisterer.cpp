@@ -11,11 +11,11 @@
 #include <azure_prov_client/prov_device_ll_client.h>
 #include <azure_prov_client/prov_security_factory.h>
 #include <azure_prov_client/prov_transport_http_client.h>
+#include <nlohmann/json.hpp>
 
 #include "TobAzureHsm.h"
 
 #include "BreakoutTrustOnboardSDK.h"
-#include "json.hpp"
 //
 
 static const char *global_prov_uri = "global.azure-devices-provisioning.net";
