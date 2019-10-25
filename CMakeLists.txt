@@ -103,7 +103,6 @@ set_property(TARGET TwilioTrustOnboard PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 if(NOT NO_OS)
 	find_package(NlohmannJson REQUIRED)
-	message("JSON DIR IS ${JSON_INCLUDE_DIR}")
 	add_executable(
         	${TOOL_BINARY}
 	        tools/TrustOnboardTool.cpp)
