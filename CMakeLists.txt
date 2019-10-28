@@ -116,13 +116,20 @@ if(NOT NO_OS)
 endif(NOT NO_OS)
 
 if(OPENSSL_SUPPORT)
+	find_package(OpenSSL REQUIRED)
 	add_library(
 		${TOB_ENGINE} SHARED
 		tools/OpenSSLEngine.cpp)
 
 	target_link_libraries(
 		${TOB_ENGINE}
-		TwilioTrustOnboard)
+		TwilioTrustOnboard
+		${OPENSSL_LIBRARIES})
+
+	target_include_directories(
+		${TOB_ENGINE} PRIVATE
+		${OPENSSL_INCLUDE_DIR})
+
 endif(OPENSSL_SUPPORT)
 
 if(MBEDTLS_SUPPORT)
