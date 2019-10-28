@@ -1,1 +1,1 @@
-find_path(JSON_INCLUDE_DIR nlohmann/json.hpp)
+find_path(JSON_INCLUDE_DIR json.hpp HINTS /usr/include/nlohmann /usr/include/ /usr)
