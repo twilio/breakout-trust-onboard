@@ -328,9 +328,9 @@ static RSA_METHOD* tob_engine_signing_rsa(void) {
 
     tob_engine_meth->name = OPENSSL_strdup("Trust Onboard RSA method");
     tob_engine_meth->flags = RSA_FLAG_SIGN_VER;
-    tob_engine_meth->rsa_sign = tob_engine_rsa_sign;
-    tob_engine_meth->rsa_priv_dec = tob_engine_rsa_decrypt;
-    tob_engine_meth->finish = tob_engine_rsa_finish;
+    tob_engine_meth->rsa_sign = tob_engine_signing_rsa_sign;
+    tob_engine_meth->rsa_priv_dec = tob_engine_signing_rsa_decrypt;
+    tob_engine_meth->finish = tob_engine_signing_rsa_finish;
 #endif
   }
 
