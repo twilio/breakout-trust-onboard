@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """Twilio Telemetry/Sensor Demo For Quickstart and Quest."""
 import time
 import sys
@@ -37,7 +39,7 @@ serial = i2c(port=1, address=0x3C)
 device = sh1106(serial, width=128, height=128, rotate=1)
 
 # Trust Onboard Options
-TOB_DEVICE = '/dev/ttyACM3'
+TOB_DEVICE = '/dev/ttyACM1'
 TOB_BAUDRATE = '115200'
 TOB_PIN = '0000'
 
