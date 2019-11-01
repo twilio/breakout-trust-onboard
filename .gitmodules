@@ -1,3 +1,3 @@
-[submodule "cloud-support/custom/paho-openssl/libs/paho.mqtt.embedded-c"]
-	path = cloud-support/custom/paho-openssl/libs/paho.mqtt.embedded-c
+[submodule "samples/standalone/paho-openssl/libs/paho.mqtt.embedded-c"]
+	path = samples/standalone/paho-openssl/libs/paho.mqtt.embedded-c
 	url = https://github.com/eclipse/paho.mqtt.embedded-c/

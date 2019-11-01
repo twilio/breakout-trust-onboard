@@ -24,7 +24,7 @@
 #include <azure_c_shared_utility/shared_util_options.h>
 #include <azure_prov_client/iothub_security_factory.h>
 
-#include "custom_hsm_twilio.h"
+#include "TobAzureHsm.h"
 #include "BreakoutTrustOnboardSDK.h"
 
 #include <linux/i2c-dev.h>
@@ -38,19 +38,19 @@
 //#define SAMPLE_HTTP
 
 #ifdef SAMPLE_MQTT
-    #include "iothubtransportmqtt.h"
+    #include "azureiot/iothubtransportmqtt.h"
 #endif // SAMPLE_MQTT
 #ifdef SAMPLE_MQTT_OVER_WEBSOCKETS
-    #include "iothubtransportmqtt_websockets.h"
+    #include "azureiot/iothubtransportmqtt_websockets.h"
 #endif // SAMPLE_MQTT_OVER_WEBSOCKETS
 #ifdef SAMPLE_AMQP
-    #include "iothubtransportamqp.h"
+    #include "azureiot/iothubtransportamqp.h"
 #endif // SAMPLE_AMQP
 #ifdef SAMPLE_AMQP_OVER_WEBSOCKETS
-    #include "iothubtransportamqp_websockets.h"
+    #include "azureiot/iothubtransportamqp_websockets.h"
 #endif // SAMPLE_AMQP_OVER_WEBSOCKETS
 #ifdef SAMPLE_HTTP
-    #include "iothubtransporthttp.h"
+    #include "azureiot/iothubtransporthttp.h"
 #endif // SAMPLE_HTTP
 
 /* Change if using different device, key, baudrate or PIN */
@@ -322,3 +322,11 @@ int main(void)
 
   return 0;
 }
+
+// Force symbol import at this point, so that the linker doesn't pull in
+//   Riot and utpm implementations from Azure IoT SDK
+extern const HSM_CLIENT_X509_INTERFACE* hsm_client_x509_interface(void);
+extern const HSM_CLIENT_TPM_INTERFACE* hsm_client_tpm_interface(void);
+
+const HSM_CLIENT_X509_INTERFACE* (*x509_ptr)(void) = hsm_client_x509_interface;
+const HSM_CLIENT_TPM_INTERFACE* (*tpm_ptr)(void) = hsm_client_tpm_interface;

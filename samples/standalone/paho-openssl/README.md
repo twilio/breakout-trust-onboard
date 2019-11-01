@@ -12,7 +12,7 @@ We'll use the Paho embedded-c MQTT client library, libcurl, and the Trust Onboar
 
 The Paho embedded-c MQTT client library allows us to implement our own IPStack which is required to have more control over how the TLS connection is initiated.  libcurl provides a nice abstraction around the OpenSSL connection initiation and socket operations we need.  Finally, the Trust Onboard OpenSSL engine handles forwarding the signing operations to the Applet embedded in your Trust Onboard enabled SIM card.
 
-Other paths are possible here, depending on your needs.  Support for mbedtls, wolfssl and openssl are demonstrated for HTTPS connections in the cloud-support/custom directory of this repository.
+Other paths are possible here, depending on your needs.  Support for mbedtls, wolfssl and openssl are demonstrated for HTTPS connections in the `samples/standalone` directory of this repository.
 
 # Getting Started
 
@@ -37,25 +37,24 @@ cd ..
 
 Depending on your environment, you have two ways to test this.  You can use a supported cellular module, such as the Raspberry Pi HAT that comes with our Broadband IoT Developer Kit, or a smart card reader (useful primarily for testing).
 
-There are two Trust Onboard OpenSSL engine configuration files included in this sample.  If your cellular module lives at a different serial tty port, or if you have multiple smart card readers on your system, you may need to edit the files accordingly:
+There are two Trust Onboard OpenSSL engine configuration files installed with Trust Onboard SDK.  If your cellular module lives at a different serial tty port, or if you have multiple smart card readers on your system, you may need to copy the files over, and edit them accordingly:
 
-- test_engine_acm.conf - used for a serial connection to a cellular module with a Trust Onboard SIM
-- test_engine_pcsc.conf - used for a direct smart card reader connection with a Trust Onboard SIM
+- /usr/share/trust_onboard/ssl/acm.cnf - used for a serial connection to a cellular module with a Trust Onboard SIM
+- /usr/share/trust_onboard/ssl/pcsc.cnf - used for a direct smart card reader connection with a Trust Onboard SIM
 
 The Eclipse project's [paho.mqtt.embedded-c library](https://github.com/eclipse/paho.mqtt.embedded-c/) is included as a git submodule of this project (be sure to `git submodule init` and `git submodule update`).  It will be compiled with the sample:
 
 ```
-cd cloud-support/custom/paho-openssl
-mkdir cmake
-cd cmake
-cmake ..
+mkdir paho-tob-cmake
+cd paho-tob-cmake
+cmake /usr/share/trust_onboard/samples/standalone/paho-openssl
 make
 ```
 
-To run the sample, either with the `test_engine_acm.conf` or `test_engine_pcsc.conf` configuration, supply your own MQTT hostname, port, and topic names to subscribe to below.  The sample will subscribe to the topic and print any messages it receives.  Ensure the hostname you provide below matches one of the names on the server's certificate or host validation will fail:
+To run the sample, either with the `acm.cnf` or `pcsc.cnf` configuration, supply your own MQTT hostname, port, and topic names to subscribe to below.  The sample will subscribe to the topic and print any messages it receives.  Ensure the hostname you provide below matches one of the names on the server's certificate or host validation will fail:
 
 ```
-OPENSSL_CONF=../test_engine_acm.conf ./client_sample mqtt.example.org 8883 signing ca.pem test-clientid "device/#"
+OPENSSL_CONF=/usr/share/trust_onboard/ssl/acm.cnf ./client_sample mqtt.example.org 8883 signing ca.pem test-clientid "device/#"
 ```
 
 Your client will be subscribed to the wildcard topic `device/#` when you see the following output:

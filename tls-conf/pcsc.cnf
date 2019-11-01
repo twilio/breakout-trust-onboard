@@ -8,7 +8,6 @@ mias = mias_section
 
 [mias_section]
 engine_id = tob_mias
-dynamic_path = /usr/local/lib/libtrust_onboard_engine.so
+dynamic_path = /usr/lib/libtrust_onboard_engine.so
 PIN = 0000
-MODEM_DEVICE = /dev/ttyACM0
-MODEM_BAUDRATE = 115200
+MODEM_DEVICE = pcsc:0

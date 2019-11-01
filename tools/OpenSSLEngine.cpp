@@ -205,24 +205,23 @@ static int tob_engine_ctrl(ENGINE* e, int cmd, long i, void* p, void (*f)(void))
       ctx->modem_baudrate = i;
       return 1;
 
-    case CMD_LOAD_CERT_CTRL: 
-      {
-        struct load_cert_params {
-          const char *cert_id;
-          X509 *cert;
-        } *params = (struct load_cert_params*)p;
+    case CMD_LOAD_CERT_CTRL: {
+      struct load_cert_params {
+        const char* cert_id;
+        X509* cert;
+      }* params = (struct load_cert_params*)p;
 
-        if (strcmp(params->cert_id, "signing") == 0) {
-          params->cert = tob_extract_certificate(e, true);
-        } else if (strcmp(params->cert_id, "available") == 0) {
-          params->cert = tob_extract_certificate(e, false);
-        } else {
-          fprintf(stderr, "Invalid cert name: %s\n", params->cert_id);
-          params->cert = NULL;
-        }
-
-        return (params->cert != NULL);
+      if (strcmp(params->cert_id, "signing") == 0) {
+        params->cert = tob_extract_certificate(e, true);
+      } else if (strcmp(params->cert_id, "available") == 0) {
+        params->cert = tob_extract_certificate(e, false);
+      } else {
+        fprintf(stderr, "Invalid cert name: %s\n", params->cert_id);
+        params->cert = NULL;
       }
+
+      return (params->cert != NULL);
+    }
   }
   fprintf(stderr, "Unknown command: %d\n", cmd);
   return 0;
@@ -329,9 +328,9 @@ static RSA_METHOD* tob_engine_signing_rsa(void) {
 
     tob_engine_meth->name = OPENSSL_strdup("Trust Onboard RSA method");
     tob_engine_meth->flags = RSA_FLAG_SIGN_VER;
-    tob_engine_meth->rsa_sign = tob_engine_rsa_sign;
-    tob_engine_meth->rsa_priv_dec = tob_engine_rsa_decrypt;
-    tob_engine_meth->finish = tob_engine_rsa_finish;
+    tob_engine_meth->rsa_sign = tob_engine_signing_rsa_sign;
+    tob_engine_meth->rsa_priv_dec = tob_engine_signing_rsa_decrypt;
+    tob_engine_meth->finish = tob_engine_signing_rsa_finish;
 #endif
   }
 

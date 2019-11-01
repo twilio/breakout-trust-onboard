@@ -59,13 +59,13 @@ MQTT_BROKER_STDOUT=$(mktemp)
 MOSQUITTO_CONF=$(mktemp)
 
 SOURCE_DIR=$(realpath `dirname "${BASH_SOURCE[0]}"`/..)
-CLOUD_SUPPORT_DIR="${SOURCE_DIR}/cloud-support/custom"
+SAMPLES_DIR="${SOURCE_DIR}/samples/standalone"
 TOB_LIB_DIR=${SOURCE_DIR}/install_prefix/lib
 TOB_INC_DIR=${SOURCE_DIR}/install_prefix/include
 export LD_LIBRARY_PATH=${TOB_LIB_DIR}
 
 CERTS_DIR=$(mktemp -d)
-${CLOUD_SUPPORT_DIR}/server/gencreds.sh ${CERTS_DIR}/CA.pem ${CERTS_DIR}/server_cert.pem ${CERTS_DIR}/server_pkey.pem localhost || exit 1
+${SAMPLES_DIR}/server/gencreds.sh ${CERTS_DIR}/CA.pem ${CERTS_DIR}/server_cert.pem ${CERTS_DIR}/server_pkey.pem localhost || exit 1
 
 ${SOURCE_DIR}/cmake/bin/trust_onboard_tool --device=${TOB_DEVICE} --baudrate=${TOB_BAUDRATE} --pin=${TOB_PIN} --available-cert=${CERTS_DIR}/client_cert_available.pem --available-key=${CERTS_DIR}/client_pkey_available.pem --signing-cert=${CERTS_DIR}/client_cert_signing.pem
 
@@ -81,7 +81,7 @@ CLIENT_SIGNING_CERT=${CERTS_DIR}/client_cert_signing.pem
 
 echo "*** Starting HTTPS server"
 openssl rehash ${SOURCE_DIR}/bundles/
-${CLOUD_SUPPORT_DIR}/server/server_sample.py ${SERVER_PORT} ${SERVER_CERT} ${SERVER_PKEY} ${SOURCE_DIR}/bundles/ 2>&1 >${SERVER_STDOUT} &
+${SAMPLES_DIR}/server/server_sample.py ${SERVER_PORT} ${SERVER_CERT} ${SERVER_PKEY} ${SOURCE_DIR}/bundles/ 2>&1 >${SERVER_STDOUT} &
 server_id=$!
 
 echo "*** Starting MQTT broker"
@@ -116,7 +116,7 @@ trap cleanup INT TERM EXIT
 sleep 2
 
 echo "*** Testing OpenSSL sample"
-build_sample ${CLOUD_SUPPORT_DIR}/client-openssl ${TOB_LIB_DIR} ${TOB_INC_DIR}
+build_sample ${SAMPLES_DIR}/client-openssl ${TOB_LIB_DIR} ${TOB_INC_DIR}
 
 # Generate OpenSSL config
 
@@ -139,7 +139,7 @@ MODEM_DEVICE = ${TOB_DEVICE}
 MODEM_BAUDRATE = ${TOB_BAUDRATE}
 EOF
 
-${CLOUD_SUPPORT_DIR}/client-openssl/build/client_sample https://localhost:${SERVER_PORT} signing ${SERVER_CA} 2>&1 >${CLIENT_STDOUT} &
+${SAMPLES_DIR}/client-openssl/build/client_sample https://localhost:${SERVER_PORT} signing ${SERVER_CA} 2>&1 >${CLIENT_STDOUT} &
 openssl_client_id=$!
 kill_timer ${openssl_client_id} 60&
 kill_timer_id=$!
@@ -156,10 +156,10 @@ else
 fi
 
 echo "*** Testing MbedTLS sample"
-build_sample ${CLOUD_SUPPORT_DIR}/client-mbedtls ${TOB_LIB_DIR} ${TOB_INC_DIR}
+build_sample ${SAMPLES_DIR}/client-mbedtls ${TOB_LIB_DIR} ${TOB_INC_DIR}
 
 echo '' >${CLIENT_STDOUT}
-${CLOUD_SUPPORT_DIR}/client-mbedtls/build/client_sample localhost ${SERVER_PORT} / signing ${SERVER_CA} ${TOB_DEVICE} ${TOB_BAUDRATE} ${TOB_PIN} 2>&1 >${CLIENT_STDOUT} &
+${SAMPLES_DIR}/client-mbedtls/build/client_sample localhost ${SERVER_PORT} / signing ${SERVER_CA} ${TOB_DEVICE} ${TOB_BAUDRATE} ${TOB_PIN} 2>&1 >${CLIENT_STDOUT} &
 mbedtls_client_id=$!
 kill_timer ${mbedtls_client_id} 60&
 kill_timer_id=$!
@@ -176,10 +176,10 @@ else
 fi
 
 echo "*** Testing WolfSSL sample"
-build_sample ${CLOUD_SUPPORT_DIR}/client-wolfssl ${TOB_LIB_DIR} ${TOB_INC_DIR}
+build_sample ${SAMPLES_DIR}/client-wolfssl ${TOB_LIB_DIR} ${TOB_INC_DIR}
 
 echo '' >${CLIENT_STDOUT}
-${CLOUD_SUPPORT_DIR}/client-wolfssl/build/client_sample localhost ${SERVER_PORT} / signing ${SERVER_CA} ${TOB_DEVICE} ${TOB_BAUDRATE} ${TOB_PIN} 2>&1 >${CLIENT_STDOUT} &
+${SAMPLES_DIR}/client-wolfssl/build/client_sample localhost ${SERVER_PORT} / signing ${SERVER_CA} ${TOB_DEVICE} ${TOB_BAUDRATE} ${TOB_PIN} 2>&1 >${CLIENT_STDOUT} &
 wolfssl_client_id=$!
 kill_timer ${wolfssl_client_id} 60&
 kill_timer_id=$!
@@ -195,9 +195,9 @@ else
 fi
 
 echo "*** Testing Paho MQTT sample"
-build_sample ${CLOUD_SUPPORT_DIR}/paho-openssl ${TOB_LIB_DIR} ${TOB_INC_DIR}
+build_sample ${SAMPLES_DIR}/paho-openssl ${TOB_LIB_DIR} ${TOB_INC_DIR}
 echo '' >${CLIENT_STDOUT}
-${CLOUD_SUPPORT_DIR}/paho-openssl/build/client_sample localhost ${MQTT_BROKER_PORT} signing ${SERVER_CA} paho-test-client hello 2>&1 >${CLIENT_STDOUT} &
+${SAMPLES_DIR}/paho-openssl/build/client_sample localhost ${MQTT_BROKER_PORT} signing ${SERVER_CA} paho-test-client hello 2>&1 >${CLIENT_STDOUT} &
 paho_openssl_client_id=$!
 kill_timer ${paho_openssl_client_id} 10&
 kill_timer_id=$!

@@ -3,7 +3,7 @@
 mkdir -p cmake
 mkdir -p install_prefix
 cd cmake
-cmake -DPCSC_SUPPORT=ON -DOPENSSL_SUPPORT=ON -DMBEDTLS_SUPPORT=ON -DBUILD_SHARED=ON -DBUILD_TESTS=ON -DCMAKE_INSTALL_PREFIX=../install_prefix ..
+cmake -DPCSC_SUPPORT=ON -DOPENSSL_SUPPORT=ON -DMBEDTLS_SUPPORT=ON -DBUILD_TESTS=ON -DCMAKE_INSTALL_PREFIX=../install_prefix ..
 make
 make install
 
