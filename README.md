@@ -58,14 +58,14 @@ In a resource-constrained application you most likely don't want to use this lib
 
 # Sample Azure IoT Registration Client Helper
 
-`azure_dps_registerer` is a simple client that uses the Azure IoT C SDK to register a device using the Device Provisioning Service.
+`azure_dps_registerer` is a simple client that uses the Azure IoT C SDK to register a device using the Device Provisioning Service, and get back the IoTHub URI and device ID corresponding to your certificate.
 
-The client, when run, will read the DPS ID Scope either from a file (by default, `/home/pi/azure_id_scope.txt`) or an AZURE_ID_SCOPE environment variable if set.  It will use the Trust Onboard `available` certificate on your Twilio Trust Onboard SIM and register a device with Azure IoT Hub.  The output of this command will be a YAML encoded hash with connection information and the Trust Onboard `available` certificate and key in cleartext.
+The output format is JSON:
 
-The expected result is something similar to the following output:
-
-    status: SUCCESS
-    iothub_uri: ...
-    device_id: ...
-    certificate: "..."
-    key: "..."
+```
+    {
+      "status": "SUCCESS",
+      "iothub_uri": "...",
+      "device_id": "..."
+    }
+```
