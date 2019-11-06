@@ -17,6 +17,51 @@
 #include "BreakoutTrustOnboardSDK.h"
 
 #define MAX_BAUDRATE 4000000
+
+#ifdef OPENSSL_SUPPORT
+
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+#include <openssl/bio.h>
+#include <openssl/pem.h>
+
+static int subjectName(const char* cert, size_t certLen, char** subjectName) {
+  BIO* certBio = BIO_new(BIO_s_mem());
+  BIO_write(certBio, cert, certLen);
+  STACK_OF(X509_INFO) * certstack;
+  X509_INFO* stack_item  = NULL;
+  X509_NAME* certsubject = NULL;
+  int i;
+
+  certstack = PEM_X509_INFO_read_bio(certBio, NULL, NULL, NULL);
+  if (!certstack) {
+    fprintf(stderr, "unable to parse certificate in memory\n");
+    return 0;
+  }
+
+  for (i = 0; i < sk_X509_INFO_num(certstack); i++) {
+    char subject_cn[256] = "** n/a **";
+    long cert_version;
+
+    stack_item = sk_X509_INFO_value(certstack, i);
+
+    certsubject = X509_get_subject_name(stack_item->x509);
+    X509_NAME_get_text_by_NID(certsubject, NID_commonName, subject_cn, 256);
+    cert_version = (X509_get_version(stack_item->x509) + 1);
+
+    if (i == 0) {
+      *subjectName = (char*)malloc(sizeof(char) * (strlen(subject_cn) + 1));
+      strcpy(*subjectName, subject_cn);
+    }
+  }
+
+  sk_X509_INFO_pop_free(certstack, X509_INFO_free);
+  BIO_free(certBio);
+
+  return 1;
+}
+#endif  // OPENSSL_SUPPORT
+
 void print_usage(const char* program_name) {
   fprintf(stderr, "%s <arguments>\n", program_name);
   fprintf(stderr,
@@ -225,6 +270,20 @@ int main(int argc, char** argv) {
     j["available_certificate"] = std::string((const char*)cert);
     j["available_pkey"]        = std::string((const char*)pk);
     j["signing_certificate"]   = std::string((const char*)signing_cert);
+
+#ifdef OPENSSL_SUPPORT
+    char* avail_cn;
+    if (subjectName((const char*)cert, strlen((const char*)cert), &avail_cn)) {
+      j["available_cn"] = std::string((const char*)avail_cn);
+    }
+    free(avail_cn);
+
+    char* signing_cn;
+    if (subjectName((const char*)signing_cert, strlen((const char*)signing_cert), &signing_cn)) {
+      j["signing_cn"] = std::string((const char*)signing_cn);
+    }
+    free(signing_cn);
+#endif  // OPENSSL_SUPPORT
 
     std::cout << j.dump() << std::endl;
   }
