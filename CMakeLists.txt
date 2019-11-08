@@ -19,7 +19,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(TOOL_BINARY trust_onboard_tool)
 if(OPENSSL_SUPPORT)
 	set(TOB_ENGINE trust_onboard_engine)
+	add_definitions(-DOPENSSL_SUPPORT)
 endif(OPENSSL_SUPPORT)
+
 if(BUILD_AZURE)
 	set(TOB_DPS_REGISTERER azure_dps_registerer)
 endif(BUILD_AZURE)
@@ -128,6 +130,14 @@ if(OPENSSL_SUPPORT)
 
 	target_include_directories(
 		${TOB_ENGINE} PRIVATE
+		${OPENSSL_INCLUDE_DIR})
+
+	target_link_libraries(
+		${TOOL_BINARY}
+		${OPENSSL_LIBRARIES})
+
+	target_include_directories(
+		${TOOL_BINARY} PRIVATE
 		${OPENSSL_INCLUDE_DIR})
 
 endif(OPENSSL_SUPPORT)
