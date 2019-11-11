@@ -267,9 +267,9 @@ int main(int argc, char** argv) {
 
   if (print_json) {
     nlohmann::json j;
-    j["available_certificate"] = std::string((const char*)cert);
-    j["available_pkey"]        = std::string((const char*)pk);
-    j["signing_certificate"]   = std::string((const char*)signing_cert);
+    j["available_certificate"] = std::string((const char*)cert, cert_size);
+    j["available_pkey"]        = std::string((const char*)pk, pk_size);
+    j["signing_certificate"]   = std::string((const char*)signing_cert, signing_cert_size);
 
 #ifdef OPENSSL_SUPPORT
     char* avail_cn;
