@@ -30,7 +30,7 @@ class ToBIPStack
 
     static CURLcode restrict_digest_function(CURL* curl, void* sslctx, void* parm) {
       SSL_CTX* ctx = (SSL_CTX*)sslctx;
-      SSL_CTX_set1_sigalgs_list(ctx, "RSA+SHA384");
+      SSL_CTX_set1_sigalgs_list(ctx, "RSA+SHA1:RSA+SHA256:RSA+SHA384");
 
       return CURLE_OK;
     }
@@ -44,7 +44,10 @@ class ToBIPStack
 
       curl = curl_easy_init();
 
-      curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, restrict_digest_function);
+      if (strcmp(tob_cert, "signing") == 0) {
+        // Signing key only supports a limited amount of signing algorithms
+        curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, restrict_digest_function);
+      }
 
       curl_easy_setopt(curl, CURLOPT_URL, url);
       if (curl_easy_setopt(curl, CURLOPT_SSLENGINE, "tob_mias") != CURLE_OK) {
@@ -135,6 +138,7 @@ class ToBIPStack
       curl_easy_cleanup(curl);
 
       std::cout << "Network disconnect called" << std::endl;
+      return 0;
     }
 
   private:
