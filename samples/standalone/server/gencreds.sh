@@ -1,7 +1,7 @@
 #!/bin/bash
 
 exit_usage() {
-  echo "gencreds.sh /path/to/CA.pem /path/to/server_cert.pem /path/to/server_pkey.pem server_host_name" >&2
+  echo "gencreds.sh /path/to/CA.pem /path/to/server_cert.pem /path/to/server_pkey.pem server_host_name [mosquitto.conf]" >&2
   exit 1
 }
 
@@ -10,7 +10,7 @@ exit_error() {
   exit 1
 }
 
-if [ "$#" -ne 4 ]; then
+if [ "$#" -lt 4 ]; then
   exit_usage
 fi
 
@@ -20,6 +20,7 @@ SERVER_CSR_PATH=$(mktemp)
 SERVER_CERT_PATH="$2"
 SERVER_PKEY_PATH="$3"
 SERVER_HOSTNAME="$4"
+MOSQUITTO_CONF="$5"
 
 openssl genrsa -out ${CA_PKEY_PATH} 4096 || exit_error "Can't generate CA key"
 openssl req -x509 -new -nodes -key ${CA_PKEY_PATH} -sha256 -days 1825 -out ${CA_CERT_PATH} -subj "/C=IS/ST=Iceland/L=Reykjavík/O=MIAS Test/OU=Certificate issuing department/CN=example.is"
@@ -32,3 +33,13 @@ openssl x509 -req -in ${SERVER_CSR_PATH} -CA ${CA_CERT_PATH} -CAkey ${CA_PKEY_PA
 rm ${CA_PKEY_PATH}
 rm ${SERVER_CSR_PATH}
 
+if [ -n "${MOSQUITTO_CONF}" ]; then
+    cat <<EOF > $(realpath ${MOSQUITTO_CONF})
+require_certificate true
+tls_version tlsv1.2
+capath /usr/share/trust_onboard/ssl/ca
+keyfile $(realpath ${SERVER_PKEY_PATH})
+certfile $(realpath ${SERVER_CERT_PATH})
+EOF
+
+fi
