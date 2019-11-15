@@ -24,7 +24,7 @@ A typical Twilio Trust Onboard flow for utilizing the `available` certificate is
 
 - The cellular module/development board is initialized, providing one or more serial interfaces to the host.
 - A library communicates with the SIMs applets using the SIMs PIN and the path of the certificate and keys to access.  This occurs using the cellular module's serial interface and supported AT commands for accessing the SIM directly.
-- The library provides the PEM encoded certificate chain and (in the case of the `available` certificate) the DER encoded private key.
+- The library provides the PEM encoded certificate and (in the case of the `available` certificate) private key.
 - Your applications make use of the public certificate and private key for authentication with your chosen backend services.
 
 ## Example Reference Implementation
@@ -36,7 +36,7 @@ We have found multiple cellular modules to be compatible with the AT commands an
 In the project you build above, you should now have an executable `bin/trust_onboard_tool`.  We can use this tool to extract the Trust Onboard `available` X.509 certificate and private key.  Since the output of this CLI is two files, we recommend writing the files out to a sub-directory.  **Important:** If you are provided a different default PIN or have changed it, be sure to replace the PIN `0000`, or you may block your SIM card.  The password `mypassword` below is the passphrase that will be used to secure the P12 certificate and key bundle the `convert_certs.sh` script generates.  This assumes you are using our pre-built image or ran `make install` for the Breakout_Trust_Onboard_SDK.
 
     mkdir temp
-    trust_onboard_tool -d /dev/ttyACM1 -p 0000 -a temp/certificate-chain.pem -k temp/key.pem
+    trust_onboard_tool -d /dev/ttyACM1 -p 0000 -a temp/certificate.pem -k temp/key.pem
 
 The certificate and private key can now be used in your applications.  We also offer direct access to the Trust Onboard SDK to access the certificate and private key in your code without an intermediate file.  See the [BreakoutTrustOnboardSDK.h](include/BreakoutTrustOnboardSDK.h) header for more details.
 

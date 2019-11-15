@@ -61,7 +61,7 @@ TEST_CASE("Read credentials in PEM and DER format", "[available] [signing] [cert
     available_cert = new uint8_t[size_query];
 
     REQUIRE(tobExtractAvailableCertificate(available_cert, &available_cert_size, pin.c_str()) == 0);
-    REQUIRE(available_cert_size == size_query);
+    REQUIRE(available_cert_size <= size_query); // equality is no longer guaranteed, but the allocated buffer should be large enough to hold the certificate
 
     delete[] available_cert;
   }

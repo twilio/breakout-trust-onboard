@@ -110,6 +110,27 @@ static int der_to_pem_len(int derLen, const char* headerStr) {
          9 + captionLen + 5;             // footer
 };
 
+static void crop_pem_chain(const char* inPem, int inPemLen, int* outPemLen) {
+  static const char footer[]     = "-----END CERTIFICATE-----";
+  static const int footer_length = sizeof(footer) - 1;
+  int footer_ind                 = 0;
+
+  for (int i = 0; i < inPemLen; i++) {
+    if (inPem[i] == footer[footer_ind]) {
+      ++footer_ind;
+
+      if (footer_ind == footer_length) {
+        *outPemLen = i + 1;
+        return;
+      }
+    } else {
+      footer_ind = 0;
+    }
+  }
+
+  *outPemLen = inPemLen;
+}
+
 static void hex_string_2_bytes_array(uint8_t* hexstr, uint16_t hexstrLen, uint8_t* bytes, uint16_t* bytesLen) {
   uint8_t d;
   uint16_t i, j;
@@ -387,6 +408,12 @@ int tobExtractAvailableCertificate(uint8_t* cert, int* cert_size, const char* pi
   int ret = tob_x509_crt_extract_se(cert, cert_size, CERT_MIAS_PATH, pin);
   if (ret == ERR_SE_MIAS_READ_OBJECT_ERROR) {
     ret = tob_x509_crt_extract_se(cert, cert_size, CERT_MIAS_PATH_LEGACY, pin);
+  }
+
+  if (ret == 0 && cert != nullptr) {
+    // success, crop the chain. The hack is needed, because current Trust Onboard SIM batches contain invalid
+    // certificate chain for available certificates
+    crop_pem_chain((char*)cert, *cert_size, cert_size);
   }
   return ret;
 }
