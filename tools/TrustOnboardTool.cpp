@@ -83,7 +83,7 @@ Examples:\n");
   fprintf(stderr, "\n%s -d /dev/ttyACM1 -p 0000 -a certificate.pem -k key.pem\n", program_name);
   fprintf(stderr, "\n%s -d /dev/ttyUSB0 -b 9600 -p 0000 -s signing-certificate.pem\n", program_name);
 #ifdef PCSC_SUPPORT
-  fprintf(stderr, "\n%s --device=pcsc:0 --pin=0000 --available-cert=certificate-chain.pem --available-key=key.pem\n",
+  fprintf(stderr, "\n%s --device=pcsc:0 --pin=0000 --available-cert=certificate.pem --available-key=key.pem\n",
           program_name);
 #endif
 }
@@ -193,7 +193,7 @@ int main(int argc, char** argv) {
   }
 
   if (cert_path != nullptr) {
-    fprintf(stderr, "Writing certificate chain with size: %d...\n", cert_size);
+    fprintf(stderr, "Writing certificate with size: %d...\n", cert_size);
     FILE* cert_fp = fopen(cert_path, "w");
     if (!cert_fp) {
       fprintf(stderr, "... error opening file for certificate output: %s\n", cert_path);
@@ -255,7 +255,7 @@ int main(int argc, char** argv) {
   }
 
   if (signing_cert_path != nullptr) {
-    fprintf(stderr, "Writing signing certificate chain with size: %d...\n", signing_cert_size);
+    fprintf(stderr, "Writing signing certificate with size: %d...\n", signing_cert_size);
     FILE* signing_cert_fp = fopen(signing_cert_path, "w");
     if (!signing_cert_fp) {
       fprintf(stderr, "... error opening file for signing certificate output: %s\n", signing_cert_path);

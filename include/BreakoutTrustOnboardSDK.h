@@ -80,8 +80,8 @@ extern int tobInitializeWithInterface(SEInterface *seiface);
  * Extract the Available public certificate in PEM form.  The certificate
  * buffer will contain the device certificate itself and its preceding
  * intemediate certificates.
- * @param cert - buffer to receive the PEM certificate chain or null pointer to query the length
- * @param cert_size - pointer to int that will receive the number of bytes for the PEM certificate chain. Due to technical limitations of the SIM, if cert is nullptr it might be larger than actual length of the certificate.
+ * @param cert - buffer to receive the PEM certificate or null pointer to query the length
+ * @param cert_size - pointer to int that will receive the number of bytes for the PEM certificate. Due to technical limitations of the SIM, if cert is nullptr it might be larger than actual length of the certificate.
  * @param pin - PIN1 for access to certificate.  Must be correct or SIM may be locked after repeated attempts.
  * @return 0 if successful, otherwise one of the following error codes:
  *   ERR_SE_BAD_KEY_NAME_ERROR
