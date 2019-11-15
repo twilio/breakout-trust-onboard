@@ -27,6 +27,28 @@ A typical Twilio Trust Onboard flow for utilizing the `available` certificate is
 - The library provides the PEM encoded certificate and (in the case of the `available` certificate) private key.
 - Your applications make use of the public certificate and private key for authentication with your chosen backend services.
 
+## Building Trust Onboard SDK
+Trust Onboard SDK uses `cmake` and is built as [a regular cmake project](https://cmake.org/runningcmake/):
+
+```
+    cd breakout-trust-onboard
+    mkdir build
+    cmake ..
+    make
+```
+
+By default it has one dependency, [Niels Lohmann's single-header json parser](https://github.com/nlohmann/json). On Debian-based distributions it can be installed with `apt install nlohmann-json-dev`.
+
+Additional configuration options include:
+
+  * `PCSC_SUPPORT` - support for PC/SC card readers. Adds dependency on `libpcsclite` (`apt install libpcsclite1` on Debian).
+  * `OPENSSL_SUPPORT` - support for OpenSSL. Adds dependency on OpenSSL.
+  * `MBEDTLS_SUPPORT` - support for MbedTLS. Adds depencency on MbedTLS, should be built from source (see below).
+  * `BUILD_AZURE` - support for Azure IoT SDK. Depends on Twilio build of Azure SDK (see [our Azure guide](samples/azure-iot/README.md)).
+  * `BUILD_TESTS` - builds test suites, depends on OpenSSL.
+  * `BUILD_DOCS` - builds documentation, depends on Doxygen.
+  * `NO_OS` - minimal build for a non-posix environment. No dependencies.
+
 ## Example Reference Implementation
 
 We have found multiple cellular modules to be compatible with the AT commands and access to the SIM needed to work with Twilio ToB SIMs, but the following is a combination which we have researched and built a tutorial around: [Twilio Wireless Broadband IoT Developer Kit](https://github.com/twilio/Wireless_Broadband_IoT_Dev_Kit)
