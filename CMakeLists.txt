@@ -228,6 +228,21 @@ install(FILES tls-conf/acm.cnf tls-conf/pcsc.cnf DESTINATION share/trust_onboard
 install(DIRECTORY samples/azure-iot DESTINATION share/trust_onboard/samples USE_SOURCE_PERMISSIONS)
 install(DIRECTORY samples/standalone DESTINATION share/trust_onboard/samples USE_SOURCE_PERMISSIONS)
 
+function (depends_append DEPLIST_TO_APPEND FIRST_DEP)
+	set(DEPLIST_LOCAL "${${DEPLIST_TO_APPEND}}")
+	if("${DEPLIST_LOCAL}" STREQUAL "")
+		set(DEPLIST_LOCAL "${FIRST_DEP}")
+	else()
+		set(DEPLIST_LOCAL "${DEPLIST_LOCAL}, ${FIRST_DEP}")
+	endif()
+
+	foreach(dep ${ARGN})
+		set(DEPLIST_LOCAL "${DEPLIST_LOCAL}, ${dep}")
+	endforeach(dep)
+
+	set(${DEPLIST_TO_APPEND} "${DEPLIST_LOCAL}" PARENT_SCOPE)
+endfunction()
+
 set(CPACK_COMPONENTS_ALL_IN_ONE_PACKAGE 1)
 
 set(CPACK_PACKAGE_NAME "trust-onboard-sdk")
@@ -237,22 +252,22 @@ SET(CPACK_SYSTEM_NAME "Linux")
 
 set(CPACK_GENERATOR "DEB")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Twilio Inc.")
-if(OPENSSL_SUPPORT)
+if(OPENSSL_SUPPORT OR BUILD_AZURE)
 	if(OPENSSL_VERSION_MINOR EQUAL "1")
-		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS} libssl-dev")
+		depends_append(CPACK_DEBIAN_PACKAGE_DEPENDS "libssl-dev")
 	elseif(OPENSSL_VERSION_MINOR EQUAL "0")
-		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS} libssl1.0-dev")
+		depends_append(CPACK_DEBIAN_PACKAGE_DEPENDS "libssl1.0-dev")
 	else()
 		message(FATAL_ERROR "Unsupported OpenSSL version: ${OPENSSL_VERSION}")
 	endif()
 endif()
 
 if(PCSC_SUPPORT)
-	set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS} libpcsclite1")
+	depends_append(CPACK_DEBIAN_PACKAGE_DEPENDS "libpcsclite1")
 endif()
 
 if(BUILD_AZURE)
-	set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS} azure-iot-sdk-c-twilio-dev")
+	depends_append(CPACK_DEBIAN_PACKAGE_DEPENDS "azure-iot-sdk-c-twilio-dev")
 endif()
 
 set(CPACK_SET_DESTDIR "ON")
