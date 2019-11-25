@@ -6,6 +6,7 @@
 // Checking of return codes and error values shall be omitted for brevity.  Please practice sound engineering practices
 // when writing production code.
 
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -50,15 +51,11 @@ and removing calls to _DoWork will yield the same results. */
     #include "azureiot/iothubtransporthttp.h"
 #endif // SAMPLE_HTTP
 
-/* Paste in the your x509 iothub connection string  */
-/*  "HostName=<host_name>;DeviceId=<device_id>;x509=true;UseProvisioning=true" */
-static const char* connectionString = "<connection_string>";
-
 /* Change if using different device, key, baudrate or PIN */
 TWILIO_TRUST_ONBOARD_HSM_CONFIG hsmConfig = {
   "/dev/ttyACM1", /* Device */
   "0000",         /* PIN code */
-  1,              /* Non-zero for signing key, zero for available key */
+  0,              /* Non-zero for signing key, zero for available key */
   115200          /* Baudrate */
 };
 
@@ -80,12 +77,25 @@ static void send_confirm_callback(IOTHUB_CLIENT_CONFIRMATION_RESULT result, void
     (void)printf("Confirmation callback received for message %zu with result %s\r\n", g_message_count_send_confirmations, MU_ENUM_TO_STRING(IOTHUB_CLIENT_CONFIRMATION_RESULT, result));
 }
 
-int main(void)
+static void print_usage(const char* program_name) {
+  printf("%s <arguments>\n", program_name);
+  printf("\nRequired arguments:\n\
+  -c,--connection-string=<string>    - connection string to use. Has the following format:\n\
+    \"HostName=<host_name>;DeviceId=<device_id>;x509=true;UseProvisioning=true\"\n\
+\nOptional arguments:\n\
+  -d,--device=<device>               - serial device to connect to a SIM, /dev/ttyACM1 by default\n\
+  -p,--pin=<pin>                     - PIN code for the mIAS applet on your SIM card, 0000 by default\n\
+  -b,--baudrate=<baudrate>           - baud rate for a serial device. 115200 by default\n\
+  -s,--signing                       - Use signing certificate instead of the available one\n");
+}
+
+int main(int argc, char** argv)
 {
     IOTHUB_CLIENT_TRANSPORT_PROVIDER protocol;
     IOTHUB_MESSAGE_HANDLE message_handle;
     size_t messages_sent = 0;
     const char* telemetry_msg = "test_message";
+    const char* connection_string = NULL;
 
     // Select the Protocol to use with the connection
 #ifdef SAMPLE_MQTT
@@ -106,6 +116,52 @@ int main(void)
 
     IOTHUB_DEVICE_CLIENT_LL_HANDLE device_ll_handle;
 
+    static struct option options[] = {{"device", required_argument, NULL, 'd'},
+                                      {"baudrate", required_argument, NULL, 'b'},
+                                      {"pin", required_argument, NULL, 'p'},
+                                      {"connection-string", required_argument, NULL, 'c'},
+                                      {"signing", no_argument, NULL, 's'},
+                                      {NULL, 0, NULL, 0}};
+
+    int opt;
+    while ((opt = getopt_long(argc, argv, "d:b:p:c:s", options, NULL)) != -1) {
+      switch (opt) {
+        case 'd':
+          hsmConfig.device_path = optarg;
+          break;
+        case 'b': {
+          long long_baudrate = strtol(optarg, NULL, 10);
+          if (long_baudrate <= 0) {
+            printf("Invalid baudrate: %s\n", optarg);
+            print_usage(argv[0]);
+            return 1;
+          }
+          hsmConfig.baudrate = (int)long_baudrate;
+          break;
+        }
+        case 'p':
+          hsmConfig.sim_pin = optarg;
+          break;
+        case 's':
+          hsmConfig.signing = 1;
+          break;
+        case 'c':
+          connection_string = optarg;
+          break;
+        default:
+          fprintf(stderr, "Invalid option: %c\n", opt);
+          print_usage(argv[0]);
+          return 1;
+      }
+    }
+
+    if (connection_string == NULL) {
+      printf("Connection string is not set\n");
+      print_usage(argv[0]);
+      return 1;
+    }
+
+
     // Used to initialize IoTHub SDK subsystem
     (void)IoTHub_Init();
 
@@ -113,7 +169,7 @@ int main(void)
 
     (void)printf("Creating IoTHub handle\r\n");
     // Create the iothub handle here
-    device_ll_handle = IoTHubDeviceClient_LL_CreateFromConnectionString(connectionString, protocol);
+    device_ll_handle = IoTHubDeviceClient_LL_CreateFromConnectionString(connection_string, protocol);
     if (device_ll_handle == NULL)
     {
         (void)printf("Failure createing Iothub device.  Hint: Check you connection string.\r\n");

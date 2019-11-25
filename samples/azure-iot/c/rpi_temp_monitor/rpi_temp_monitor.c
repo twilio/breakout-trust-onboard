@@ -2,6 +2,7 @@
 // Copyright (c) Twilio. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
@@ -57,7 +58,7 @@
 TWILIO_TRUST_ONBOARD_HSM_CONFIG hsmConfig = {
   "/dev/ttyACM1", /* Device */
   "0000",         /* PIN code */
-  1,              /* Non-zero for signing key, zero for available key */
+  0,              /* Non-zero for signing key, zero for available key */
   115200          /* Baudrate */
 };
 
@@ -215,7 +216,16 @@ static int provision_device(char** connectionString, char** deviceId) {
   return 1;
 }
 
-int main(void)
+static void print_usage(const char* program_name) {
+  printf("%s [<arguments>]\n", program_name);
+  printf("\nArguments:\n\
+  -d,--device=<device>               - serial device to connect to a SIM, /dev/ttyACM1 by default\n\
+  -p,--pin=<pin>                     - PIN code for the mIAS applet on your SIM card, 0000 by default\n\
+  -b,--baudrate=<baudrate>           - baud rate for a serial device. 115200 by default\n\
+  -s,--signing                       - Use signing certificate instead of the available one\n");
+}
+
+int main(int argc, char** argv)
 {
   IOTHUB_CLIENT_TRANSPORT_PROVIDER protocol;
   IOTHUB_MESSAGE_HANDLE message_handle;
@@ -240,10 +250,46 @@ int main(void)
 
   IOTHUB_DEVICE_CLIENT_LL_HANDLE device_ll_handle;
 
+  static struct option options[] = {{"device", required_argument, NULL, 'd'},
+                                    {"baudrate", required_argument, NULL, 'b'},
+                                    {"pin", required_argument, NULL, 'p'},
+                                    {"signing", no_argument, NULL, 's'},
+                                    {NULL, 0, NULL, 0}};
+
+  int opt;
+  while ((opt = getopt_long(argc, argv, "d:b:p:c:s", options, NULL)) != -1) {
+    switch (opt) {
+      case 'd':
+        hsmConfig.device_path = optarg;
+        break;
+      case 'b': {
+        long long_baudrate = strtol(optarg, NULL, 10);
+        if (long_baudrate <= 0) {
+          printf("Invalid baudrate: %s\n", optarg);
+          print_usage(argv[0]);
+          return 1;
+        }
+        hsmConfig.baudrate = (int)long_baudrate;
+        break;
+      }
+      case 'p':
+        hsmConfig.sim_pin = optarg;
+        break;
+      case 's':
+        hsmConfig.signing = 1;
+          break;
+      default:
+        fprintf(stderr, "Invalid option: %c\n", opt);
+        print_usage(argv[0]);
+        return 1;
+    }
+  }
+
   if (!sht35_init()) {
     fprintf(stderr, "Could not initialize temperature sensor\r\n");
     return 1;
   }
+
   // Used to initialize IoTHub SDK subsystem
   IoTHub_Init();
   iothub_security_init(IOTHUB_SECURITY_TYPE_X509);
