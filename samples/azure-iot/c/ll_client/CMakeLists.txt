@@ -5,6 +5,8 @@
 
 cmake_minimum_required(VERSION 3.5)
 
+set (CMAKE_C_STANDARD 99)
+
 add_executable(ll_client ll_client.c)
 
 target_link_libraries(ll_client
