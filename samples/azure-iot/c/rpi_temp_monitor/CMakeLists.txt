@@ -6,7 +6,6 @@
 cmake_minimum_required(VERSION 3.5)
 
 set (CMAKE_C_STANDARD 99)
-set (CMAKE_CXX_STANDARD 11)
 
 if (NOT AZURE_ID_SCOPE_PATH)
   set(AZURE_ID_SCOPE_PATH "/home/pi/azure_id_scope.txt")
