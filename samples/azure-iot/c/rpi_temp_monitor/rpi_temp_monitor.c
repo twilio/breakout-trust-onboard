@@ -2,6 +2,7 @@
 // Copyright (c) Twilio. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
@@ -38,39 +39,38 @@
 //#define SAMPLE_HTTP
 
 #ifdef SAMPLE_MQTT
-    #include "azureiot/iothubtransportmqtt.h"
-#endif // SAMPLE_MQTT
+#include "azureiot/iothubtransportmqtt.h"
+#endif  // SAMPLE_MQTT
 #ifdef SAMPLE_MQTT_OVER_WEBSOCKETS
-    #include "azureiot/iothubtransportmqtt_websockets.h"
-#endif // SAMPLE_MQTT_OVER_WEBSOCKETS
+#include "azureiot/iothubtransportmqtt_websockets.h"
+#endif  // SAMPLE_MQTT_OVER_WEBSOCKETS
 #ifdef SAMPLE_AMQP
-    #include "azureiot/iothubtransportamqp.h"
-#endif // SAMPLE_AMQP
+#include "azureiot/iothubtransportamqp.h"
+#endif  // SAMPLE_AMQP
 #ifdef SAMPLE_AMQP_OVER_WEBSOCKETS
-    #include "azureiot/iothubtransportamqp_websockets.h"
-#endif // SAMPLE_AMQP_OVER_WEBSOCKETS
+#include "azureiot/iothubtransportamqp_websockets.h"
+#endif  // SAMPLE_AMQP_OVER_WEBSOCKETS
 #ifdef SAMPLE_HTTP
-    #include "azureiot/iothubtransporthttp.h"
-#endif // SAMPLE_HTTP
+#include "azureiot/iothubtransporthttp.h"
+#endif  // SAMPLE_HTTP
 
 /* Change if using different device, key, baudrate or PIN */
 TWILIO_TRUST_ONBOARD_HSM_CONFIG hsmConfig = {
-  "/dev/ttyACM1", /* Device */
-  "0000",         /* PIN code */
-  1,              /* Non-zero for signing key, zero for available key */
-  115200          /* Baudrate */
+    "/dev/ttyACM1", /* Device */
+    "0000",         /* PIN code */
+    0,              /* Non-zero for signing key, zero for available key */
+    115200          /* Baudrate */
 };
 
 #define SHT35_I2C_DEVICE "/dev/i2c-1"
 #define SHT35_I2C_ADDR 0x45
-#define SHT35_MEASUREMENT_US 15000 // maximum measurement time is 15ms
+#define SHT35_MEASUREMENT_US 15000  // maximum measurement time is 15ms
 
 static int sht35_device_file = -1;
 
 static const char *global_prov_uri = "global.azure-devices-provisioning.net";
 
-typedef struct EVENT_INSTANCE_TAG
-{
+typedef struct EVENT_INSTANCE_TAG {
   IOTHUB_MESSAGE_HANDLE messageHandle;
   size_t messageTrackingId;  // For tracking the messages within the user callback.
 } EVENT_INSTANCE;
@@ -97,7 +97,7 @@ static int sht35_init(void) {
   return 1;
 }
 
-static int sht35_read_data(float* temp_celsius, float* temp_farenheit, float* humidity) {
+static int sht35_read_data(float *temp_celsius, float *temp_farenheit, float *humidity) {
   uint8_t buf[6];
 
   buf[0] = 0x24;
@@ -112,15 +112,17 @@ static int sht35_read_data(float* temp_celsius, float* temp_farenheit, float* hu
   uint16_t temp_raw = (buf[0] << 8) | buf[1];
   uint16_t hum_raw  = (buf[3] << 8) | buf[4];
 
-  *temp_celsius = (175 * temp_raw) / 65535.0 - 45.0;
+  *temp_celsius   = (175 * temp_raw) / 65535.0 - 45.0;
   *temp_farenheit = (315 * temp_raw) / 65535.0 - 49.0;
-  *humidity = (100.0 * hum_raw) / 65535.0;
+  *humidity       = (100.0 * hum_raw) / 65535.0;
 
   return 1;
 }
 
-static void construct_message(char* msg, float temp_celsius, float temp_farenheit, float humidity, const char* deviceId) {
-  sprintf(msg, "{\"deviceId\":\"%s\",\"temperatureFarenheit\":%.1f,\"temperatureCelsius\":%.1f,\"humidity\":%.1f}", deviceId, temp_farenheit, temp_celsius, humidity);
+static void construct_message(char *msg, float temp_celsius, float temp_farenheit, float humidity,
+                              const char *deviceId) {
+  sprintf(msg, "{\"deviceId\":\"%s\",\"temperatureFarenheit\":%.1f,\"temperatureCelsius\":%.1f,\"humidity\":%.1f}",
+          deviceId, temp_farenheit, temp_celsius, humidity);
 }
 
 static char *obtain_id_scope() {
@@ -154,16 +156,16 @@ static void register_device_callback(PROV_DEVICE_RESULT register_result, const c
     mallocAndStrcpy_s(&reg_ctx->iothub_uri, iothub_uri);
     mallocAndStrcpy_s(&reg_ctx->device_id, device_id);
     reg_ctx->registration_complete = 1;
-    reg_ctx->registration_success = 1;
+    reg_ctx->registration_success  = 1;
   } else {
     fprintf(stderr, "Failure encountered on registration %s\r\n",
             MU_ENUM_TO_STRING(PROV_DEVICE_RESULT, register_result));
     reg_ctx->registration_complete = 1;
-    reg_ctx->registration_success = 0;
+    reg_ctx->registration_success  = 0;
   }
 }
 
-static int provision_device(char** connectionString, char** deviceId) {
+static int provision_device(char **connectionString, char **deviceId) {
   char *id_scope = obtain_id_scope();
   if (!id_scope || strcmp("", id_scope) == 0) {
     printf("Azure DPS ID Scope could not be read.");
@@ -185,7 +187,8 @@ static int provision_device(char** connectionString, char** deviceId) {
   TWILIO_REGISTRATION_INFO register_ctx;
   register_ctx.registration_complete = 0;
 
-  if (Prov_Device_LL_Register_Device(handle, register_device_callback, &register_ctx, NULL, NULL) != PROV_DEVICE_RESULT_OK) {
+  if (Prov_Device_LL_Register_Device(handle, register_device_callback, &register_ctx, NULL, NULL) !=
+      PROV_DEVICE_RESULT_OK) {
     printf("Failed to start the registration process\n");
     Prov_Device_LL_Destroy(handle);
     prov_dev_security_deinit();
@@ -200,23 +203,33 @@ static int provision_device(char** connectionString, char** deviceId) {
   Prov_Device_LL_Destroy(handle);
   prov_dev_security_deinit();
 
-  if(!register_ctx.registration_success) {
+  if (!register_ctx.registration_success) {
     return 0;
   }
   /* "HostName=<host_name>;DeviceId=<device_id>;x509=true;UseProvisioning=true" */
-  *connectionString = (char*) malloc(9 + strlen(register_ctx.iothub_uri) + 1 + // HostName=<host_name>;
-		                     9 + strlen(register_ctx.device_id) + 1 +  // DeviceId=<device_id>;
-				     5 + 4 + 1 +                               // x509=true;
-				     16 + 4);                                  // UseProvisioning=true
+  *connectionString = (char *)malloc(9 + strlen(register_ctx.iothub_uri) + 1 +  // HostName=<host_name>;
+                                     9 + strlen(register_ctx.device_id) + 1 +   // DeviceId=<device_id>;
+                                     5 + 4 + 1 +                                // x509=true;
+                                     16 + 4);                                   // UseProvisioning=true
 
-  sprintf(*connectionString, "HostName=%s;DeviceId=%s;x509=true;UseProvisioning=true", register_ctx.iothub_uri, register_ctx.device_id);
+  sprintf(*connectionString, "HostName=%s;DeviceId=%s;x509=true;UseProvisioning=true", register_ctx.iothub_uri,
+          register_ctx.device_id);
   *deviceId = register_ctx.device_id;
   free(register_ctx.iothub_uri);
   return 1;
 }
 
-int main(void)
-{
+static void print_usage(const char *program_name) {
+  printf("%s [<arguments>]\n", program_name);
+  printf(
+      "\nArguments:\n\
+  -d,--device=<device>               - serial device to connect to a SIM, /dev/ttyACM1 by default\n\
+  -p,--pin=<pin>                     - PIN code for the mIAS applet on your SIM card, 0000 by default\n\
+  -b,--baudrate=<baudrate>           - baud rate for a serial device. 115200 by default\n\
+  -s,--signing                       - Use signing certificate instead of the available one\n");
+}
+
+int main(int argc, char **argv) {
   IOTHUB_CLIENT_TRANSPORT_PROVIDER protocol;
   IOTHUB_MESSAGE_HANDLE message_handle;
   char telemetry_msg[512];
@@ -224,26 +237,62 @@ int main(void)
   // Select the Protocol to use with the connection
 #ifdef SAMPLE_MQTT
   protocol = MQTT_Protocol;
-#endif // SAMPLE_MQTT
+#endif  // SAMPLE_MQTT
 #ifdef SAMPLE_MQTT_OVER_WEBSOCKETS
   protocol = MQTT_WebSocket_Protocol;
-#endif // SAMPLE_MQTT_OVER_WEBSOCKETS
+#endif  // SAMPLE_MQTT_OVER_WEBSOCKETS
 #ifdef SAMPLE_AMQP
   protocol = AMQP_Protocol;
-#endif // SAMPLE_AMQP
+#endif  // SAMPLE_AMQP
 #ifdef SAMPLE_AMQP_OVER_WEBSOCKETS
   protocol = AMQP_Protocol_over_WebSocketsTls;
-#endif // SAMPLE_AMQP_OVER_WEBSOCKETS
+#endif  // SAMPLE_AMQP_OVER_WEBSOCKETS
 #ifdef SAMPLE_HTTP
   protocol = HTTP_Protocol;
-#endif // SAMPLE_HTTP
+#endif  // SAMPLE_HTTP
 
   IOTHUB_DEVICE_CLIENT_LL_HANDLE device_ll_handle;
+
+  static struct option options[] = {{"device", required_argument, NULL, 'd'},
+                                    {"baudrate", required_argument, NULL, 'b'},
+                                    {"pin", required_argument, NULL, 'p'},
+                                    {"signing", no_argument, NULL, 's'},
+                                    {NULL, 0, NULL, 0}};
+
+  int opt;
+  while ((opt = getopt_long(argc, argv, "d:b:p:c:s", options, NULL)) != -1) {
+    switch (opt) {
+      case 'd':
+        hsmConfig.device_path = optarg;
+        break;
+      case 'b': {
+        long long_baudrate = strtol(optarg, NULL, 10);
+        if (long_baudrate <= 0) {
+          printf("Invalid baudrate: %s\n", optarg);
+          print_usage(argv[0]);
+          return 1;
+        }
+        hsmConfig.baudrate = (int)long_baudrate;
+        break;
+      }
+      case 'p':
+        hsmConfig.sim_pin = optarg;
+        break;
+      case 's':
+        hsmConfig.signing = 1;
+        break;
+      default:
+        fprintf(stderr, "Invalid option: %c\n", opt);
+        print_usage(argv[0]);
+        return 1;
+    }
+  }
 
   if (!sht35_init()) {
     fprintf(stderr, "Could not initialize temperature sensor\r\n");
     return 1;
   }
+
   // Used to initialize IoTHub SDK subsystem
   IoTHub_Init();
   iothub_security_init(IOTHUB_SECURITY_TYPE_X509);
@@ -265,8 +314,7 @@ int main(void)
     return 1;
   }
 
-  if (IoTHubDeviceClient_LL_SetOption(device_ll_handle, OPTION_HSM_CONFIG_DATA, &hsmConfig) != IOTHUB_CLIENT_OK)
-  {
+  if (IoTHubDeviceClient_LL_SetOption(device_ll_handle, OPTION_HSM_CONFIG_DATA, &hsmConfig) != IOTHUB_CLIENT_OK) {
     fprintf(stderr, "Can't configure HSM, aborting\r\n");
     IoTHubDeviceClient_LL_Destroy(device_ll_handle);
     IoTHub_Deinit();
@@ -275,8 +323,7 @@ int main(void)
 
   struct timeval ts;
   gettimeofday(&ts, NULL);
-  do
-  {
+  do {
     struct timeval now;
     gettimeofday(&now, NULL);
     if (now.tv_sec - ts.tv_sec >= 10) {
@@ -291,8 +338,10 @@ int main(void)
       if (!success) {
         fprintf(stderr, "Failed to read temperature\r\n");
       } else {
-        printf("Sending data:\n\tCelsius temperature: %.1f degrees\n\tFarenheit temperature: %.1f\n\tRelative humidity: %.1f%%\n\n",
-                  temp_celsius, temp_farenheit, humidity);
+        printf(
+            "Sending data:\n\tCelsius temperature: %.1f degrees\n\tFarenheit temperature: %.1f\n\tRelative humidity: "
+            "%.1f%%\n\n",
+            temp_celsius, temp_farenheit, humidity);
         construct_message(telemetry_msg, temp_celsius, temp_farenheit, humidity, deviceId);
         // Construct the iothub message from a string or a byte array
         message_handle = IoTHubMessage_CreateFromString(telemetry_msg);
@@ -325,8 +374,8 @@ int main(void)
 
 // Force symbol import at this point, so that the linker doesn't pull in
 //   Riot and utpm implementations from Azure IoT SDK
-extern const HSM_CLIENT_X509_INTERFACE* hsm_client_x509_interface(void);
-extern const HSM_CLIENT_TPM_INTERFACE* hsm_client_tpm_interface(void);
+extern const HSM_CLIENT_X509_INTERFACE *hsm_client_x509_interface(void);
+extern const HSM_CLIENT_TPM_INTERFACE *hsm_client_tpm_interface(void);
 
-const HSM_CLIENT_X509_INTERFACE* (*x509_ptr)(void) = hsm_client_x509_interface;
-const HSM_CLIENT_TPM_INTERFACE* (*tpm_ptr)(void) = hsm_client_tpm_interface;
+const HSM_CLIENT_X509_INTERFACE *(*x509_ptr)(void) = hsm_client_x509_interface;
+const HSM_CLIENT_TPM_INTERFACE *(*tpm_ptr)(void)   = hsm_client_tpm_interface;
