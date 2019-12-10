@@ -144,6 +144,7 @@ async def message_receiver(client):
 async def twilio_telemetry_loop():
     global UNITS
 
+    res = 0
     client = None
     try:
         display_device = sh1106(i2c(port=1, address=0x3C), width=DISPLAY_WIDTH, height=DISPLAY_HEIGHT, rotate=DISPLAY_ROTATE)
@@ -228,11 +229,13 @@ async def twilio_telemetry_loop():
 
     except Exception as iothub_error:
         print ("Unexpected error %s from IoTHub" % iothub_error)
+        res = 1
     except KeyboardInterrupt:
         print ("IoTHubClient sample stopped")
     finally:
         if client:
             await client.disconnect()
+        return res
 
 ##############################################
 # Called from the command line               #
@@ -246,9 +249,12 @@ if __name__ == '__main__':
         print ('Python >= 3 is required to run this demo')
         exit(1)
 
+    res = 0
     if sys.version_info[1] >= 7:
-        asyncio.run(twilio_telemetry_loop())
+        res = asyncio.run(twilio_telemetry_loop())
     else:
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(twilio_telemetry_loop())
-        loop.close
+        res = loop.run_until_complete(twilio_telemetry_loop())
+        loop.close()
+
+    exit(res)
