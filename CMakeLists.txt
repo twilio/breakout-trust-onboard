@@ -281,10 +281,6 @@ endif()
 
 set(CPACK_SET_DESTDIR "ON")
 
-if(TOB_DEVICE)
-	add_subdirectory(device-support/${TOB_DEVICE})
-endif(TOB_DEVICE)
-
 include(CPack)
 
 if (BUILD_TESTS)
