@@ -104,7 +104,9 @@ if(BUILD_AZURE)
 endif(BUILD_AZURE)
 
 add_library(TwilioTrustOnboard SHARED ${LIB_SOURCES} ${LIB_HEADERS})
-add_coverage(TwilioTrustOnboard)
+if(ENABLE_COVERAGE)
+	add_coverage(TwilioTrustOnboard)
+endif()
 
 set_property(TARGET TwilioTrustOnboard PROPERTY POSITION_INDEPENDENT_CODE ON)
 
@@ -113,7 +115,9 @@ if(NOT NO_OS)
 	add_executable(
 		${TOOL_BINARY}
 		tools/TrustOnboardTool.cpp)
-	add_coverage(${TOOL_BINARY})
+	if(ENABLE_COVERAGE)
+		add_coverage(${TOOL_BINARY})
+	endif()
 	target_include_directories(${TOOL_BINARY}
 		PRIVATE
 		${JSON_INCLUDE_DIR})
@@ -128,7 +132,9 @@ if(OPENSSL_SUPPORT)
 	add_library(
 		${TOB_ENGINE} SHARED
 		tools/OpenSSLEngine.cpp)
-	add_coverage(${TOB_ENGINE})
+	if(ENABLE_COVERAGE)
+		add_coverage(${TOB_ENGINE})
+	endif()
 
 	target_link_libraries(
 		${TOB_ENGINE}
@@ -153,7 +159,9 @@ if(MBEDTLS_SUPPORT)
 	add_library(
 		tob_mbed SHARED
 		src/TobMbedtls.cpp)
-	add_coverage(${tob_mbed})
+	if(ENABLE_COVERAGE)
+		add_coverage(tob_mbed)
+	endif()
 	target_include_directories(tob_mbed PUBLIC ${MBEDTLS_INCLUDE_DIRS})
 	target_link_libraries(tob_mbed ${MBEDTLS_LIBRARIES} TwilioTrustOnboard)
 endif(MBEDTLS_SUPPORT)
@@ -164,7 +172,9 @@ if(BUILD_AZURE)
 
 	add_executable(${TOB_DPS_REGISTERER}
 		tools/AzureDpsRegisterer.cpp)
-	add_coverage(${TOB_DPS_REGISTERER})
+	if(ENABLE_COVERAGE)
+		add_coverage(${TOB_DPS_REGISTERER})
+	endif()
 	target_link_libraries(
 		${TOB_DPS_REGISTERER}
 		TwilioTrustOnboard
