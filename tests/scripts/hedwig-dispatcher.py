@@ -13,13 +13,14 @@ class HedwigException(Exception):
     pass
 
 class HedwigWorker:
-    def __init__(self, host, token, base_repo, base_ref, pr_repo, pr_ref):
+    def __init__(self, host, token, base_repo, base_ref, pr_repo, pr_ref, extra_args=None):
         self.host = host
         self.token = token
         self.base_repo = base_repo
         self.base_ref = base_ref
         self.pr_repo = pr_repo
         self.pr_ref = pr_ref
+        self.extra_args = extra_args
 
     def send_request(self, data):
         req = urllib.request.Request(self.host, data.encode('utf-8'))
@@ -32,6 +33,7 @@ class HedwigWorker:
           return js
 
         except urllib.error.HTTPError as e:
+            print ("HTTP Error: ", e)
             return None
 
     def send_request_json(self, json_dict):
@@ -43,6 +45,9 @@ class HedwigWorker:
                        'pr_repo'   : self.pr_repo,
                        'base_ref'  : self.base_ref,
                        'base_repo' : self.base_repo}
+        if self.extra_args:
+            req_payload['extra_args'] = self.extra_args
+
         req = {'type'    : 'start',
                'payload' : req_payload}
 
@@ -118,6 +123,7 @@ def main():
     parser.add_argument("--prrepo", help="PR branch repo URL")
     parser.add_argument("--baseref", help="PR base ref")
     parser.add_argument("--prref", help="PR branch ref")
+    parser.add_argument("--extra-args", help="Additional arguments to the worker's test script")
     parser.add_argument("workers", nargs='+', help="Worker tokens, each of form https://domain.com/resourse@<base64 auth token>")
 
     print ("Starting Hedwig CI dispatcher")
@@ -127,31 +133,31 @@ def main():
     if not args.baserepo:
         print ("Base repo is a required argument")
         parser.print_help()
-        return 1
+        sys.exit(1)
 
     if not args.prrepo:
         print ("PR repo is a required argument")
         parser.print_help()
-        return 1
+        sys.exit(1)
 
     if not args.baserepo:
         print ("Base ref is a required argument")
         parser.print_help()
-        return 1
+        sys.exit(1)
 
     if not args.baserepo:
         print ("PR ref is a required argument")
         parser.print_help()
-        return 1
+        sys.exit(1)
 
     if len(args.workers) < 1:
         print ("At least one worker should be defined")
         parser.print_help()
-        return 1
+        sys.exit(1)
 
 
     host, token = args.workers[0].split('@') # TODO: iterate over all workers choosing the best suitable one
-    worker = HedwigWorker(host, token, args.baserepo, args.baseref, args.prrepo, args.prref)
+    worker = HedwigWorker(host, token, args.baserepo, args.baseref, args.prrepo, args.prref, args.extra_args)
 
     try:
         success, log = worker.run()
@@ -166,7 +172,7 @@ def main():
 
     except HedwigException as e:
         print("Fatal ERROR executing remote CI job:", e)
-        return 1
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

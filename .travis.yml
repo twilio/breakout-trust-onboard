@@ -7,31 +7,31 @@ os:
 env:
   global:
   - secure: dV4afOeNl9/wBLRaIzqBD0NoNDP66qcsyAl7KH8fo4eH2HGdxV6sDX2EKcW44l7fJH6pS3qKX1ZDREnIyjWs9Ktms/F1oSe9unF1CH84DeIWkDHwpIEccEQ66i5DfTlZbmeo2Bp2qnRnMuS/9uSHvnmHOG29rh0rjnPGXcRX4KMYXShwmlv5y6tdvCfa9BoUaQnaQx9VUP/uXiqczS73BBzX5PAn0VV7B3X31i3AB90SWY0PmQDOM7zWkH9w8fd9kNo+sINAScfgEDV2yAwvrdFx/D4VRVecEi4W/O00xZGcDy2Sib81lz2m0pMmMBLp/ewT9N8erDfWH1pls9eN5gtCoSTn5pVxgTGZW2tr821YKaIiySFbgjL4nwGa6Rjsu7n94LTHZ/haReSnk5wKxvI2dwXSsS+rVA+0cqzWGZ1l4z+780f38nM58Yg3vSs8OKQpUnFjV0ZaN5sGnDCiccpp6lvidDbd3rNZff7putuK+qw//xQShEYqFnRUcuz4ZFx8U8CcOVvY3eNlZrqv44I/9UeHDQwEvD/XRz/QfYsdJWDPvWu8KAmD4QIqNSurDJLVRoQp40BH/vrpB8zOzEcynsriclqj5pJyEUdk0KYeCP1Pw8S6sWjfkmPzmyDjZCY9e/m2mF+p+WaQc3VkpayIBmBpLBIMh7uIm4VHP+A=
+  - secure: ReXiux3Chs6DMYRNgLBie2lEZK4gdQnwCv1uUxp6caKTEQCbpR0ikgOmKTmSZGdwxRq13iyeuq1HGMmjd0FDHpQUj7TY2/0pZm79X36uPnZx56cmL1WConzP7Tqlx+/Q7Y14pr9Zv7Mfin0r2q9i3YSgP+XBIQxfXzvT6J+WX0SVlP9WgeLJv4b+qUaHXujWxkxWxBWSthNaLCRQQFZJ1l/SQZ7cwCRNJvCcWL9rPOZTJlQ86Npzkyhmo4NsKAqR9DLeVP6uwFhY/U31klSq7UfIkXck0hg65oBTFAF+y3J0fdblsM+PuApafJpqzw0E8dYY6Pboz6rokQltXLAMnB7173NWlizHUR7iflgbgwrtTI3AmzUOtkpupRONVksMl2p1Rn666mRFsvCtmzZx9ManbAWCT1ZydXPvucgBq4iGEFdXEyOP5Ov3pK1EZW3l/DcmegxB+kDWzJzURhMSRrFBGcY6cAT5Tkc8b1HGV5Rlom5Bb+jidSco/eK4hcT87KEgGfjKol162PzV5x+6Eiy77A9VeC8lP6RArGOXRxQuyZLoqqZpQgUBJ8ToGHwr3aB3w0l7xHsb4kfodeCO2eJW+4L0KxIayXHxNSqZYDTXC6S5PSl1uQ/rH8/OdYaRfK9jQoDpNi9MVxwCkGMXyEZBDU0/CxaVmMF9wexqwwA=
 before_install:
 - sudo apt-get update
 - sudo apt install nlohmann-json-dev
-
 script:
 - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then travis_wait 30 ./tests/scripts/ci-script-travis.sh;
   fi
-- if [ -n "$TRAVIS_TAG" ]; then travis_wait 50 sudo ./tests/scripts/build-deb.sh buster; fi
-- if [ -n "$TRAVIS_TAG" ]; then travis_wait 50 sudo ./tests/scripts/build-deb.sh stretch; fi
-
+- if [ -n "$TRAVIS_TAG" ]; then travis_wait 50 sudo ./tests/scripts/build-deb.sh buster;
+  fi
+- if [ -n "$TRAVIS_TAG" ]; then travis_wait 50 sudo ./tests/scripts/build-deb.sh stretch;
+  fi
 deploy:
- - provider: bintray
-   file: deploy-buster.json
-   skip_cleanup: true
-   on:
-     tags: true
-   user: agerasimov1@twilio
-   key:
-     secure: "HsxaG4sSAKdESIg6DbVoqpe7O91CpaZPiewMkm3KDCCacpW57NZraFShpDUHD5a4ou6yu/vJxrRfkjEX0te4VwRxTTr2hQbsITsvE4Z0W0zUATDyRes/gjS51bQiwYMqHL0dvcKKCAsO5q4t6UZqiJXObou3cpy2JiHb7JGz4R1wF3ih1MeZefGES773OAZouIWarMTVWyyur5rHKeCyQn9qKCuBCE7pGElH2WvrvVhfJOzgtwCHDFaO+c4HNHSpYdW2Pxeu34g/eYoh/Lg0B7Ru6Gc30GrUmC5FubszurVWARnJ3G3vdghNrNRz1FgrMWrX9BKMHSNmqAP06zM+JpQQEAqM+pc8rKO7mFKKSepbvLWVXlYJtCUX3Jx5WwrMaNJsXpJUAEScFaQ4Kgfs3Oc8Lx8PEb6J1Of0OVVO6jlR3J17XZ6IEsyqax9M7bPKwabcg8vYcRey75d4be2aCp3rSnwYMbScfjWQWJhGFkQuX7dgR9SrcdeFll+BTs00FZlC11/MAMxWN0vi5OYAZ+QYG0TVpa3ZxJcaqeLvwPpTfgkMZLBdjw1RxX7rRUVD2vZCgVI8+98n+FzkP7cwBEovKQnrv8+m/HhwutKMAd8BZgN1mvb48E8E2LVSqEXVLb9xRk1StYexDNg0uWamX7YMKvBKqL7T6ILxhPFAmXc="
- - provider: bintray
-   file: deploy-stretch.json
-   skip_cleanup: true
-   on:
-     tags: true
-   user: agerasimov1@twilio
-   key:
-     secure: "HsxaG4sSAKdESIg6DbVoqpe7O91CpaZPiewMkm3KDCCacpW57NZraFShpDUHD5a4ou6yu/vJxrRfkjEX0te4VwRxTTr2hQbsITsvE4Z0W0zUATDyRes/gjS51bQiwYMqHL0dvcKKCAsO5q4t6UZqiJXObou3cpy2JiHb7JGz4R1wF3ih1MeZefGES773OAZouIWarMTVWyyur5rHKeCyQn9qKCuBCE7pGElH2WvrvVhfJOzgtwCHDFaO+c4HNHSpYdW2Pxeu34g/eYoh/Lg0B7Ru6Gc30GrUmC5FubszurVWARnJ3G3vdghNrNRz1FgrMWrX9BKMHSNmqAP06zM+JpQQEAqM+pc8rKO7mFKKSepbvLWVXlYJtCUX3Jx5WwrMaNJsXpJUAEScFaQ4Kgfs3Oc8Lx8PEb6J1Of0OVVO6jlR3J17XZ6IEsyqax9M7bPKwabcg8vYcRey75d4be2aCp3rSnwYMbScfjWQWJhGFkQuX7dgR9SrcdeFll+BTs00FZlC11/MAMxWN0vi5OYAZ+QYG0TVpa3ZxJcaqeLvwPpTfgkMZLBdjw1RxX7rRUVD2vZCgVI8+98n+FzkP7cwBEovKQnrv8+m/HhwutKMAd8BZgN1mvb48E8E2LVSqEXVLb9xRk1StYexDNg0uWamX7YMKvBKqL7T6ILxhPFAmXc="
-
+- provider: bintray
+  file: deploy-buster.json
+  skip_cleanup: true
+  on:
+    tags: true
+  user: agerasimov1@twilio
+  key:
+    secure: HsxaG4sSAKdESIg6DbVoqpe7O91CpaZPiewMkm3KDCCacpW57NZraFShpDUHD5a4ou6yu/vJxrRfkjEX0te4VwRxTTr2hQbsITsvE4Z0W0zUATDyRes/gjS51bQiwYMqHL0dvcKKCAsO5q4t6UZqiJXObou3cpy2JiHb7JGz4R1wF3ih1MeZefGES773OAZouIWarMTVWyyur5rHKeCyQn9qKCuBCE7pGElH2WvrvVhfJOzgtwCHDFaO+c4HNHSpYdW2Pxeu34g/eYoh/Lg0B7Ru6Gc30GrUmC5FubszurVWARnJ3G3vdghNrNRz1FgrMWrX9BKMHSNmqAP06zM+JpQQEAqM+pc8rKO7mFKKSepbvLWVXlYJtCUX3Jx5WwrMaNJsXpJUAEScFaQ4Kgfs3Oc8Lx8PEb6J1Of0OVVO6jlR3J17XZ6IEsyqax9M7bPKwabcg8vYcRey75d4be2aCp3rSnwYMbScfjWQWJhGFkQuX7dgR9SrcdeFll+BTs00FZlC11/MAMxWN0vi5OYAZ+QYG0TVpa3ZxJcaqeLvwPpTfgkMZLBdjw1RxX7rRUVD2vZCgVI8+98n+FzkP7cwBEovKQnrv8+m/HhwutKMAd8BZgN1mvb48E8E2LVSqEXVLb9xRk1StYexDNg0uWamX7YMKvBKqL7T6ILxhPFAmXc=
+- provider: bintray
+  file: deploy-stretch.json
+  skip_cleanup: true
+  on:
+    tags: true
+  user: agerasimov1@twilio
+  key:
+    secure: HsxaG4sSAKdESIg6DbVoqpe7O91CpaZPiewMkm3KDCCacpW57NZraFShpDUHD5a4ou6yu/vJxrRfkjEX0te4VwRxTTr2hQbsITsvE4Z0W0zUATDyRes/gjS51bQiwYMqHL0dvcKKCAsO5q4t6UZqiJXObou3cpy2JiHb7JGz4R1wF3ih1MeZefGES773OAZouIWarMTVWyyur5rHKeCyQn9qKCuBCE7pGElH2WvrvVhfJOzgtwCHDFaO+c4HNHSpYdW2Pxeu34g/eYoh/Lg0B7Ru6Gc30GrUmC5FubszurVWARnJ3G3vdghNrNRz1FgrMWrX9BKMHSNmqAP06zM+JpQQEAqM+pc8rKO7mFKKSepbvLWVXlYJtCUX3Jx5WwrMaNJsXpJUAEScFaQ4Kgfs3Oc8Lx8PEb6J1Of0OVVO6jlR3J17XZ6IEsyqax9M7bPKwabcg8vYcRey75d4be2aCp3rSnwYMbScfjWQWJhGFkQuX7dgR9SrcdeFll+BTs00FZlC11/MAMxWN0vi5OYAZ+QYG0TVpa3ZxJcaqeLvwPpTfgkMZLBdjw1RxX7rRUVD2vZCgVI8+98n+FzkP7cwBEovKQnrv8+m/HhwutKMAd8BZgN1mvb48E8E2LVSqEXVLb9xRk1StYexDNg0uWamX7YMKvBKqL7T6ILxhPFAmXc=
