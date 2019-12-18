@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.7)
 
 if (LINUX)
-  set (CMAKE_CXX_FLAGS "-pthread ${CMAKE_CXX_FLAGS}")
+	set (CMAKE_CXX_FLAGS "-pthread ${CMAKE_CXX_FLAGS}")
 endif()
 
 set(CMAKE_C_STANDARD 99)
@@ -20,7 +20,7 @@ include_directories(${CURL_INCLUDE_DIR})
 add_executable(client_sample client_sample.cpp)
 
 target_link_libraries(client_sample
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${OPENSSL_LIBRARIES}
-  ${CURL_LIBRARIES}
+	${CMAKE_THREAD_LIBS_INIT}
+	${OPENSSL_LIBRARIES}
+	${CURL_LIBRARIES}
 )
