@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 SOURCE_DIR=$(realpath `dirname "${BASH_SOURCE[0]}"`/../..)
 
 mkdir -p cmake
