@@ -15,23 +15,23 @@ add_definitions(-DAZURE_ID_SCOPE_PATH="${AZURE_ID_SCOPE_PATH}")
 add_executable(rpi_temp_monitor rpi_temp_monitor.c)
 
 target_link_libraries(rpi_temp_monitor
-    TwilioTrustOnboard
-    prov_http_transport
-    iothub_client
-    prov_device_ll_client
-    prov_auth_client
-    hsm_security_client
-    uhttp
-    umqtt
-    iothub_client_http_transport
-    iothub_client_mqtt_transport
-    prov_auth_client
-    aziotsharedutil
-    curl
-    ssl
-    crypto
-    pthread
-    m
-    parson)
+	TwilioTrustOnboard
+	prov_http_transport
+	iothub_client
+	prov_device_ll_client
+	prov_auth_client
+	hsm_security_client
+	uhttp
+	umqtt
+	iothub_client_http_transport
+	iothub_client_mqtt_transport
+	prov_auth_client
+	aziotsharedutil
+	curl
+	ssl
+	crypto
+	pthread
+	m
+	parson)
 
 add_definitions(-DUSE_MQTT)

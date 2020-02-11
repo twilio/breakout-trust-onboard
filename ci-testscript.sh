@@ -3,7 +3,7 @@
 mkdir -p cmake
 mkdir -p install_prefix
 cd cmake
-cmake -DPCSC_SUPPORT=ON -DOPENSSL_SUPPORT=ON -DMBEDTLS_SUPPORT=ON -DBUILD_TESTS=ON -DCMAKE_INSTALL_PREFIX=../install_prefix ..
+cmake -DPCSC_SUPPORT=ON -DOPENSSL_SUPPORT=ON -DMBEDTLS_SUPPORT=ON -DBUILD_TESTS=ON -DENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../install_prefix ..
 make
 make install
 
@@ -17,5 +17,8 @@ else
 fi
 
 ../tests/scripts/test_runner.py ${MODEMS_CSV_FILE} bin/trust_onboard_sdk_tests bin/trust_onboard_ll_tests ../tests/tls_lib_test.sh
+
+export CODECOV_TOKEN="${1}"
+bash <(curl -s https://codecov.io/bash)
 
 

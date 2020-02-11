@@ -12,6 +12,10 @@ option(NO_OS "Build for bare metal / RTOS" OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/)
 
+if(ENABLE_COVERAGE)
+	find_package(codecov)
+endif(ENABLE_COVERAGE)
+
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -52,21 +56,21 @@ include_directories(external_libs/tob_sim/platform/pcsc/inc)
 include_directories(include)
 
 set(LIB_SOURCES
-        external_libs/tob_sim/common/src/Applet.cpp
-        external_libs/tob_sim/common/src/MF.cpp
-        external_libs/tob_sim/common/src/MIAS.cpp
-        external_libs/tob_sim/common/src/SEInterface.cpp
-        external_libs/tob_sim/common/src/base64.c
-        src/BreakoutTrustOnboardSDK.cpp
+	external_libs/tob_sim/common/src/Applet.cpp
+	external_libs/tob_sim/common/src/MF.cpp
+	external_libs/tob_sim/common/src/MIAS.cpp
+	external_libs/tob_sim/common/src/SEInterface.cpp
+	external_libs/tob_sim/common/src/base64.c
+	src/BreakoutTrustOnboardSDK.cpp
 	)
 
 set(LIB_HEADERS
-        external_libs/tob_sim/common/inc/ISO7816.h
-        external_libs/tob_sim/common/inc/Applet.h
-        external_libs/tob_sim/common/inc/MF.h
-        external_libs/tob_sim/common/inc/MIAS.h
-        external_libs/tob_sim/common/inc/SEInterface.h
-        external_libs/tob_sim/common/inc/base64.h
+	external_libs/tob_sim/common/inc/ISO7816.h
+	external_libs/tob_sim/common/inc/Applet.h
+	external_libs/tob_sim/common/inc/MF.h
+	external_libs/tob_sim/common/inc/MIAS.h
+	external_libs/tob_sim/common/inc/SEInterface.h
+	external_libs/tob_sim/common/inc/base64.h
 	)
 
 if(NOT NO_OS)
@@ -86,7 +90,7 @@ endif(NOT NO_OS)
 if(PCSC_SUPPORT)
 	find_package(PCSC REQUIRED)
 
-        set(LIB_SOURCES ${LIB_SOURCES}
+	set(LIB_SOURCES ${LIB_SOURCES}
 		external_libs/tob_sim/platform/pcsc/src/Pcsc.cpp)
 	set(LIB_HEADERS ${LIB_HEADERS}
 		external_libs/tob_sim/platform/pcsc/inc/Pcsc.h)
@@ -100,21 +104,27 @@ if(BUILD_AZURE)
 endif(BUILD_AZURE)
 
 add_library(TwilioTrustOnboard SHARED ${LIB_SOURCES} ${LIB_HEADERS})
+if(ENABLE_COVERAGE)
+	add_coverage(TwilioTrustOnboard)
+endif()
 
 set_property(TARGET TwilioTrustOnboard PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 if(NOT NO_OS)
 	find_package(NlohmannJson REQUIRED)
 	add_executable(
-        	${TOOL_BINARY}
-	        tools/TrustOnboardTool.cpp)
+		${TOOL_BINARY}
+		tools/TrustOnboardTool.cpp)
+	if(ENABLE_COVERAGE)
+		add_coverage(${TOOL_BINARY})
+	endif()
 	target_include_directories(${TOOL_BINARY}
 		PRIVATE
 		${JSON_INCLUDE_DIR})
 
 	target_link_libraries(
-        	${TOOL_BINARY}
-        	TwilioTrustOnboard)
+		${TOOL_BINARY}
+		TwilioTrustOnboard)
 endif(NOT NO_OS)
 
 if(OPENSSL_SUPPORT)
@@ -122,6 +132,9 @@ if(OPENSSL_SUPPORT)
 	add_library(
 		${TOB_ENGINE} SHARED
 		tools/OpenSSLEngine.cpp)
+	if(ENABLE_COVERAGE)
+		add_coverage(${TOB_ENGINE})
+	endif()
 
 	target_link_libraries(
 		${TOB_ENGINE}
@@ -146,6 +159,9 @@ if(MBEDTLS_SUPPORT)
 	add_library(
 		tob_mbed SHARED
 		src/TobMbedtls.cpp)
+	if(ENABLE_COVERAGE)
+		add_coverage(tob_mbed)
+	endif()
 	target_include_directories(tob_mbed PUBLIC ${MBEDTLS_INCLUDE_DIRS})
 	target_link_libraries(tob_mbed ${MBEDTLS_LIBRARIES} TwilioTrustOnboard)
 endif(MBEDTLS_SUPPORT)
@@ -156,6 +172,9 @@ if(BUILD_AZURE)
 
 	add_executable(${TOB_DPS_REGISTERER}
 		tools/AzureDpsRegisterer.cpp)
+	if(ENABLE_COVERAGE)
+		add_coverage(${TOB_DPS_REGISTERER})
+	endif()
 	target_link_libraries(
 		${TOB_DPS_REGISTERER}
 		TwilioTrustOnboard
@@ -189,9 +208,9 @@ if(PCSC_SUPPORT)
 endif(PCSC_SUPPORT)
 
 set(TOOLS_SOURCES
-        tools/TrustOnboardTool.cpp
-        tools/OpenSSLEngine.cpp
-        tools/AzureDpsRegisterer.cpp
+	tools/TrustOnboardTool.cpp
+	tools/OpenSSLEngine.cpp
+	tools/AzureDpsRegisterer.cpp
 	)
 
 add_custom_target(format COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/service-scripts/format.sh ${LIB_SOURCES} ${LIB_HEADERS} ${TOOLS_SOURCES} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
@@ -271,10 +290,6 @@ if(BUILD_AZURE)
 endif()
 
 set(CPACK_SET_DESTDIR "ON")
-
-if(TOB_DEVICE)
-	add_subdirectory(device-support/${TOB_DEVICE})
-endif(TOB_DEVICE)
 
 include(CPack)
 

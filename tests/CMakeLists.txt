@@ -11,36 +11,36 @@ find_package(OpenSSL REQUIRED)
 include_directories(${OPENSSL_INCLUDE_DIR})
 
 add_executable(
-  trust_onboard_sdk_tests
-  BreakoutTrustOnboardSDKTests.cpp
-  )
+	trust_onboard_sdk_tests
+	BreakoutTrustOnboardSDKTests.cpp
+	)
 
 add_executable(
-  trust_onboard_ll_tests
-  BreakoutTrustOnboardLLTests.cpp
-  )
+	trust_onboard_ll_tests
+	BreakoutTrustOnboardLLTests.cpp
+	)
 
 target_link_libraries(
-  trust_onboard_sdk_tests
-  TwilioTrustOnboard
-  )
+	trust_onboard_sdk_tests
+	TwilioTrustOnboard
+	)
 
 target_link_libraries(
-  trust_onboard_ll_tests
-  TwilioTrustOnboard
-  ${OPENSSL_LIBRARIES}
-  )
+	trust_onboard_ll_tests
+	TwilioTrustOnboard
+	${OPENSSL_LIBRARIES}
+	)
 
 
 if(PCSC_SUPPORT)
-  target_link_libraries(
-    trust_onboard_sdk_tests
-    ${PCSC_LIBRARIES}
-  )
+	target_link_libraries(
+		trust_onboard_sdk_tests
+		${PCSC_LIBRARIES}
+	)
 
-  target_link_libraries(
-    trust_onboard_ll_tests
-    ${PCSC_LIBRARIES}
-  )
+	target_link_libraries(
+		trust_onboard_ll_tests
+		${PCSC_LIBRARIES}
+	)
 endif(PCSC_SUPPORT)
 
